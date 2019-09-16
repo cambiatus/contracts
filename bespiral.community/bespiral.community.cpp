@@ -598,7 +598,7 @@ void bespiral::updatesale(std::uint64_t sale_id, std::string title,
 
   // Validate quantity
   eosio_assert(quantity.is_valid(), "Quantity is invalid");
-  eosio_assert(quantity.amount > 0, "Invalid amount of quantity, must use a positive value");
+  eosio_assert(quantity.amount >= 0, "Invalid amount of quantity, must use a positive value");
 
   // Check if stock is tracked
   if (found_sale.track_stock >= 1) {
