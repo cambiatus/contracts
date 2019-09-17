@@ -245,6 +245,28 @@
             ]
         },
         {
+            "name": "indexes",
+            "base": "",
+            "fields": [
+                {
+                    "name": "last_used_sale_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_used_objective_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_used_action_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_used_claim_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "netlink",
             "base": "",
             "fields": [
@@ -426,32 +448,6 @@
                 },
                 {
                     "name": "units",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "table_index",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "last_used_sale_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "last_used_objective_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "last_used_action_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "last_used_claim_id",
                     "type": "uint64"
                 }
             ]
@@ -704,6 +700,13 @@
             "key_types": []
         },
         {
+            "name": "indexes",
+            "type": "indexes",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "network",
             "type": "network",
             "index_type": "i64",
@@ -720,13 +723,6 @@
         {
             "name": "sale",
             "type": "sale",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "tableindex",
-            "type": "table_index",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
