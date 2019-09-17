@@ -262,10 +262,10 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 
   typedef eosio::singleton<eosio::name{"itemindex"}, bespiral::indexes> item_indexes;
 
-	item_indexes curr_indexes;
+  item_indexes curr_indexes;
 
-	// Initialize our singleton table for indices
-	bespiral(eosio::name receiver, eosio::name code,  eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}	
+  // Initialize our singleton table for indices
+  bespiral(eosio::name receiver, eosio::name code,  eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}	
 };
 
 const auto currency_account = eosio::name{"bes.token"};
