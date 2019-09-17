@@ -1,6 +1,7 @@
 #include <eosiolib/eosio.hpp>
 #include <eosiolib/asset.hpp>
 #include <eosiolib/system.h>
+#include<eosiolib/singleton.hpp>
 #include <eosiolib/crypto.h>
 
 class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contract {
@@ -138,14 +139,12 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                       (track_stock)(quantity)(units));
   };
 
-  TABLE table_index {
-    std::uint64_t id;
-    std::uint64_t last_used_sale_id;
-    std::uint64_t last_used_objective_id;
-    std::uint64_t last_used_action_id;
-    std::uint64_t last_used_claim_id;
-
-    std::uint64_t primary_key() const { return id; }
+  TABLE indexes {
+    // Values based on the blockchain data as of 17th September 2019
+    std::uint64_t last_used_sale_id = 15;
+    std::uint64_t last_used_objective_id = 8;
+    std::uint64_t last_used_action_id = 33;
+    std::uint64_t last_used_claim_id = 0;
   };
 
   /// @abi action
@@ -261,7 +260,12 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                             eosio::indexed_by<eosio::name{"byuser"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
                             > sales;
 
-  typedef eosio::multi_index<eosio::name{"tableindex"}, bespiral::table_index> table_indexes;
+  typedef eosio::singleton<eosio::name{"itemindex"}, bespiral::indexes> item_indexes;
+
+	item_indexes curr_indexes;
+
+	// Initialize our singleton table for indices
+	bespiral(eosio::name receiver, eosio::name code,  eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}	
 };
 
 const auto currency_account = eosio::name{"bes.token"};
