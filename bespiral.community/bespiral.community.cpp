@@ -156,7 +156,7 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
   auto itr_creator = network.find(creator_id);
   eosio_assert(itr_creator != network.end(), "Creator doesn't belong to the community");
 
-  // Get last used objective id and update table_index table
+  // Get last used objective id and update item_index table
   uint64_t objective_id;
   objective_id = get_available_id("objectives");
 
@@ -249,7 +249,7 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
   // Validate verification type
   eosio_assert(verification_type == "claimable" || verification_type == "automatic", "verification type must be either 'claimable' or 'automatic'");
 
-  // Get last used action id and update table_index table
+  // Get last used action id and update item_index table
   uint64_t action_id;
   action_id = get_available_id("actions");
 
@@ -416,7 +416,7 @@ void bespiral::claimaction(std::uint64_t action_id, eosio::name maker) {
   eosio_assert(itr_network != network.end(), "Maker doesn't belong to the community");
 
 
-  // Get last used claim id and update table_index table
+  // Get last used claim id and update item_index table
   uint64_t claim_id;
   claim_id = get_available_id("claims");
 
@@ -593,7 +593,7 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
   networks network(_self, _self.value);
   const auto &netlink = network.get(from_id, "'from' account doesn't belong to the community");
 
-  // Get last used objective id and update table_index table
+  // Get last used objective id and update item_index table
   uint64_t sale_id;
   sale_id = get_available_id("sales");
 
@@ -745,46 +745,29 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
 // Get available key
 uint64_t bespiral::get_available_id(std::string table) {
   eosio_assert(table == "actions" || table == "objectives" || table == "sales" || table == "claims", "Table index not available");
-  table_indexes table_index(_self, _self.value);
-  auto itr_indexes = table_index.find(0);
 
-	// In case an index record doesnt exist
-  if (itr_indexes == table_index.end()) {
-    table_index.emplace(_self, [&](auto &ti) {
-      ti.id = 0;
-      ti.last_used_sale_id = 0;
-      ti.last_used_objective_id = 0;
-      ti.last_used_action_id = 0;
-      ti.last_used_claim_id = 0;
-    });
-  }
+  // Init indexes table
+  indexes default_indexes;
+  auto current_indexes = curr_indexes.get_or_create(_self, default_indexes);
 
-
-  //Use loaded index table
-  auto loaded_indexes = table_index.find(0);
-  const auto &indexes = *loaded_indexes;
   uint64_t id = 1;
 
   if(table == "actions") {
-      id = indexes.last_used_action_id + 1;
-      table_index.modify(indexes, _self, [&](auto &i) {
-        i.last_used_action_id = id;
-      });
+      id = current_indexes.last_used_action_id + 1;
+      current_indexes.last_used_action_id = id;
+      curr_indexes.set(current_indexes, _self);
    } else if (table == "objectives") {
-      id = indexes.last_used_objective_id + 1;
-      table_index.modify(indexes, _self, [&](auto &i) {
-        i.last_used_objective_id = id;
-      });
+      id = current_indexes.last_used_objective_id + 1;
+      current_indexes.last_used_objective_id = id;
+      curr_indexes.set(current_indexes, _self);
    } else if(table == "sales") {
-      id = indexes.last_used_sale_id + 1;
-      table_index.modify(indexes, _self, [&](auto &i) {
-        i.last_used_sale_id = id;
-      });
+      id = current_indexes.last_used_sale_id + 1;
+      current_indexes.last_used_sale_id = id;
+      curr_indexes.set(current_indexes, _self);
    } else if(table == "claims") {
-      id = indexes.last_used_claim_id + 1;
-      table_index.modify(indexes, _self, [&](auto &i) {
-        i.last_used_claim_id = id;
-      });
+      id = current_indexes.last_used_claim_id + 1;
+      current_indexes.last_used_claim_id = id;
+      curr_indexes.set(current_indexes, _self);
   }
 
   return id;
