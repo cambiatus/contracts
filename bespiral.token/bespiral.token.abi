@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Jul 24 17:29:09 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Sep 20 15:20:51 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -79,6 +79,20 @@
                 {
                     "name": "renovation_amount",
                     "type": "asset"
+                }
+            ]
+        },
+        {
+            "name": "initacc",
+            "base": "",
+            "fields": [
+                {
+                    "name": "currency",
+                    "type": "symbol"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
                 }
             ]
         },
@@ -164,6 +178,11 @@
         {
             "name": "create",
             "type": "create",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "initacc",
+            "type": "initacc",
             "ricardian_contract": ""
         },
         {

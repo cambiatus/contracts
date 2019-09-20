@@ -124,8 +124,7 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
   }
 
   // Send invited rewaqrd
-  if (cmm.invited_reward.amount > 0)
-  {
+  if (cmm.invited_reward.amount > 0) {
     std::string memo_invited = "Welcome to " + cmm.name + "!";
     eosio::action invited_reward = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
                                                  currency_account,                                                 // Account
@@ -134,6 +133,12 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
                                                  std::make_tuple(new_user, cmm.invited_reward, memo_invited));
     invited_reward.send();
     require_recipient(new_user);
+  } else {
+    eosio::action init_account = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
+                                               currency_account,                                                 // Account
+                                               eosio::name{"initacc"},                                           // Action
+                                               std::make_tuple(cmm.invited_reward.symbol, new_user));
+    init_account.send();
   }
 }
 
@@ -586,7 +591,7 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
 }
 
 void bespiral::updatesale(std::uint64_t sale_id, std::string title,
-                          std::string description, eosio::asset quantity, 
+                          std::string description, eosio::asset quantity,
                           std::string image, std::uint64_t units)
 {
   // Find sale
@@ -731,8 +736,8 @@ uint64_t bespiral::get_available_id(std::string table) {
   auto loaded_indexes = table_index.find(0);
   const auto &indexes = *loaded_indexes;
   uint64_t id = 1;
-  
-  if(table == "actions") { 
+
+  if(table == "actions") {
       id = indexes.last_used_action_id + 1;
       table_index.modify(indexes, _self, [&](auto &i) {
         i.last_used_action_id = id;
@@ -740,7 +745,7 @@ uint64_t bespiral::get_available_id(std::string table) {
    } else if (table == "objectives") {
       id = indexes.last_used_objective_id + 1;
       table_index.modify(indexes, _self, [&](auto &i) {
-        i.last_used_objective_id = id; 
+        i.last_used_objective_id = id;
       });
    } else if(table == "sales") {
       id = indexes.last_used_sale_id + 1;
@@ -752,8 +757,8 @@ uint64_t bespiral::get_available_id(std::string table) {
       table_index.modify(indexes, _self, [&](auto &i) {
         i.last_used_claim_id = id;
       });
-  }	
-  
+  }
+
   return id;
 }
 

@@ -59,6 +59,10 @@ class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
   /// Set expiry options to a given token
   ACTION setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount);
 
+  /// @abi action
+  /// Init empty balance for a given account
+  ACTION initacc(eosio::symbol currency, eosio::name account);
+
   typedef eosio::multi_index< eosio::name{"accounts"}, account > accounts;
   typedef eosio::multi_index< eosio::name{"stat"}, currency_stats > stats;
   typedef eosio::multi_index< eosio::name{"expiryopts"}, expiry_options > expiry_opts;
@@ -66,6 +70,7 @@ class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
   void sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats& st);
   void add_balance(eosio::name owner, eosio::asset value, const token::currency_stats& st);
   void renovate_expiration(eosio::name account, const token::currency_stats& st);
+
   token::expiry_options get_expiration_opts(const token::currency_stats& st);
 };
 

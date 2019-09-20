@@ -214,6 +214,34 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
                                });
 }
 
+void token::initacc(eosio::symbol currency, eosio::name account) {
+  // Validate auth -- can only be called by the BeSpiral contracts
+  require_auth(_self);
+
+  // Make sure token exists on the stats table
+  stats statstable(_self, currency.code().raw());
+  const auto& st = statstable.get(currency.code().raw(), "token with given symbol does not exist, create token before initacc");
+
+  // Make sure account belongs to the given community
+  // Check if from belongs to the community
+  bespiral_networks network(community_account, community_account.value);
+  auto network_id = gen_uuid(currency.raw(), account.value);
+  auto itr_net = network.find(network_id);
+  eosio_assert(itr_net != network.end(), "account doesn't belong to the community");
+
+  // Create account table entry
+  accounts accounts(_self, account.value);
+  auto found_account = accounts.find(currency.code().raw());
+
+  if (found_account == accounts.end()) {
+    accounts.emplace(_self, [&](auto& a) {
+                              a.balance = eosio::asset(0, st.supply.symbol);
+                              a.last_activity = now();
+                            });
+  }
+}
+
+
 void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount) {
   // Validate data
   eosio_assert(currency.is_valid(), "invalid symbol name");
@@ -334,4 +362,4 @@ token::expiry_options token::get_expiration_opts(const token::currency_stats& st
   return expiry_struct;
 }
 
-EOSIO_DISPATCH(token, (create)(transfer)(issue)(retire)(setexpiry));
+EOSIO_DISPATCH(token, (create)(transfer)(issue)(retire)(setexpiry)(initacc));
