@@ -64,6 +64,13 @@ void token::create(eosio::name issuer,
                                                  );
     netlink_issuer.send();
   }
+
+  // Create new balance for the creator
+  accounts accounts(_self, issuer.value);
+  accounts.emplace(_self, [&](auto& a) {
+                            a.balance = eosio::asset(0, max_supply.symbol);
+                            a.last_activity = now();
+                          });
 }
 
 /**
