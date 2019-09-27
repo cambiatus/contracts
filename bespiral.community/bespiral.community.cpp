@@ -463,7 +463,11 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
 
   // Check if action is completed, have usages left or the deadline has been met
   eosio_assert(objact.is_completed == false, "This is action is already completed, can't verify claim");
-  eosio_assert(objact.deadline > now(), "Deadline exceeded");
+
+  if (objact.deadline > 0) {
+    eosio_assert(objact.deadline > now(), "Deadline exceeded");
+  }
+
   if (objact.usages > 0) {
     eosio_assert(objact.usages_left >= 1, "There are no usages left for this action");
   }
