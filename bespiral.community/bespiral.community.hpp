@@ -163,8 +163,12 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   ACTION netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user);
 
   /// @abi action
-  /// Create a new community objective.
+  /// Create a new community objective
   ACTION newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator);
+
+  /// @abi action
+  /// Edit the description of a given objective
+  ACTION updobjective(std::uint64_t objective_id, std::string description, eosio::name editor);
 
   /// @abi action
   /// Create a new community objective action.
@@ -196,7 +200,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   /// Update some sale details
   ACTION updatesale(std::uint64_t sale_id, std::string title,
                     std::string description, eosio::asset quantity,
-                    std::string image, std::uint64_t units);
+                    std::string image, std::uint8_t track_stock, std::uint64_t units);
 
   /// @abi action
   /// Delete a sale
@@ -210,7 +214,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   /// Offchain event hook for when a transfer occours in our shop
   ACTION transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units);
 
-  //Get available key 
+  //Get available key
   uint64_t get_available_id(std::string table);
 
 

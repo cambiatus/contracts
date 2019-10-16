@@ -3,8 +3,7 @@
 
 void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                       std::string name, std::string description,
-                      eosio::asset inviter_reward, eosio::asset invited_reward)
-{
+                      eosio::asset inviter_reward, eosio::asset invited_reward) {
   require_auth(creator);
 
   const eosio::symbol new_symbol = cmm_asset.symbol;
@@ -50,8 +49,7 @@ void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string l
 }
 
 void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name,
-                      std::string description, eosio::asset inviter_reward, eosio::asset invited_reward)
-{
+                      std::string description, eosio::asset inviter_reward, eosio::asset invited_reward) {
   communities community(_self, _self.value);
   const auto &cmm = community.get(cmm_asset.symbol.raw(), "can't find any community with given asset");
 
@@ -71,8 +69,7 @@ void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name
   });
 }
 
-void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user)
-{
+void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user) {
   eosio_assert(is_account(new_user), "new user account doesn't exists");
   require_auth(inviter);
 
@@ -142,9 +139,7 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
   }
 }
 
-void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator)
-{
-  eosio_assert(is_account(creator), "invalid account for creator");
+void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator) {
   require_auth(creator);
 
   eosio::symbol community_symbol = cmm_asset.symbol;
@@ -153,9 +148,7 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
 
   // Check if community exists
   communities community(_self, _self.value);
-  auto itr_cmm = community.find(community_symbol.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given community_id");
-  auto &cmm = *itr_cmm;
+  const auto &cmm = community.get(community_symbol.raw(), "Can't find community with given community_id");
 
   // Check if creator belongs to the community
   networks network(_self, _self.value);
@@ -177,12 +170,38 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
   });
 }
 
+void bespiral::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor) {
+  require_auth(editor);
+
+  eosio_assert(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
+
+  // Find objective
+  objectives objective(_self, _self.value);
+  const auto &found_objective = objective.get(objective_id, "Can't find objective with given ID");
+
+  // Find community
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(found_objective.community.raw(), "Can't find community with given community_id");
+
+  // Check if editor belongs to the community
+  networks network(_self, _self.value);
+  auto editor_id = gen_uuid(found_objective.community.raw(), editor.value);
+  auto itr_editor = network.find(editor_id);
+  eosio_assert(itr_editor != network.end(), "Editor doesn't belong to the community");
+
+  // Validate Auth can be either the community creator or the objective creator
+  eosio_assert(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
+
+  objective.modify(found_objective, _self, [&](auto &row) {
+                                             row.description = description;
+                                           });
+}
+
 void bespiral::newaction(std::uint64_t objective_id, std::string description,
                          eosio::asset reward, eosio::asset verifier_reward,
                          std::uint64_t deadline, std::uint64_t usages,
                          std::uint64_t verifications, std::string verification_type,
-                         std::string validators_str, eosio::name creator)
-{
+                         std::string validators_str, eosio::name creator) {
   // Validate creator
   eosio_assert(is_account(creator), "invalid account for creator");
   require_auth(creator);
@@ -284,8 +303,7 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
   }
 }
 
-void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier)
-{
+void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier) {
   // Validates verifier
   eosio_assert(is_account(verifier), "invalid account for verifier");
   eosio_assert(is_account(maker), "invalid account for maker");
@@ -357,8 +375,7 @@ void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::n
 
 /// @abi action
 /// Start a new claim on an action
-void bespiral::claimaction(std::uint64_t action_id, eosio::name maker)
-{
+void bespiral::claimaction(std::uint64_t action_id, eosio::name maker) {
   // Validate maker
   eosio_assert(is_account(maker), "invalid account for maker");
   require_auth(maker);
@@ -415,8 +432,7 @@ void bespiral::claimaction(std::uint64_t action_id, eosio::name maker)
 
 /// @abi action
 /// Send a positive verification for a given claim
-void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote)
-{
+void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote) {
   // Validates verifier belongs to the action community
   claims claim_table(_self, _self.value);
   auto itr_clm = claim_table.find(claim_id);
@@ -551,8 +567,7 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
 
 void bespiral::createsale(eosio::name from, std::string title, std::string description,
                           eosio::asset quantity, std::string image,
-                          std::uint8_t track_stock, std::uint64_t units)
-{
+                          std::uint8_t track_stock, std::uint64_t units) {
   // Validate user
   require_auth(from);
 
@@ -599,21 +614,21 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
 
 void bespiral::updatesale(std::uint64_t sale_id, std::string title,
                           std::string description, eosio::asset quantity,
-                          std::string image, std::uint64_t units)
-{
-  // Find sale
+                          std::string image, std::uint8_t track_stock, std::uint64_t units) {
+    // Find sale
   sales sale(_self, _self.value);
   const auto &found_sale = sale.get(sale_id, "Can't find any sale with given sale_id");
 
   // Validate user
   require_auth(found_sale.creator);
 
+
   // Validate quantity
   eosio_assert(quantity.is_valid(), "Quantity is invalid");
   eosio_assert(quantity.amount >= 0, "Invalid amount of quantity, must use a positive value");
 
   // Check if stock is tracked
-  if (found_sale.track_stock >= 1) {
+  if (found_sale.track_stock >= 1 && track_stock == 1) {
     eosio_assert(units >= 0, "Invalid number of units, must be greater than or equal to 0");
   } else {
     // Discard units value if not tracking stock
@@ -637,11 +652,11 @@ void bespiral::updatesale(std::uint64_t sale_id, std::string title,
     s.image = image;
     s.quantity = quantity;
     s.units = units;
+    s.track_stock = track_stock;
   });
 }
 
-void bespiral::deletesale(std::uint64_t sale_id)
-{
+void bespiral::deletesale(std::uint64_t sale_id) {
   // Find sale
   sales sale(_self, _self.value);
   auto itr_sale = sale.find(sale_id);
@@ -681,8 +696,7 @@ void bespiral::reactsale(std::uint64_t sale_id, eosio::name from, std::string ty
 }
 
 // to = sale creator
-void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units)
-{
+void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units) {
   // Validate user
   require_auth(from);
 
@@ -692,12 +706,25 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
   // Validate accounts are different
   eosio_assert(from != to, "Can't sale for yourself");
 
-  // Validate units
-  eosio_assert(units > 0, "Invalid number of units, must be greater than 0");
-
   // Find sale
   sales sale(_self, _self.value);
   const auto &found_sale = sale.get(sale_id, "Can't find any sale with given sale_id");
+
+  if (found_sale.track_stock == 1) {
+    // Validate units
+    eosio_assert(units > 0, "Invalid number of units, must be greater than 0");
+
+    // Validate sale has that amount of units available
+    eosio_assert(found_sale.units >= units, "Sale doesn't have that many units available");
+
+    // Check amount depending on quantity
+    const auto found_sale_sub_total = found_sale.quantity.amount * units;
+    const auto from_total_offered = quantity.amount * units;
+    eosio_assert(from_total_offered == found_sale_sub_total, "Amount offered doesn't correspond to expected value");
+  } else {
+    // Without trackStock
+    eosio_assert(quantity == found_sale.quantity, "Quantity must be the same as the sale price");
+  }
 
   // Validate 'from' user belongs to sale community
   auto from_id = gen_uuid(found_sale.community.raw(), from.value);
@@ -707,18 +734,12 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
   // Validate 'to' user is the sale creator
   eosio_assert(found_sale.creator == to, "Sale creator and sale doesn't match");
 
-  // Validate sale has that amount of units available
-  eosio_assert(found_sale.units >= units, "Sale doesn't have that many units available");
-
-  // Validate total value offered
-  const auto found_sale_sub_total = found_sale.quantity.amount * units;
-  const auto from_total_offered = quantity.amount * units;
-  eosio_assert(from_total_offered == found_sale_sub_total, "Amount offered doesn't correspond to expected value");
-
   // Update sale
-  sale.modify(found_sale, _self, [&](auto &s){
-    s.units -= units;
-  });
+  if (found_sale.track_stock == 1) {
+    sale.modify(found_sale, _self, [&](auto &s){
+                                     s.units -= units;
+                                   });
+  }
 }
 
 // Get available key
@@ -772,6 +793,7 @@ uint64_t bespiral::get_available_id(std::string table) {
 
 EOSIO_DISPATCH(bespiral,
                (create)(update)(netlink)(newobjective)
-               (newaction)(verifyaction)(claimaction)
-               (verifyclaim)(createsale)(updatesale)
-               (deletesale)(reactsale)(transfersale));
+               (updobjective)(newaction)(verifyaction)
+               (claimaction)(verifyclaim)(createsale)
+               (updatesale) (deletesale)(reactsale)
+               (transfersale));

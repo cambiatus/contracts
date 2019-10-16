@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Sep 27 15:12:10 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Oct 16 12:35:05 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -537,8 +537,30 @@
                     "type": "string"
                 },
                 {
+                    "name": "track_stock",
+                    "type": "uint8"
+                },
+                {
                     "name": "units",
                     "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "updobjective",
+            "base": "",
+            "fields": [
+                {
+                    "name": "objective_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "editor",
+                    "type": "name"
                 }
             ]
         },
@@ -635,6 +657,11 @@
             "name": "updatesale",
             "type": "updatesale",
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Update a sale\nsummary: Enable the sale creator to update some details of a single sale. It requires you to send: `sale_id`, `title`, `description`, `quantity`, `image` and `units`. Except by `sale_id`, all information sent is going to be updated. Note that `quantity` is related to price and `units` to number of items available.\nicon:"
+        },
+        {
+            "name": "updobjective",
+            "type": "updobjective",
+            "ricardian_contract": ""
         },
         {
             "name": "verifyaction",
