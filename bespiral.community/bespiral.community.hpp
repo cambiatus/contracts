@@ -215,7 +215,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 
 	/// @abi action
 	/// Set the indices for a chain
-	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id)
+	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
 
   //Get available key
   uint64_t get_available_id(std::string table);
