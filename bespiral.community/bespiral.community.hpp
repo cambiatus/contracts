@@ -141,10 +141,10 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 
   TABLE indexes {
     // Values based on the blockchain data as of 17th September 2019
-    std::uint64_t last_used_sale_id = 15;
-    std::uint64_t last_used_objective_id = 8;
-    std::uint64_t last_used_action_id = 33;
-    std::uint64_t last_used_claim_id = 0;
+    std::uint64_t last_used_sale_id;
+    std::uint64_t last_used_objective_id;
+    std::uint64_t last_used_action_id;
+    std::uint64_t last_used_claim_id;
   };
 
   /// @abi action
