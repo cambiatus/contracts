@@ -213,6 +213,10 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   /// Offchain event hook for when a transfer occours in our shop
   ACTION transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units);
 
+	/// @abi action
+	/// Set the indices for a chain
+	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id)
+
   //Get available key
   uint64_t get_available_id(std::string table);
 
@@ -265,7 +269,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   item_indexes curr_indexes;
 
   // Initialize our singleton table for indices
-  bespiral(eosio::name receiver, eosio::name code,  eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}	
+  bespiral(eosio::name receiver, eosio::name code,  eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}
 };
 
 const auto currency_account = eosio::name{"bes.token"};
