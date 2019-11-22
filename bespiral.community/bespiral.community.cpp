@@ -744,15 +744,15 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
 
 // set chain indices
 void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id) {
-	indices default_indexes;
+	indexes default_indexes;
 	auto current_indexes = curr_indexes.get_or_create(_self, default_indexes);
 
 	current_indexes.last_used_sale_id = sale_id;
 	current_indexes.last_used_objective_id = objective_id;
 	current_indexes.last_used_action_id = action_id;
-	current_indexes.last_used_claim_id = claiim_id;
+	current_indexes.last_used_claim_id = claim_id;
 
-	curr_indexes.set(current_indexes, _self)
+	curr_indexes.set(current_indexes, _self);
 }
 
 // Get available key
