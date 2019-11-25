@@ -44,6 +44,10 @@ class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
   ACTION create(eosio::name issuer, eosio::asset max_supply, eosio::asset min_balance, std::string type);
 
   /// @abi action
+  /// Update a BeSpiral Token properties
+  ACTION update(eosio::asset max_supply, eosio::asset min_balance);
+
+  /// @abi action
   /// Transfer BeSpiral compatible tokens between users.
   ACTION transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo);
 

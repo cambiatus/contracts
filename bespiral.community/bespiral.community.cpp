@@ -86,8 +86,7 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
     return; // Skip if user already in the network
 
   // Validates inviter if not the creator
-  if (cmm.creator != inviter)
-  {
+  if (cmm.creator != inviter) {
     auto inviter_id = gen_uuid(cmm.symbol.raw(), inviter.value);
     auto itr_inviter = network.find(inviter_id);
     eosio_assert(itr_inviter != network.end(), "unknown inviter");
@@ -120,7 +119,7 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
     require_recipient(inviter);
   }
 
-  // Send invited rewaqrd
+  // Send invited reward
   if (cmm.invited_reward.amount > 0) {
     std::string memo_invited = "Welcome to " + cmm.name + "!";
     eosio::action invited_reward = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
@@ -254,7 +253,6 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
   action_id = get_available_id("actions");
 
 
-
   // Insert new action
   actions action(_self, _self.value);
   action.emplace(_self, [&](auto &a) {
@@ -281,6 +279,9 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
     sort(strs.begin(), strs.end());
     auto strs_it = std::unique(strs.begin(), strs.end());
     eosio_assert(strs_it == strs.end(), "You cannot add a validator more than once to an action");
+
+    // Make sure we have at least 2 verifiers
+    eosio_assert(strs.size() >= 2, "You need at least two verifiers in a claimable action");
 
     for (const std::string &validator_str : strs) {
       eosio::name acc = eosio::name{validator_str};

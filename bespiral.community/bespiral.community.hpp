@@ -125,8 +125,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     std::string description;
     std::string image;
     std::uint8_t track_stock;
-    eosio::asset quantity;    // actual price of product/service
-    std::uint64_t units;      // how many available
+    eosio::asset quantity;    // Actual price of product/service
+    std::uint64_t units;      // How many are available
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_cmm() const { return community.raw(); }
@@ -256,9 +256,9 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                              > checks;
 
   typedef eosio::multi_index<eosio::name{"sale"},
-                            bespiral::sale,
-                            eosio::indexed_by<eosio::name{"bycmm"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_cmm>>,
-                            eosio::indexed_by<eosio::name{"byuser"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
+                             bespiral::sale,
+                             eosio::indexed_by<eosio::name{"bycmm"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_cmm>>,
+                             eosio::indexed_by<eosio::name{"byuser"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
                             > sales;
 
   typedef eosio::multi_index<eosio::name{"tableindex"}, bespiral::table_index> table_indexes;
