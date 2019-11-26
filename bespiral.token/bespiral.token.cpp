@@ -13,11 +13,10 @@
    2) Only the community issuer can create new Tokens
    3) Symbol must be unique and the same for both the community and the token
  */
-void token::create(eosio::name issuer,
-                   eosio::asset max_supply,
-                   eosio::asset min_balance,
-                   std::string type) {
+void token::create(eosio::name issuer, eosio::asset max_supply,
+                   eosio::asset min_balance, std::string type) {
   auto sym = max_supply.symbol;
+  eosio_assert(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
   eosio_assert(type == "mcc" || type == "expiry", "type must be 'mcc' or 'expiry'");
 
   // Find existing community
@@ -71,6 +70,35 @@ void token::create(eosio::name issuer,
                             a.balance = eosio::asset(0, max_supply.symbol);
                             a.last_activity = now();
                           });
+}
+
+
+/**
+   Update token configurations
+   @author Julien Lucca
+   @version 1.0
+*/
+void token::update(eosio::asset max_supply, eosio::asset min_balance) {
+  eosio_assert(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
+
+  eosio_assert(min_balance.is_valid(), "invalid min_balance");
+  eosio_assert(max_supply.is_valid(), "invalid max_supply");
+  eosio_assert(max_supply.amount > 0, "max max_supply must be positive");
+
+  // Find existing community
+  bespiral_communities communities(community_account, community_account.value);
+  const auto& cmm = communities.get(max_supply.symbol.raw(), "can't find community. BeSpiral Tokens require a community.");
+
+  // Find token stats
+  stats statstable(_self, max_supply.symbol.code().raw());
+  const auto& st = statstable.get(min_balance.symbol.code().raw(), "token with given symbol does not exist, create token before issue");
+
+  require_auth(st.issuer);
+
+  statstable.modify(st, _self, [&](auto& s) {
+                                 s.max_supply = max_supply;
+                                 s.min_balance = min_balance;
+                               });
 }
 
 /**
@@ -369,4 +397,7 @@ token::expiry_options token::get_expiration_opts(const token::currency_stats& st
   return expiry_struct;
 }
 
-EOSIO_DISPATCH(token, (create)(transfer)(issue)(retire)(setexpiry)(initacc));
+EOSIO_DISPATCH(token,
+               (create)(update)(issue)
+               (transfer)(retire)(setexpiry)
+               (initacc));
