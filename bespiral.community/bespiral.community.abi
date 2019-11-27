@@ -1,6 +1,7 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Oct 16 12:35:05 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
     "version": "eosio::abi/1.1",
+    "types": [],
     "structs": [
         {
             "name": "action",
@@ -245,6 +246,28 @@
             ]
         },
         {
+            "name": "indexes",
+            "base": "",
+            "fields": [
+                {
+                    "name": "last_used_sale_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_used_objective_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_used_action_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "last_used_claim_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "netlink",
             "base": "",
             "fields": [
@@ -431,27 +454,23 @@
             ]
         },
         {
-            "name": "table_index",
+            "name": "setindices",
             "base": "",
             "fields": [
                 {
-                    "name": "id",
+                    "name": "sale_id",
                     "type": "uint64"
                 },
                 {
-                    "name": "last_used_sale_id",
+                    "name": "objective_id",
                     "type": "uint64"
                 },
                 {
-                    "name": "last_used_objective_id",
+                    "name": "action_id",
                     "type": "uint64"
                 },
                 {
-                    "name": "last_used_action_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "last_used_claim_id",
+                    "name": "claim_id",
                     "type": "uint64"
                 }
             ]
@@ -601,7 +620,6 @@
             ]
         }
     ],
-    "types": [],
     "actions": [
         {
             "name": "claimaction",
@@ -642,6 +660,11 @@
             "name": "reactsale",
             "type": "reactsale",
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: React to a sale\nsummary: Enable any user in the same community (except by creator) to react to a sale. It requires you to send: `sale_id`, `from` and `type`. No information is going to be saved.\nicon:"
+        },
+        {
+            "name": "setindices",
+            "type": "setindices",
+            "ricardian_contract": ""
         },
         {
             "name": "transfersale",
@@ -704,6 +727,13 @@
             "key_types": []
         },
         {
+            "name": "indexes",
+            "type": "indexes",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "network",
             "type": "network",
             "index_type": "i64",
@@ -720,13 +750,6 @@
         {
             "name": "sale",
             "type": "sale",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "tableindex",
-            "type": "table_index",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -761,6 +784,5 @@
             "body": "---\nspec-version: 0.0.1\ntitle: Data Ownership\nsummary: The smart contract promises to only use the data in accordance of the terms defined in the Ricardian Contract, now and at all future dates.\nicon:"
         }
     ],
-    "variants": [],
-    "abi_extensions": []
+    "variants": []
 }
