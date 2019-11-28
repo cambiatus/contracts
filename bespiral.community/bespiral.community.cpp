@@ -248,10 +248,14 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
   // Validate verification type
   eosio_assert(verification_type == "claimable" || verification_type == "automatic", "verification type must be either 'claimable' or 'automatic'");
 
-  // Get last used action id and update item_index table
+  // Validate that if we have verifications, it need to be at least two
+  if (verifications > 0) {
+    eosio_assert(verifications >= 2, "You need at least two votes to validate an action");
+  }
+
+  // Get last used action id and update table_index table
   uint64_t action_id;
   action_id = get_available_id("actions");
-
 
   // Insert new action
   actions action(_self, _self.value);
