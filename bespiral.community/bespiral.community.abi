@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Oct 16 12:35:05 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Jan  9 19:00:31 2020",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -565,6 +565,60 @@
             ]
         },
         {
+            "name": "upsertaction",
+            "base": "",
+            "fields": [
+                {
+                    "name": "action_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "objective_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "reward",
+                    "type": "asset"
+                },
+                {
+                    "name": "verifier_reward",
+                    "type": "asset"
+                },
+                {
+                    "name": "deadline",
+                    "type": "uint64"
+                },
+                {
+                    "name": "usages",
+                    "type": "uint64"
+                },
+                {
+                    "name": "verifications",
+                    "type": "uint64"
+                },
+                {
+                    "name": "verification_type",
+                    "type": "string"
+                },
+                {
+                    "name": "validators_str",
+                    "type": "string"
+                },
+                {
+                    "name": "is_completed",
+                    "type": "uint8"
+                },
+                {
+                    "name": "creator",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "verifyaction",
             "base": "",
             "fields": [
@@ -661,6 +715,11 @@
         {
             "name": "updobjective",
             "type": "updobjective",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertaction",
+            "type": "upsertaction",
             "ricardian_contract": ""
         },
         {

@@ -373,9 +373,8 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
   actions action(_self, _self.value);
   auto itr_act = action.find(action_id);
 
-  if (itr_act == action.end()) {
+  if (action_id == 0) {
     // Get last used action id and update table_index table
-    uint64_t action_id;
     action_id = get_available_id("actions");
 
     action.emplace(_self, [&](auto &a) {
@@ -424,12 +423,12 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
 
     // Clean up existing validators if action already exists
     if (itr_act != action.end()) {
-      auto act = *itr_act
-      auto validator_by_action = validator.get_index<eosio::name{"by_action"}>();
+      auto act = *itr_act;
+      auto validator_by_action = validator.get_index<eosio::name{"byaction"}>();
       auto itr_vals = validator_by_action.find(act.id);
 
-      for (auto i = itr_vals.begin(); i != itr_vals.end();) {
-        i = validator_by_action.erase(i);
+      for (; itr_vals != validator_by_action.end();) {
+        itr_vals = validator_by_action.erase(itr_vals);
       }
     }
 
@@ -943,7 +942,7 @@ uint64_t bespiral::get_available_id(std::string table) {
 
 EOSIO_DISPATCH(bespiral,
                (create)(update)(netlink)(newobjective)
-               (updobjective)(newaction)(verifyaction)
+               (updobjective)(newaction)(upsertaction)(verifyaction)
                (claimaction)(verifyclaim)(createsale)
                (updatesale) (deletesale)(reactsale)
                (transfersale));
