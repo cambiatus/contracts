@@ -196,119 +196,6 @@ void bespiral::updobjective(std::uint64_t objective_id, std::string description,
                                            });
 }
 
-void bespiral::newaction(std::uint64_t objective_id, std::string description,
-                         eosio::asset reward, eosio::asset verifier_reward,
-                         std::uint64_t deadline, std::uint64_t usages,
-                         std::uint64_t verifications, std::string verification_type,
-                         std::string validators_str, eosio::name creator) {
-  // Validate creator
-  eosio_assert(is_account(creator), "invalid account for creator");
-  require_auth(creator);
-
-  // Validates that the objective exists
-  objectives objective(_self, _self.value);
-  auto itr_obj = objective.find(objective_id);
-  eosio_assert(itr_obj != objective.end(), "Can't find objective with given objective_id");
-  auto &obj = *itr_obj;
-
-  // Validate community
-  communities community(_self, _self.value);
-  auto itr_cmm = community.find(obj.community.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given objective_id");
-  auto &cmm = *itr_cmm;
-
-  // Creator must belong to the community
-  networks network(_self, _self.value);
-  auto creator_id = gen_uuid(cmm.symbol.raw(), creator.value);
-  auto itr_creator = network.find(creator_id);
-  eosio_assert(itr_creator != network.end(), "Creator doesn't belong to the community");
-
-  // Validate assets
-  eosio_assert(reward.is_valid(), "invalid reward");
-  eosio_assert(reward.amount >= 0, "reward must be greater than or equal to 0");
-  eosio_assert(reward.symbol == obj.community, "reward must be a community token");
-
-  eosio_assert(verifier_reward.is_valid(), "invalid verifier_reward");
-  eosio_assert(verifier_reward.amount >= 0, "verifier reward must be greater than or equal to 0");
-  eosio_assert(verifier_reward.symbol == obj.community, "verifier_reward must be a community token");
-
-  // Validate description
-  eosio_assert(description.length() <= 256, "Invalid length for description, must be less or equal than 256 chars");
-
-  // Validate deadline
-  if (deadline > 0) {
-    eosio_assert(now() < deadline, "Deadline must be somewhere in the future");
-  }
-
-  // Validate usages
-  if (usages > 0) {
-    eosio_assert(usages <= 1000, "You can have a maximum of 1000 uses");
-  }
-
-  // Validate verification type
-  eosio_assert(verification_type == "claimable" || verification_type == "automatic", "verification type must be either 'claimable' or 'automatic'");
-
-  // Validate that if we have verifications, it need to be at least two
-  if (verifications > 0) {
-    eosio_assert(verifications >= 2, "You need at least two votes to validate an action");
-  }
-
-  // Get last used action id and update table_index table
-  uint64_t action_id;
-  action_id = get_available_id("actions");
-
-  // Insert new action
-  actions action(_self, _self.value);
-  action.emplace(_self, [&](auto &a) {
-                          a.id = action_id;
-                          a.objective_id = objective_id;
-                          a.description = description;
-                          a.reward = reward;
-                          a.verifier_reward = verifier_reward;
-                          a.deadline = deadline;
-                          a.usages = usages;
-                          a.usages_left = usages;
-                          a.verifications = verifications;
-                          a.verification_type = verification_type;
-                          a.is_completed = 0;
-                          a.creator = creator;
-                        });
-
-  if (verification_type == "claimable") {
-    // Validate list of validators
-    std::vector<std::string> strs = split(validators_str, "-");
-    eosio_assert(strs.size() >= verifications, "You cannot have a bigger number of verifications than therer are account in the validator list");
-
-    // Ensure list of validators in unique
-    sort(strs.begin(), strs.end());
-    auto strs_it = std::unique(strs.begin(), strs.end());
-    eosio_assert(strs_it == strs.end(), "You cannot add a validator more than once to an action");
-
-    // Make sure we have at least 2 verifiers
-    eosio_assert(strs.size() >= 2, "You need at least two verifiers in a claimable action");
-
-    for (const std::string &validator_str : strs) {
-      eosio::name acc = eosio::name{validator_str};
-      eosio_assert((bool)acc, "account from validator list cannot be empty");
-      eosio_assert(is_account(acc), "account from validator list don't exist");
-
-      // Must belong to the community
-      auto validator_id = gen_uuid(cmm.symbol.raw(), acc.value);
-      auto itr_validator = network.find(validator_id);
-      eosio_assert(itr_validator != network.end(), "one of the validators doesn't belong to the community");
-
-      // Add list of validators
-      validators validator(_self, _self.value);
-      validator.emplace(_self, [&](auto &v) {
-                                 v.id = validator.available_primary_key();
-                                 v.action_id = action_id;
-                                 v.validator = acc;
-                               });
-    };
-  }
-}
-
-
 void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                             std::string description, eosio::asset reward,
                             eosio::asset verifier_reward, std::uint64_t deadline,
@@ -942,7 +829,7 @@ uint64_t bespiral::get_available_id(std::string table) {
 
 EOSIO_DISPATCH(bespiral,
                (create)(update)(netlink)(newobjective)
-               (updobjective)(newaction)(upsertaction)(verifyaction)
+               (updobjective)(upsertaction)(verifyaction)
                (claimaction)(verifyclaim)(createsale)
                (updatesale) (deletesale)(reactsale)
                (transfersale));
