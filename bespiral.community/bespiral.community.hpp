@@ -179,6 +179,15 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                    std::string validators_str, eosio::name creator);
 
   /// @abi action
+  /// Update action
+  ACTION upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
+                      std::string description, eosio::asset reward,
+                      eosio::asset verifier_reward, std::uint64_t deadline,
+                      std::uint64_t usages, std::uint64_t verifications,
+                      std::string verification_type, std::string validators_str,
+                      std::uint8_t is_completed, eosio::name creator);
+
+  /// @abi action
   /// Start a new claim on an action
   ACTION claimaction(std::uint64_t action_id, eosio::name maker);
 
