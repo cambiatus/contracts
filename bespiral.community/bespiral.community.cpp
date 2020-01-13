@@ -196,11 +196,12 @@ void bespiral::updobjective(std::uint64_t objective_id, std::string description,
                                            });
 }
 
-void bespiral::newaction(std::uint64_t objective_id, std::string description,
-                         eosio::asset reward, eosio::asset verifier_reward,
-                         std::uint64_t deadline, std::uint64_t usages,
-                         std::uint64_t verifications, std::string verification_type,
-                         std::string validators_str, eosio::name creator) {
+void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
+                            std::string description, eosio::asset reward,
+                            eosio::asset verifier_reward, std::uint64_t deadline,
+                            std::uint64_t usages, std::uint64_t verifications,
+                            std::string verification_type, std::string validators_str,
+                            std::uint8_t is_completed, eosio::name creator) {
   // Validate creator
   eosio_assert(is_account(creator), "invalid account for creator");
   require_auth(creator);
@@ -253,26 +254,43 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
     eosio_assert(verifications >= 2, "You need at least two votes to validate an action");
   }
 
-  // Get last used action id and update table_index table
-  uint64_t action_id;
-  action_id = get_available_id("actions");
+  // ========================================= End validation, start upsert
 
-  // Insert new action
+  // Find action
   actions action(_self, _self.value);
-  action.emplace(_self, [&](auto &a) {
-                          a.id = action_id;
-                          a.objective_id = objective_id;
-                          a.description = description;
-                          a.reward = reward;
-                          a.verifier_reward = verifier_reward;
-                          a.deadline = deadline;
-                          a.usages = usages;
-                          a.usages_left = usages;
-                          a.verifications = verifications;
-                          a.verification_type = verification_type;
-                          a.is_completed = 0;
-                          a.creator = creator;
-                        });
+  auto itr_act = action.find(action_id);
+
+  if (action_id == 0) {
+    // Get last used action id and update table_index table
+    action_id = get_available_id("actions");
+
+    action.emplace(_self, [&](auto &a) {
+                            a.id = action_id;
+                            a.objective_id = objective_id;
+                            a.description = description;
+                            a.reward = reward;
+                            a.verifier_reward = verifier_reward;
+                            a.deadline = deadline;
+                            a.usages = usages;
+                            a.usages_left = usages;
+                            a.verifications = verifications;
+                            a.verification_type = verification_type;
+                            a.is_completed = 0;
+                            a.creator = creator;
+                          });
+  } else {
+    action.modify(itr_act, _self, [&](auto& a) {
+                                    a.description = description;
+                                    a.reward = reward;
+                                    a.verifier_reward = verifier_reward;
+                                    a.deadline = deadline;
+                                    a.usages = usages;
+                                    a.usages_left = usages;
+                                    a.verifications = verifications;
+                                    a.verification_type = verification_type;
+                                    a.is_completed = is_completed;
+                                  });
+  }
 
   if (verification_type == "claimable") {
     // Validate list of validators
@@ -287,6 +305,20 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
     // Make sure we have at least 2 verifiers
     eosio_assert(strs.size() >= 2, "You need at least two verifiers in a claimable action");
 
+    // Define validators table
+    validators validator(_self, _self.value);
+
+    // Clean up existing validators if action already exists
+    if (itr_act != action.end()) {
+      auto act = *itr_act;
+      auto validator_by_action = validator.get_index<eosio::name{"byaction"}>();
+      auto itr_vals = validator_by_action.find(act.id);
+
+      for (; itr_vals != validator_by_action.end();) {
+        itr_vals = validator_by_action.erase(itr_vals);
+      }
+    }
+
     for (const std::string &validator_str : strs) {
       eosio::name acc = eosio::name{validator_str};
       eosio_assert((bool)acc, "account from validator list cannot be empty");
@@ -298,7 +330,6 @@ void bespiral::newaction(std::uint64_t objective_id, std::string description,
       eosio_assert(itr_validator != network.end(), "one of the validators doesn't belong to the community");
 
       // Add list of validators
-      validators validator(_self, _self.value);
       validator.emplace(_self, [&](auto &v) {
                                  v.id = validator.available_primary_key();
                                  v.action_id = action_id;
@@ -794,7 +825,7 @@ uint64_t bespiral::get_available_id(std::string table) {
 
 EOSIO_DISPATCH(bespiral,
                (create)(update)(netlink)(newobjective)
-               (updobjective)(newaction)(verifyaction)
+               (updobjective)(upsertaction)(verifyaction)
                (claimaction)(verifyclaim)(createsale)
                (updatesale) (deletesale)(reactsale)
                (transfersale));

@@ -1,11 +1,11 @@
-# EOS Smart Contracts for BeSpiral
+# EOS Smart Contracts for Cambiatus
 
-All of our BeSpiral Smart contracts lives here. You'll find everything you need to run here.
+All of our Cambiatus Smart contracts lives here. You'll find everything you need to run here.
 
 ## Install
 
 ```
-git clone https://github.com/BeSpiral/contracts.git
+git clone https://github.com/cambiatus/contracts.git
 ```
 
 Our docker setup include two nodes `keosd` and `nodeosd`. The `keosd` is responsible for running the wallet and as well the `cleos` commmand, since this way `cleos` won't spin up its own version of `keosd` daemon everytime you invoke it. The other `nodeos` node is responsible for running the blockchain and compiling files.
