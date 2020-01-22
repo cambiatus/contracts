@@ -134,13 +134,12 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     std::uint64_t by_user() const { return creator.value; }
 
     EOSLIB_SERIALIZE(sale,
-                      (id)(creator)(community)
-                      (title)(description)(image)
-                      (track_stock)(quantity)(units));
+                     (id)(creator)(community)
+                     (title)(description)(image)
+                     (track_stock)(quantity)(units));
   };
 
   TABLE indexes {
-    // Values based on the blockchain data as of 17th September 2019
     std::uint64_t last_used_sale_id;
     std::uint64_t last_used_objective_id;
     std::uint64_t last_used_action_id;
@@ -174,9 +173,10 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   ACTION upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                       std::string description, eosio::asset reward,
                       eosio::asset verifier_reward, std::uint64_t deadline,
-                      std::uint64_t usages, std::uint64_t verifications,
-                      std::string verification_type, std::string validators_str,
-                      std::uint8_t is_completed, eosio::name creator);
+                      std::uint64_t usages, std::uint64_t usages_left,
+                      std::uint64_t verifications, std::string verification_type,
+                      std::string validators_str, std::uint8_t is_completed,
+                      eosio::name creator);
 
   /// @abi action
   /// Start a new claim on an action

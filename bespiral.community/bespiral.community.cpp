@@ -155,18 +155,14 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
   auto itr_creator = network.find(creator_id);
   eosio_assert(itr_creator != network.end(), "Creator doesn't belong to the community");
 
-  // Get last used objective id and update item_index table
-  uint64_t objective_id;
-  objective_id = get_available_id("objectives");
-
   // Insert new objective
   objectives objective(_self, _self.value);
   objective.emplace(_self, [&](auto &o) {
-    o.id = objective_id;
-    o.description = description;
-    o.community = community_symbol;
-    o.creator = creator;
-  });
+                             o.id = get_available_id("objectives");
+                             o.description = description;
+                             o.community = community_symbol;
+                             o.creator = creator;
+                           });
 }
 
 void bespiral::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor) {
@@ -199,9 +195,10 @@ void bespiral::updobjective(std::uint64_t objective_id, std::string description,
 void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                             std::string description, eosio::asset reward,
                             eosio::asset verifier_reward, std::uint64_t deadline,
-                            std::uint64_t usages, std::uint64_t verifications,
-                            std::string verification_type, std::string validators_str,
-                            std::uint8_t is_completed, eosio::name creator) {
+                            std::uint64_t usages, std::uint64_t usages_left,
+                            std::uint64_t verifications, std::string verification_type,
+                            std::string validators_str, std::uint8_t is_completed,
+                            eosio::name creator) {
   // Validate creator
   eosio_assert(is_account(creator), "invalid account for creator");
   require_auth(creator);
@@ -285,7 +282,7 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                                     a.verifier_reward = verifier_reward;
                                     a.deadline = deadline;
                                     a.usages = usages;
-                                    a.usages_left = usages;
+                                    a.usages_left = usages_left;
                                     a.verifications = verifications;
                                     a.verification_type = verification_type;
                                     a.is_completed = is_completed;
@@ -780,6 +777,7 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
 
 // set chain indices
 void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id) {
+  require_auth(_self);
 	indexes default_indexes;
 	auto current_indexes = curr_indexes.get_or_create(_self, default_indexes);
 
@@ -828,4 +826,4 @@ EOSIO_DISPATCH(bespiral,
                (updobjective)(upsertaction)(verifyaction)
                (claimaction)(verifyclaim)(createsale)
                (updatesale) (deletesale)(reactsale)
-               (transfersale));
+               (transfersale)(setindices));
