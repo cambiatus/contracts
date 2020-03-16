@@ -71,7 +71,14 @@ void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name
 
 void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user) {
   eosio_assert(is_account(new_user), "new user account doesn't exists");
-  require_auth(inviter);
+
+  // Check for inviter auth, otherwise check for backend's auth
+  if (has_auth(inviter)) {
+    require_auth(inviter);
+  } else {
+    // ATTENTION: `bespiral` account is configured on the backend and hardcoded here. You may have trouble with this
+    require_auth(eosio::name{"bespiral"});
+  }
 
   // Validates community
   eosio::symbol cmm_symbol = cmm_asset.symbol;
