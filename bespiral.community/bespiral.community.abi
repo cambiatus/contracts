@@ -1,7 +1,6 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Jan  9 19:00:31 2020",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Feb 24 15:55:34 2020",
     "version": "eosio::abi/1.1",
-    "types": [],
     "structs": [
         {
             "name": "action",
@@ -236,6 +235,16 @@
             ]
         },
         {
+            "name": "deleteact",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "deletesale",
             "base": "",
             "fields": [
@@ -303,52 +312,6 @@
                 },
                 {
                     "name": "invited_by",
-                    "type": "name"
-                }
-            ]
-        },
-        {
-            "name": "newaction",
-            "base": "",
-            "fields": [
-                {
-                    "name": "objective_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "reward",
-                    "type": "asset"
-                },
-                {
-                    "name": "verifier_reward",
-                    "type": "asset"
-                },
-                {
-                    "name": "deadline",
-                    "type": "uint64"
-                },
-                {
-                    "name": "usages",
-                    "type": "uint64"
-                },
-                {
-                    "name": "verifications",
-                    "type": "uint64"
-                },
-                {
-                    "name": "verification_type",
-                    "type": "string"
-                },
-                {
-                    "name": "validators_str",
-                    "type": "string"
-                },
-                {
-                    "name": "creator",
                     "type": "name"
                 }
             ]
@@ -616,6 +579,10 @@
                     "type": "uint64"
                 },
                 {
+                    "name": "usages_left",
+                    "type": "uint64"
+                },
+                {
                     "name": "verifications",
                     "type": "uint64"
                 },
@@ -674,6 +641,7 @@
             ]
         }
     ],
+    "types": [],
     "actions": [
         {
             "name": "claimaction",
@@ -691,6 +659,11 @@
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Create a sale on a given community\nsummary: Enable a single user to create a new sale (either buy or sell) on a given community. It requires you to send: `from`, `title`, `description`, `quantity`, `image`, `is_buy` and `units`. All information sent is going to be saved. Note that `quantity` is related to price and `units` to number of items available.\nicon:"
         },
         {
+            "name": "deleteact",
+            "type": "deleteact",
+            "ricardian_contract": ""
+        },
+        {
             "name": "deletesale",
             "type": "deletesale",
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Delete a sale\nsummary: Enable the sale creator to remove a single sale. It requires you to send: `sale_id`. No information is going to be saved.\nicon:"
@@ -699,11 +672,6 @@
             "name": "netlink",
             "type": "netlink",
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Invites a new account to a given community\nsummary: Add a user to the BeSpiral community network. It requires you to send: `cmm_asset`, `inviter` and `new_user`. We'll save who invited the new account and on which community\nicon:"
-        },
-        {
-            "name": "newaction",
-            "type": "newaction",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle:\nsummary:\nicon:"
         },
         {
             "name": "newobjective",
@@ -843,5 +811,6 @@
             "body": "---\nspec-version: 0.0.1\ntitle: Data Ownership\nsummary: The smart contract promises to only use the data in accordance of the terms defined in the Ricardian Contract, now and at all future dates.\nicon:"
         }
     ],
-    "variants": []
+    "variants": [],
+    "abi_extensions": []
 }

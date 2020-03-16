@@ -789,6 +789,16 @@ void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std
 	curr_indexes.set(current_indexes, _self);
 }
 
+
+void bespiral::deleteact(std::uint64_t id) {
+  require_auth(_self);
+
+  actions action(_self, _self.value);
+  auto x = action.find(id);
+  eosio_assert(x != action.end(), "Cant find action with given id");
+  action.erase(x);
+}
+
 // Get available key
 uint64_t bespiral::get_available_id(std::string table) {
   eosio_assert(table == "actions" || table == "objectives" || table == "sales" || table == "claims", "Table index not available");
@@ -826,4 +836,4 @@ EOSIO_DISPATCH(bespiral,
                (updobjective)(upsertaction)(verifyaction)
                (claimaction)(verifyclaim)(createsale)
                (updatesale) (deletesale)(reactsale)
-               (transfersale)(setindices));
+               (transfersale)(setindices)(deleteact));
