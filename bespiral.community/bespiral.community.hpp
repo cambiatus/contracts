@@ -218,6 +218,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 	/// Set the indices for a chain
 	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
 
+  ACTION deleteact(std::uint64_t id);
+
   //Get available key
   uint64_t get_available_id(std::string table);
 
@@ -265,12 +267,12 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                              eosio::indexed_by<eosio::name{"byuser"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
                             > sales;
 
-  typedef eosio::singleton<eosio::name{"itemindex"}, bespiral::indexes> item_indexes;
+  typedef eosio::singleton<eosio::name{"indexes"}, bespiral::indexes> item_indexes;
 
   item_indexes curr_indexes;
 
   // Initialize our singleton table for indices
-  bespiral(eosio::name receiver, eosio::name code,  eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}
+  bespiral(eosio::name receiver, eosio::name code, eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}
 };
 
 const auto currency_account = eosio::name{"bes.token"};
