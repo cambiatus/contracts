@@ -299,7 +299,7 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
   if (verification_type == "claimable") {
     // Validate list of validators
     std::vector<std::string> strs = split(validators_str, "-");
-    eosio_assert(strs.size() >= verifications, "You cannot have a bigger number of verifications than therer are account in the validator list");
+    eosio_assert(strs.size() >= verifications, "You cannot have a bigger number of verifications than accounts in the validator list");
 
     // Ensure list of validators in unique
     sort(strs.begin(), strs.end());
@@ -309,22 +309,20 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
     // Make sure we have at least 2 verifiers
     eosio_assert(strs.size() >= 2, "You need at least two verifiers in a claimable action");
 
-    // Define validators table
-    validators validator(_self, _self.value);
+    // Define validators table, scoped by action
+    validators validator(_self, action_id);
 
     // Clean up existing validators if action already exists
-    if (itr_act != action.end()) {
-      auto act = *itr_act;
-      auto validator_by_action = validator.get_index<eosio::name{"byaction"}>();
-      auto itr_vals = validator_by_action.find(act.id);
 
-      for (; itr_vals != validator_by_action.end();) {
-        itr_vals = validator_by_action.erase(itr_vals);
-      }
+    // for (validator;itr_vals != validator.end();) {
+    for (auto itr_vals = validator.begin();itr_vals != validator.end();) {
+      eosio::print_f("Test Table : {%, %}\n", itr_vals->action_id);
+      itr_vals = validator.erase(itr_vals);
     }
 
-    for (const std::string &validator_str : strs) {
-      eosio::name acc = eosio::name{validator_str};
+    std::vector<std::string> validator_v = split(validators_str, "-");
+    for (auto i : validator_v) {
+      eosio::name acc = eosio::name{i};
       eosio_assert((bool)acc, "account from validator list cannot be empty");
       eosio_assert(is_account(acc), "account from validator list don't exist");
 
@@ -489,11 +487,9 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   auto &objact = *itr_objact;
 
   // Check if user belongs to the action_validator list
-  validators validator(_self, _self.value);
-  auto validator_by_action = validator.get_index<eosio::name{"byaction"}>();
-  auto itr_validators = validator_by_action.find(objact.id);
+  validators validator(_self, objact.id);
   std::uint64_t validator_count = 0;
-  for (;itr_validators != validator_by_action.end();) {
+  for (auto itr_validators = validator.begin(); itr_validators != validator.end();) {
     if ((*itr_validators).validator == verifier) {
       validator_count++;
     }
