@@ -793,6 +793,15 @@ void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std
 }
 
 
+void bespiral::deleteobj(std::uint64_t id) {
+  require_auth(_self);
+
+  objectives objective(_self, _self.value);
+  auto x = objective.find(id);
+  eosio_assert(x != objective.end(), "Cant find objective with given di");
+  objective.erase(x);
+}
+
 void bespiral::deleteact(std::uint64_t id) {
   require_auth(_self);
 
@@ -839,4 +848,5 @@ EOSIO_DISPATCH(bespiral,
                (updobjective)(upsertaction)(verifyaction)
                (claimaction)(verifyclaim)(createsale)
                (updatesale) (deletesale)(reactsale)
-               (transfersale)(setindices)(deleteact));
+               (transfersale)(setindices)
+               (deleteobj)(deleteact));

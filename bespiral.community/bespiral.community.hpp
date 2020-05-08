@@ -218,6 +218,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 	/// Set the indices for a chain
 	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
 
+  ACTION deleteobj(std::uint64_t id);
+
   ACTION deleteact(std::uint64_t id);
 
   //Get available key

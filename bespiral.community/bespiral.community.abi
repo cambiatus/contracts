@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Mar 23 18:55:06 2020",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri May  8 18:11:32 2020",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -236,6 +236,16 @@
         },
         {
             "name": "deleteact",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "deleteobj",
             "base": "",
             "fields": [
                 {
@@ -661,6 +671,11 @@
         {
             "name": "deleteact",
             "type": "deleteact",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "deleteobj",
+            "type": "deleteobj",
             "ricardian_contract": ""
         },
         {
