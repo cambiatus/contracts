@@ -114,8 +114,7 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
     return;
 
   // Send inviter reward
-  if (cmm.inviter_reward.amount > 0)
-  {
+  if (cmm.inviter_reward.amount > 0) {
     std::string memo_inviter = "Thanks for helping " + cmm.name + " grow!";
     eosio::action inviter_reward = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
                                                  currency_account,                                                 // Account
@@ -253,9 +252,9 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
   // Validate verification type
   eosio_assert(verification_type == "claimable" || verification_type == "automatic", "verification type must be either 'claimable' or 'automatic'");
 
-  // Validate that if we have verifications, it need to be at least two
+  // Validate that if we have verifications, it need to be at least three and it must be odd
   if (verifications > 0) {
-    eosio_assert(verifications >= 2, "You need at least two votes to validate an action");
+    eosio_assert(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
   // ========================================= End validation, start upsert
@@ -341,6 +340,8 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
   }
 }
 
+/// @abi action
+/// Verify an automatic action
 void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier) {
   // Validates verifier
   eosio_assert(is_account(verifier), "invalid account for verifier");
@@ -459,26 +460,28 @@ void bespiral::claimaction(std::uint64_t action_id, eosio::name maker) {
   claim_id = get_available_id("claims");
 
   // Emplace new claim
-  claims claim(_self, _self.value);
-  claim.emplace(_self, [&](auto &c) {
-                         c.id = claim_id;
-                         c.action_id = action_id;
-                         c.claimer = maker;
-                         c.is_verified = 0;
-                       });
+  // claimsnew claim_table(_self, _self.value);
+  claims claim_table(_self, _self.value);
+  claim_table.emplace(_self, [&](auto &c ) {
+                                   c.id = claim_id;
+                                   c.action_id = action_id;
+                                   c.claimer = maker;
+                                   c.status = "pending";
+                                 });
 }
 
 /// @abi action
-/// Send a positive verification for a given claim
+/// Send a vote to a given claim
 void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote) {
   // Validates verifier belongs to the action community
   claims claim_table(_self, _self.value);
+  // claimsnew claim_table(_self, _self.value);
   auto itr_clm = claim_table.find(claim_id);
   eosio_assert(itr_clm != claim_table.end(), "Can't find claim with given claim_id");
   auto &claim = *itr_clm;
 
   // Check if claim is already verified
-  eosio_assert(claim.is_verified == false, "Can't approve already verified claim");
+  eosio_assert(claim.status == "pending", "Can't vote on already verified claim");
 
   // Validates if action exists
   actions action(_self, _self.value);
@@ -496,22 +499,6 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
     itr_validators++;
   }
   eosio_assert(validator_count > 0, "Verifier is not in the action validator list");
-
-  // Check if verifier belongs to the community
-  objectives objective(_self, _self.value);
-  auto itr_obj = objective.find(objact.objective_id);
-  eosio_assert(itr_obj != objective.end(), "Can't find objective with given claim_id");
-  auto &obj = *itr_obj;
-
-  communities community(_self, _self.value);
-  auto itr_cmm = community.find(obj.community.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given claim_id");
-  auto &cmm = *itr_cmm;
-
-  networks network(_self, _self.value);
-  auto verifier_id = gen_uuid(cmm.symbol.raw(), verifier.value);
-  auto itr_network = network.find(verifier_id);
-  eosio_assert(itr_network != network.end(), "Verifier doesn't belong to the community");
 
   // Check if action is completed, have usages left or the deadline has been met
   eosio_assert(objact.is_completed == false, "This is action is already completed, can't verify claim");
@@ -557,25 +544,43 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
     verification_reward.send();
   }
 
-  // Do nothing if the vote was negative
-  if (vote == 0) return;
+  // We always update the claim status, at each vote
+  // In order to know if its approved or rejected, we will have to count all existing checks, to see if we already have all needed
+  // Just check `objact.verifications <= check counter`
 
-  // When all required checks have been met
-  auto itr_check = check_by_claim.find(claim_id);
-  std::uint64_t check_counter = 0;
-  for (;itr_check != check_by_claim.end();) {
+  // Then we will have to count the positive and negative votes...
+  // If more than half was positive, its approved
+  // else its rejected
+
+  // If we don't have yet the number of votes necessary, then its pending
+
+  // At every vote we will have to update the claim status
+  std::uint64_t positive_votes = 0;
+  std::uint64_t negative_votes = 0;
+  auto itr_check = check_by_claim.find(claim.id);
+  for(;itr_check != check_by_claim.end();) {
     if ((*itr_check).is_verified == 1) {
-      check_counter++;
+      positive_votes++;
+    } else {
+      negative_votes++;
     }
-
     itr_check++;
   }
 
-  // Will only run when a claim has been accepted
-  if (check_counter >= objact.verifications) {
-    // Set claim as completed
-    claim_table.modify(itr_clm, _self, [&](auto &c) { c.is_verified = 1; });
+  std::string status = "pending";
+  if (positive_votes + negative_votes >= objact.verifications) {
+    if (positive_votes > negative_votes) {
+      status = "approved";
+    } else {
+      status = "rejected";
+    }
+  }
 
+  claim_table.modify(itr_clm, _self, [&](auto &c) {
+                                       c.status = status;
+                                     });
+
+  if (status == "approved") {
     if (objact.reward.amount > 0) {
       // Send reward
       std::string memo_action = "Thanks for doing an action for your community";
@@ -586,18 +591,17 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
                                                   std::make_tuple(claim.claimer, objact.reward, memo_action));
       reward_action.send();
     }
+  }
 
-    // Check if action can be completed
-    if (objact.usages > 0 && (objact.usages_left - 1 <= 0)) {
+  // Check if action can be completed. Current claim must be either "approved" or "rejected"
+  if (status != "pending") {
+    if (!objact.is_completed && objact.usages > 0) {
       action.modify(itr_objact, _self, [&](auto &a) {
-                                         a.usages_left = objact.usages_left -1;
-                                         a.is_completed = 1;
-                                       });
-    } else {
-      action.modify(itr_objact, _self, [&](auto &a) {
-                                         a.usages_left = objact.usages_left -1;
+                                         a.usages_left = objact.usages_left - 1;
+                                         a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
                                        });
     }
+
   }
 }
 
@@ -792,7 +796,6 @@ void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std
 	curr_indexes.set(current_indexes, _self);
 }
 
-
 void bespiral::deleteobj(std::uint64_t id) {
   require_auth(_self);
 
@@ -809,6 +812,103 @@ void bespiral::deleteact(std::uint64_t id) {
   auto x = action.find(id);
   eosio_assert(x != action.end(), "Cant find action with given id");
   action.erase(x);
+}
+
+void bespiral::migrate(std::uint64_t claim_id, std::uint64_t increment) {
+  // require_auth(_self);
+  // claims claim_table(_self, _self.value);
+  // claimsnew claim_new_table(_self, _self.value);
+  // actions action_table(_self, _self.value);
+  // checks check_table(_self, _self.value);
+
+  // auto check_by_claim = check_table.get_index<eosio::name{"byclaim"}>();
+
+  // // // clear exiting data from claimsnew
+  // // for(auto itr = claim_new_table.begin(); itr != claim_new_table.end();) {
+  // //   itr = claim_new_table.erase(itr);
+  // // }
+
+  // // migrate data
+  // // for (auto itr_c = claim_table.begin(); itr_c != claim_table.end();) {
+  // for (std::uint64_t a = claim_id; a < (claim_id + increment); a++) {
+  //   // auto &claim = *itr_c;
+  //   auto &claim = *claim_table.find(a);
+  //   // Discover whats the current status
+  //   // Find out more about the action
+  //   auto itr_action = action_table.find(claim.action_id);
+  //   auto &action = *itr_action;
+
+  //   // Find all checks
+  //   std::uint64_t positive_votes = 0;
+  //   std::uint64_t negative_votes = 0;
+  //   auto itr_check = check_by_claim.find(claim.id);
+  //   for(;itr_check != check_by_claim.end();) {
+  //     if ((*itr_check).is_verified == 1) {
+  //       positive_votes++;
+  //     } else {
+  //       negative_votes++;
+  //     }
+  //     itr_check++;
+  //   }
+
+  //   std::string status = "pending";
+  //   if (positive_votes + negative_votes >= action.verifications) {
+  //     if (positive_votes > negative_votes) {
+  //       status = "approved";
+  //     } else {
+  //       status = "rejected";
+  //     }
+  //   }
+
+
+  //   // Fill in the new table
+  //   claim_new_table.emplace(_self, [&](auto &cn) {
+  //                              cn.id = claim.id;
+  //                              cn.action_id = claim.action_id;
+  //                              cn.claimer = claim.claimer;
+  //                              cn.status = status;
+  //                            });
+
+  //   // Go to next on the loop
+  //   // itr_c++;
+  // }
+}
+
+void bespiral::clean(std::string t) {
+  // // Clean up the old claims table after the migration
+  // require_auth(_self);
+
+  // if (t == "claim") {
+  //   claims claim_table(_self, _self.value);
+  //   for(auto itr = claim_table.begin(); itr != claim_table.end();) {
+  //     itr = claim_table.erase(itr);
+  //   }
+  // }
+
+  // if (t == "claimnew") {
+  //   claimsnew claim_new_table(_self, _self.value);
+  //   for (auto itr = claim_new_table.begin(); itr != claim_new_table.end();) {
+  //     itr = claim_new_table.erase(itr);
+  //   }
+  // }
+}
+
+void bespiral::migrateafter(std::uint64_t claim_id, std::uint64_t increment) {
+  // // Loop on claimnew, put data into claim
+  // require_auth(_self);
+  // claims claim_table(_self, _self.value);
+  // claimsnew claim_new_table(_self, _self.value);
+
+  // for (std::uint64_t a = claim_id; a < (claim_id + increment); a++) {
+  //   auto &claim = *claim_new_table.find(a);
+
+  //   claim_table.emplace(_self, [&](auto &c) {
+  //                                c.id = claim.id;
+  //                                c.action_id = claim.action_id;
+  //                                c.claimer = claim.claimer;
+  //                                c.status = claim.status;
+  //                              });
+  // }
 }
 
 // Get available key
@@ -844,9 +944,10 @@ uint64_t bespiral::get_available_id(std::string table) {
 
 
 EOSIO_DISPATCH(bespiral,
-               (create)(update)(netlink)(newobjective)
-               (updobjective)(upsertaction)(verifyaction)
-               (claimaction)(verifyclaim)(createsale)
-               (updatesale) (deletesale)(reactsale)
-               (transfersale)(setindices)
-               (deleteobj)(deleteact));
+               (create)(update)(netlink) // Basic community
+               (newobjective)(updobjective)(upsertaction) // Objectives and Actions
+               (verifyaction) (claimaction)(verifyclaim) // Verifications and Claims
+               (createsale)(updatesale) (deletesale)(reactsale)(transfersale) // Shop
+               (setindices)(deleteobj)(deleteact) // Admin actions
+               (migrate)(clean)(migrateafter) // Temporary migration actions
+               );

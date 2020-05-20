@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri May  8 18:11:32 2020",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed May 20 17:01:14 2020",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -113,8 +113,8 @@
                     "type": "name"
                 },
                 {
-                    "name": "is_verified",
-                    "type": "uint8"
+                    "name": "status",
+                    "type": "string"
                 }
             ]
         },
@@ -129,6 +129,16 @@
                 {
                     "name": "maker",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "clean",
+            "base": "",
+            "fields": [
+                {
+                    "name": "t",
+                    "type": "string"
                 }
             ]
         },
@@ -282,6 +292,34 @@
                 },
                 {
                     "name": "last_used_claim_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "migrate",
+            "base": "",
+            "fields": [
+                {
+                    "name": "claim_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "increment",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "migrateafter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "claim_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "increment",
                     "type": "uint64"
                 }
             ]
@@ -659,6 +697,11 @@
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle:\nsummary:\nicon:"
         },
         {
+            "name": "clean",
+            "type": "clean",
+            "ricardian_contract": ""
+        },
+        {
             "name": "create",
             "type": "create",
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Create new community\nsummary: Creates a new community on BeSpiral. It requires you to send: `cmm_asset`, `creator`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. A BeSpiral community is closelly tied to a BeSpiral Token. A community allows a group of people with common goals and objectives to connect and allow the creation of incentives to reach those objectives. It also help to buy and sell products\nicon:"
@@ -682,6 +725,16 @@
             "name": "deletesale",
             "type": "deletesale",
             "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Delete a sale\nsummary: Enable the sale creator to remove a single sale. It requires you to send: `sale_id`. No information is going to be saved.\nicon:"
+        },
+        {
+            "name": "migrate",
+            "type": "migrate",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "migrateafter",
+            "type": "migrateafter",
+            "ricardian_contract": ""
         },
         {
             "name": "netlink",
