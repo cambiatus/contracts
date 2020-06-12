@@ -577,7 +577,7 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   }
 
   claim_table.modify(itr_clm, _self, [&](auto &c) {
-                                       // c.status = status;
+                                       c.status = status;
                                      });
 
   if (status == "approved") {
