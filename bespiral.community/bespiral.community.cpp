@@ -851,20 +851,6 @@ void bespiral::clean(std::string t) {
     }
   }
 
-  if (t == "claimnew") {
-    claimsnew claim_new_table(_self, _self.value);
-    for (auto itr = claim_new_table.begin(); itr != claim_new_table.end();) {
-      itr = claim_new_table.erase(itr);
-    }
-  }
-
-  if (t == "new_community") {
-    new_communities new_communities_table(_self, _self.value);
-    for (auto itr = new_communities_table.begin(); itr != new_communities_table.end();) {
-      itr = new_communities_table.erase(itr);
-    }
-  }
-
   if (t == "community") {
     communities communities_table(_self, _self.value);
     for (auto itr = communities_table.begin(); itr != communities_table.end();) {

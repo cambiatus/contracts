@@ -110,19 +110,6 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                      (id)(action_id)(claimer)(status));
   };
 
-  TABLE claimnew {
-    std::uint64_t id;
-    std::uint64_t action_id;
-    eosio::name claimer;
-    std::string status; // Can be: `approved` `rejected` `pending`
-
-    std::uint64_t primary_key() const { return id; }
-    std::uint64_t by_action() const { return action_id; }
-
-    EOSLIB_SERIALIZE(claimnew,
-                     (id)(action_id)(claimer)(status));
-  };
-
   TABLE check {
     std::uint64_t id;
     std::uint64_t claim_id;
@@ -236,15 +223,20 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 	/// Set the indices for a chain
 	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
 
+  /// @abi action
+  /// Deletes an objective
   ACTION deleteobj(std::uint64_t id);
 
+  /// @abi action
+  /// Deletes an action
   ACTION deleteact(std::uint64_t id);
 
+  /// next 3 actions used for table migrations
   ACTION migrate(std::uint64_t id, std::uint64_t increment);
   ACTION clean(std::string t);
   ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
 
-  //Get available key
+  // Get available key
   uint64_t get_available_id(std::string table);
 
   typedef eosio::multi_index<eosio::name{"community"}, bespiral::community> communities;
@@ -279,12 +271,6 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                                                eosio::const_mem_fun<bespiral::claim, uint64_t, &bespiral::claim::by_action>>
                              > claims;
 
-  typedef eosio::multi_index<eosio::name{"claimnew"},
-                             bespiral::claimnew,
-                             eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<bespiral::claimnew, uint64_t, &bespiral::claimnew::by_action>>
-                             > claimsnew;
-
   typedef eosio::multi_index<eosio::name{"check"},
                              bespiral::check,
                              eosio::indexed_by<eosio::name{"byclaim"},
@@ -293,8 +279,10 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 
   typedef eosio::multi_index<eosio::name{"sale"},
                              bespiral::sale,
-                             eosio::indexed_by<eosio::name{"bycmm"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_cmm>>,
-                             eosio::indexed_by<eosio::name{"byuser"}, eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
+                             eosio::indexed_by<eosio::name{"bycmm"},
+                                               eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_cmm>>,
+                             eosio::indexed_by<eosio::name{"byuser"},
+                                               eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
                             > sales;
 
   typedef eosio::singleton<eosio::name{"indexes"}, bespiral::indexes> item_indexes;
@@ -305,6 +293,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   bespiral(eosio::name receiver, eosio::name code, eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}
 };
 
+// Add global reference for a table from the token contract
 const auto currency_account = eosio::name{"bes.token"};
 struct currency_stats {
   eosio::asset supply;
