@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed May 20 17:01:14 2020",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Jun 11 23:50:33 2020",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -133,6 +133,28 @@
             ]
         },
         {
+            "name": "claimnew",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "action_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "claimer",
+                    "type": "name"
+                },
+                {
+                    "name": "status",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "clean",
             "base": "",
             "fields": [
@@ -173,6 +195,14 @@
                 {
                     "name": "invited_reward",
                     "type": "asset"
+                },
+                {
+                    "name": "has_objectives",
+                    "type": "uint8"
+                },
+                {
+                    "name": "has_shop",
+                    "type": "uint8"
                 }
             ]
         },
@@ -301,7 +331,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "claim_id",
+                    "name": "id",
                     "type": "uint64"
                 },
                 {
@@ -361,6 +391,48 @@
                 {
                     "name": "invited_by",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "new_community",
+            "base": "",
+            "fields": [
+                {
+                    "name": "symbol",
+                    "type": "symbol"
+                },
+                {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
+                    "name": "logo",
+                    "type": "string"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "inviter_reward",
+                    "type": "asset"
+                },
+                {
+                    "name": "invited_reward",
+                    "type": "asset"
+                },
+                {
+                    "name": "has_objectives",
+                    "type": "uint8"
+                },
+                {
+                    "name": "has_shop",
+                    "type": "uint8"
                 }
             ]
         },
@@ -815,6 +887,13 @@
             "key_types": []
         },
         {
+            "name": "claimnew",
+            "type": "claimnew",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "community",
             "type": "community",
             "index_type": "i64",
@@ -831,6 +910,13 @@
         {
             "name": "network",
             "type": "network",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "newcommunity",
+            "type": "new_community",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -577,7 +577,7 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   }
 
   claim_table.modify(itr_clm, _self, [&](auto &c) {
-                                       c.status = status;
+                                       // c.status = status;
                                      });
 
   if (status == "approved") {
@@ -809,105 +809,92 @@ void bespiral::deleteact(std::uint64_t id) {
   require_auth(_self);
 
   actions action(_self, _self.value);
-  auto x = action.find(id);
-  eosio_assert(x != action.end(), "Cant find action with given id");
-  action.erase(x);
+  auto found_action = action.find(id);
+  eosio_assert(found_action != action.end(), "Cant find action with given id");
+  action.erase(found_action);
 }
 
-void bespiral::migrate(std::uint64_t claim_id, std::uint64_t increment) {
+void bespiral::migrate(std::uint64_t id, std::uint64_t increment) {
   // require_auth(_self);
-  // claims claim_table(_self, _self.value);
-  // claimsnew claim_new_table(_self, _self.value);
-  // actions action_table(_self, _self.value);
-  // checks check_table(_self, _self.value);
 
-  // auto check_by_claim = check_table.get_index<eosio::name{"byclaim"}>();
+  // communities community_table(_self, _self.value);
+  // new_communities new_communities_table(_self, _self.value);
 
-  // // // clear exiting data from claimsnew
-  // // for(auto itr = claim_new_table.begin(); itr != claim_new_table.end();) {
-  // //   itr = claim_new_table.erase(itr);
-  // // }
+  // for (auto itr = community_table.begin(); itr != community_table.end();) {
+  //   auto &community = *itr;
 
-  // // migrate data
-  // // for (auto itr_c = claim_table.begin(); itr_c != claim_table.end();) {
-  // for (std::uint64_t a = claim_id; a < (claim_id + increment); a++) {
-  //   // auto &claim = *itr_c;
-  //   auto &claim = *claim_table.find(a);
-  //   // Discover whats the current status
-  //   // Find out more about the action
-  //   auto itr_action = action_table.find(claim.action_id);
-  //   auto &action = *itr_action;
+  //   new_communities_table.emplace(_self, [&](auto &r) {
+  //                                        r.symbol = community.symbol;
 
-  //   // Find all checks
-  //   std::uint64_t positive_votes = 0;
-  //   std::uint64_t negative_votes = 0;
-  //   auto itr_check = check_by_claim.find(claim.id);
-  //   for(;itr_check != check_by_claim.end();) {
-  //     if ((*itr_check).is_verified == 1) {
-  //       positive_votes++;
-  //     } else {
-  //       negative_votes++;
-  //     }
-  //     itr_check++;
-  //   }
+  //                                        r.creator = community.creator;
+  //                                        r.logo = community.logo;
+  //                                        r.name = community.name;
+  //                                        r.description = community.description;
+  //                                        r.inviter_reward = community.inviter_reward;
+  //                                        r.invited_reward = community.invited_reward;
+  //                                        r.has_objectives = 1;
+  //                                        r.has_shop = 1;
+  //                                      });
 
-  //   std::string status = "pending";
-  //   if (positive_votes + negative_votes >= action.verifications) {
-  //     if (positive_votes > negative_votes) {
-  //       status = "approved";
-  //     } else {
-  //       status = "rejected";
-  //     }
-  //   }
-
-
-  //   // Fill in the new table
-  //   claim_new_table.emplace(_self, [&](auto &cn) {
-  //                              cn.id = claim.id;
-  //                              cn.action_id = claim.action_id;
-  //                              cn.claimer = claim.claimer;
-  //                              cn.status = status;
-  //                            });
-
-  //   // Go to next on the loop
-  //   // itr_c++;
+  //   itr++;
   // }
 }
 
 void bespiral::clean(std::string t) {
-  // // Clean up the old claims table after the migration
-  // require_auth(_self);
+  // Clean up the old claims table after the migration
+  require_auth(_self);
 
-  // if (t == "claim") {
-  //   claims claim_table(_self, _self.value);
-  //   for(auto itr = claim_table.begin(); itr != claim_table.end();) {
-  //     itr = claim_table.erase(itr);
-  //   }
-  // }
+  if (t == "claim") {
+    claims claim_table(_self, _self.value);
+    for(auto itr = claim_table.begin(); itr != claim_table.end();) {
+      itr = claim_table.erase(itr);
+    }
+  }
 
-  // if (t == "claimnew") {
-  //   claimsnew claim_new_table(_self, _self.value);
-  //   for (auto itr = claim_new_table.begin(); itr != claim_new_table.end();) {
-  //     itr = claim_new_table.erase(itr);
-  //   }
-  // }
+  if (t == "claimnew") {
+    claimsnew claim_new_table(_self, _self.value);
+    for (auto itr = claim_new_table.begin(); itr != claim_new_table.end();) {
+      itr = claim_new_table.erase(itr);
+    }
+  }
+
+  if (t == "new_community") {
+    new_communities new_communities_table(_self, _self.value);
+    for (auto itr = new_communities_table.begin(); itr != new_communities_table.end();) {
+      itr = new_communities_table.erase(itr);
+    }
+  }
+
+  if (t == "community") {
+    communities communities_table(_self, _self.value);
+    for (auto itr = communities_table.begin(); itr != communities_table.end();) {
+      itr = communities_table.erase(itr);
+    }
+  }
 }
 
 void bespiral::migrateafter(std::uint64_t claim_id, std::uint64_t increment) {
-  // // Loop on claimnew, put data into claim
   // require_auth(_self);
-  // claims claim_table(_self, _self.value);
-  // claimsnew claim_new_table(_self, _self.value);
+  // communities communities_table(_self, _self.value);
+  // new_communities new_communities_table(_self, _self.value);
 
-  // for (std::uint64_t a = claim_id; a < (claim_id + increment); a++) {
-  //   auto &claim = *claim_new_table.find(a);
+  // for (auto itr = new_communities_table.begin(); itr != new_communities_table.end();) {
+  //   auto &new_community = *itr;
 
-  //   claim_table.emplace(_self, [&](auto &c) {
-  //                                c.id = claim.id;
-  //                                c.action_id = claim.action_id;
-  //                                c.claimer = claim.claimer;
-  //                                c.status = claim.status;
-  //                              });
+  //   communities_table.emplace(_self, [&](auto &r) {
+  //                                          r.symbol = new_community.symbol;
+
+  //                                          r.creator = new_community.creator;
+  //                                          r.logo = new_community.logo;
+  //                                          r.name = new_community.name;
+  //                                          r.description = new_community.description;
+  //                                          r.inviter_reward = new_community.inviter_reward;
+  //                                          r.invited_reward = new_community.invited_reward;
+  //                                          r.has_objectives = new_community.has_objectives;
+  //                                          r.has_shop = new_community.has_shop;
+  //                                        });
+
+  //   itr++;
   // }
 }
 

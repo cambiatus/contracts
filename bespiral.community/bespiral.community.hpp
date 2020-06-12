@@ -16,14 +16,19 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     std::string logo;
     std::string name;
     std::string description;
+
     eosio::asset inviter_reward;
     eosio::asset invited_reward;
+
+    std::uint8_t has_objectives;
+    std::uint8_t has_shop;
 
     uint64_t primary_key() const { return symbol.raw(); };
 
     EOSLIB_SERIALIZE(community,
                      (symbol)(creator)(logo)(name)(description)
-                     (inviter_reward)(invited_reward));
+                     (inviter_reward)(invited_reward)
+                     (has_objectives)(has_shop));
   };
 
   TABLE network {
@@ -105,31 +110,18 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                      (id)(action_id)(claimer)(status));
   };
 
-  // TABLE claim {
-  //   std::uint64_t id;
-  //   std::uint64_t action_id;
-  //   eosio::name claimer;
-  //   std::uint8_t is_verified; // If the number of verifications reached the necessary #
+  TABLE claimnew {
+    std::uint64_t id;
+    std::uint64_t action_id;
+    eosio::name claimer;
+    std::string status; // Can be: `approved` `rejected` `pending`
 
-  //   std::uint64_t primary_key() const { return id; }
-  //   std::uint64_t by_action() const { return action_id; }
+    std::uint64_t primary_key() const { return id; }
+    std::uint64_t by_action() const { return action_id; }
 
-  //   EOSLIB_SERIALIZE(claim,
-  //                    (id)(action_id)(claimer)(is_verified));
-  // };
-
-  // TABLE claimnew {
-  //   std::uint64_t id;
-  //   std::uint64_t action_id;
-  //   eosio::name claimer;
-  //   std::string status; // Can be: `approved` `rejected` `pending`
-
-  //   std::uint64_t primary_key() const { return id; }
-  //   std::uint64_t by_action() const { return action_id; }
-
-  //   EOSLIB_SERIALIZE(claimnew,
-  //                    (id)(action_id)(claimer)(status));
-  // };
+    EOSLIB_SERIALIZE(claimnew,
+                     (id)(action_id)(claimer)(status));
+  };
 
   TABLE check {
     std::uint64_t id;
@@ -248,7 +240,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
 
   ACTION deleteact(std::uint64_t id);
 
-  ACTION migrate(std::uint64_t claim_id, std::uint64_t increment);
+  ACTION migrate(std::uint64_t id, std::uint64_t increment);
   ACTION clean(std::string t);
   ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
 
@@ -256,6 +248,7 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   uint64_t get_available_id(std::string table);
 
   typedef eosio::multi_index<eosio::name{"community"}, bespiral::community> communities;
+
   typedef eosio::multi_index<eosio::name{"network"},
                              bespiral::network,
                              eosio::indexed_by<eosio::name{"usersbycmm"},
@@ -286,11 +279,11 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                                                eosio::const_mem_fun<bespiral::claim, uint64_t, &bespiral::claim::by_action>>
                              > claims;
 
-  // typedef eosio::multi_index<eosio::name{"claimnew"},
-  //                            bespiral::claimnew,
-  //                            eosio::indexed_by<eosio::name{"byaction"},
-  //                                              eosio::const_mem_fun<bespiral::claimnew, uint64_t, &bespiral::claimnew::by_action>>
-  //                            > claimsnew;
+  typedef eosio::multi_index<eosio::name{"claimnew"},
+                             bespiral::claimnew,
+                             eosio::indexed_by<eosio::name{"byaction"},
+                                               eosio::const_mem_fun<bespiral::claimnew, uint64_t, &bespiral::claimnew::by_action>>
+                             > claimsnew;
 
   typedef eosio::multi_index<eosio::name{"check"},
                              bespiral::check,
