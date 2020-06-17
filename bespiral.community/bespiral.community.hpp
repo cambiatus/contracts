@@ -154,12 +154,14 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   /// @abi action
   /// Creates a BeSpiral community
   ACTION create(eosio::asset cmm_asset, eosio::name creator, std::string logo, std::string name,
-                std::string description, eosio::asset inviter_reward, eosio::asset invited_reward);
+                std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
+                std::uint8_t has_objectives, std::uint8_t has_shop);
 
   /// @abi action
   /// Updates community attributes
   ACTION update(eosio::asset cmm_asset, std::string logo, std::string name,
-                std::string description, eosio::asset inviter_reward, eosio::asset invited_reward);
+                std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
+                std::uint8_t has_objectives, std::uint8_t has_shop);
 
   /// @abi action
   /// Adds a user to a community

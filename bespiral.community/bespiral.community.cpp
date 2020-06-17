@@ -3,7 +3,8 @@
 
 void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                       std::string name, std::string description,
-                      eosio::asset inviter_reward, eosio::asset invited_reward) {
+                      eosio::asset inviter_reward, eosio::asset invited_reward,
+                      std::uint8_t has_objectives, std::uint8_t has_shop) {
   require_auth(creator);
 
   const eosio::symbol new_symbol = cmm_asset.symbol;
@@ -27,15 +28,17 @@ void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string l
   eosio_assert(existing_cmm == community.end(), "symbol already exists");
 
   // creates new community
-  community.emplace(_self, [&](auto &r) {
-    r.symbol = new_symbol;
+  community.emplace(_self, [&](auto &c) {
+    c.symbol = new_symbol;
 
-    r.creator = creator;
-    r.logo = logo;
-    r.name = name;
-    r.description = description;
-    r.inviter_reward = inviter_reward;
-    r.invited_reward = invited_reward;
+    c.creator = creator;
+    c.logo = logo;
+    c.name = name;
+    c.description = description;
+    c.inviter_reward = inviter_reward;
+    c.invited_reward = invited_reward;
+    c.has_objectives = has_objectives;
+    c.has_shop = has_shop;
   });
 
   SEND_INLINE_ACTION(*this,                            // Account
@@ -49,7 +52,8 @@ void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string l
 }
 
 void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name,
-                      std::string description, eosio::asset inviter_reward, eosio::asset invited_reward) {
+                      std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
+                      std::uint8_t has_objectives, std::uint8_t has_shop) {
   communities community(_self, _self.value);
   const auto &cmm = community.get(cmm_asset.symbol.raw(), "can't find any community with given asset");
 
@@ -66,6 +70,8 @@ void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name
     row.description = description;
     row.inviter_reward = inviter_reward;
     row.invited_reward = invited_reward;
+    row.has_objectives = has_objectives;
+    row.has_shop = has_shop;
   });
 }
 
@@ -155,6 +161,8 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
   communities community(_self, _self.value);
   const auto &cmm = community.get(community_symbol.raw(), "Can't find community with given community_id");
 
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+
   // Check if creator belongs to the community
   networks network(_self, _self.value);
   auto creator_id = gen_uuid(cmm.symbol.raw(), creator.value);
@@ -183,6 +191,8 @@ void bespiral::updobjective(std::uint64_t objective_id, std::string description,
   // Find community
   communities community(_self, _self.value);
   const auto &cmm = community.get(found_objective.community.raw(), "Can't find community with given community_id");
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if editor belongs to the community
   networks network(_self, _self.value);
@@ -220,6 +230,8 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
   auto itr_cmm = community.find(obj.community.raw());
   eosio_assert(itr_cmm != community.end(), "Can't find community with given objective_id");
   auto &cmm = *itr_cmm;
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Creator must belong to the community
   networks network(_self, _self.value);
@@ -365,6 +377,8 @@ void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::n
   eosio_assert(itr_cmm != community.end(), "Can't find community with given action_id");
   auto &cmm = *itr_cmm;
 
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+
   networks network(_self, _self.value);
   auto verifier_id = gen_uuid(cmm.symbol.raw(), verifier.value);
   auto itr_network = network.find(verifier_id);
@@ -449,6 +463,8 @@ void bespiral::claimaction(std::uint64_t action_id, eosio::name maker) {
   eosio_assert(itr_cmm != community.end(), "Can't find community with given action_id");
   auto &cmm = *itr_cmm;
 
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+
   networks network(_self, _self.value);
   auto maker_id = gen_uuid(cmm.symbol.raw(), maker.value);
   auto itr_network = network.find(maker_id);
@@ -488,6 +504,20 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   auto itr_objact = action.find(claim.action_id);
   eosio_assert(itr_objact != action.end(), "Can't find action with given claim_id");
   auto &objact = *itr_objact;
+
+  // Validates that the objective exists
+  objectives objective(_self, _self.value);
+  auto itr_obj = objective.find(objact.objective_id);
+  eosio_assert(itr_obj != objective.end(), "Can't find objective with given claim_id");
+  auto &obj = *itr_obj;
+
+  // Validate community
+  communities community(_self, _self.value);
+  auto itr_cmm = community.find(obj.community.raw());
+  eosio_assert(itr_cmm != community.end(), "Can't find community with given claim_id");
+  auto &cmm = *itr_cmm;
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if user belongs to the action_validator list
   validators validator(_self, objact.id);
@@ -633,6 +663,12 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
   networks network(_self, _self.value);
   const auto &netlink = network.get(from_id, "'from' account doesn't belong to the community");
 
+  // Check if community exists
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+
   // Get last used objective id and update item_index table
   uint64_t sale_id;
   sale_id = get_available_id("sales");
@@ -680,6 +716,13 @@ void bespiral::updatesale(std::uint64_t sale_id, std::string title,
   eosio_assert(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
   eosio_assert(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
 
+
+  // Check if community exists
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+
   // Validate user belongs to community
   auto id = gen_uuid(quantity.symbol.raw(), found_sale.creator.value);
   networks network(_self, _self.value);
@@ -703,6 +746,12 @@ void bespiral::deletesale(std::uint64_t sale_id) {
   eosio_assert(itr_sale != sale.end(), "Can't find any sale with the given sale_id");
   const auto &found_sale = *itr_sale;
 
+  // Check if community exists
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(found_sale.community.raw(), "Can't find community with given Symbol");
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+
   // Validate user
   require_auth(found_sale.creator);
 
@@ -720,6 +769,12 @@ void bespiral::reactsale(std::uint64_t sale_id, eosio::name from, std::string ty
 
   // Validate user is not the sale creator
   eosio_assert(from != found_sale.creator, "Can't react to your own sale");
+
+  // Check if community exists
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(found_sale.community.raw(), "Can't find community with given Symbol");
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate user belongs to sale's community
   auto from_id = gen_uuid(found_sale.community.raw(), from.value);
@@ -765,6 +820,12 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
     // Without trackStock
     eosio_assert(quantity == found_sale.quantity, "Quantity must be the same as the sale price");
   }
+
+  // Check if community exists
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
+
+  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate 'from' user belongs to sale community
   auto from_id = gen_uuid(found_sale.community.raw(), from.value);
@@ -919,7 +980,7 @@ uint64_t bespiral::get_available_id(std::string table) {
 EOSIO_DISPATCH(bespiral,
                (create)(update)(netlink) // Basic community
                (newobjective)(updobjective)(upsertaction) // Objectives and Actions
-               (verifyaction) (claimaction)(verifyclaim) // Verifications and Claims
+               (verifyaction)(claimaction)(verifyclaim) // Verifications and Claims
                (createsale)(updatesale) (deletesale)(reactsale)(transfersale) // Shop
                (setindices)(deleteobj)(deleteact) // Admin actions
                (migrate)(clean)(migrateafter) // Temporary migration actions
