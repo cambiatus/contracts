@@ -10,22 +10,22 @@ void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string l
   const eosio::symbol new_symbol = cmm_asset.symbol;
 
   // Validates reward for invitater and invited users
-  eosio_assert(invited_reward.is_valid(), "invalid invited_reward");
-  eosio_assert(invited_reward.amount >= 0, "invited_reward must be equal or greater than 0");
-  eosio_assert(new_symbol == invited_reward.symbol, "unmatched symbols for max_supply and invited_reward");
-  eosio_assert(inviter_reward.is_valid(), "invalid inviter_reward");
-  eosio_assert(inviter_reward.amount >= 0, "inviter_reward must be equal or greater than 0");
-  eosio_assert(new_symbol == inviter_reward.symbol, "unmatched symbols for max_supply and inviter_reward");
+  eosio::check(invited_reward.is_valid(), "invalid invited_reward");
+  eosio::check(invited_reward.amount >= 0, "invited_reward must be equal or greater than 0");
+  eosio::check(new_symbol == invited_reward.symbol, "unmatched symbols for max_supply and invited_reward");
+  eosio::check(inviter_reward.is_valid(), "invalid inviter_reward");
+  eosio::check(inviter_reward.amount >= 0, "inviter_reward must be equal or greater than 0");
+  eosio::check(new_symbol == inviter_reward.symbol, "unmatched symbols for max_supply and inviter_reward");
 
   // Validates string fields
-  eosio_assert(name.size() <= 256, "name has more than 256 bytes");
-  eosio_assert(description.size() <= 256, "description has more than 256 bytes");
-  eosio_assert(logo.size() <= 256, "logo has more than 256 bytes");
+  eosio::check(name.size() <= 256, "name has more than 256 bytes");
+  eosio::check(description.size() <= 256, "description has more than 256 bytes");
+  eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
 
   // Check if community was created before
   communities community(_self, _self.value);
   auto existing_cmm = community.find(new_symbol.raw());
-  eosio_assert(existing_cmm == community.end(), "symbol already exists");
+  eosio::check(existing_cmm == community.end(), "symbol already exists");
 
   // creates new community
   community.emplace(_self, [&](auto &c) {
@@ -60,9 +60,9 @@ void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name
   require_auth(cmm.creator);
 
   // Validates string fields
-  eosio_assert(logo.size() <= 256, "logo has more than 256 bytes");
-  eosio_assert(name.size() <= 256, "name has more than 256 bytes");
-  eosio_assert(description.size() <= 256, "description has more than 256 bytes");
+  eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
+  eosio::check(name.size() <= 256, "name has more than 256 bytes");
+  eosio::check(description.size() <= 256, "description has more than 256 bytes");
 
   community.modify(cmm, _self, [&](auto &row) {
     row.logo = logo;
@@ -76,7 +76,7 @@ void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name
 }
 
 void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user) {
-  eosio_assert(is_account(new_user), "new user account doesn't exists");
+  eosio::check(is_account(new_user), "new user account doesn't exists");
 
   // Check for inviter auth, otherwise check for backend's auth
   if (has_auth(inviter)) {
@@ -102,7 +102,7 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
   if (cmm.creator != inviter) {
     auto inviter_id = gen_uuid(cmm.symbol.raw(), inviter.value);
     auto itr_inviter = network.find(inviter_id);
-    eosio_assert(itr_inviter != network.end(), "unknown inviter");
+    eosio::check(itr_inviter != network.end(), "unknown inviter");
   }
 
   network.emplace(_self, [&](auto &r) {
@@ -154,20 +154,20 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
   require_auth(creator);
 
   eosio::symbol community_symbol = cmm_asset.symbol;
-  eosio_assert(community_symbol.is_valid(), "Invalid symbol name for community");
-  eosio_assert(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
+  eosio::check(community_symbol.is_valid(), "Invalid symbol name for community");
+  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
 
   // Check if community exists
   communities community(_self, _self.value);
   const auto &cmm = community.get(community_symbol.raw(), "Can't find community with given community_id");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if creator belongs to the community
   networks network(_self, _self.value);
   auto creator_id = gen_uuid(cmm.symbol.raw(), creator.value);
   auto itr_creator = network.find(creator_id);
-  eosio_assert(itr_creator != network.end(), "Creator doesn't belong to the community");
+  eosio::check(itr_creator != network.end(), "Creator doesn't belong to the community");
 
   // Insert new objective
   objectives objective(_self, _self.value);
@@ -182,7 +182,7 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
 void bespiral::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor) {
   require_auth(editor);
 
-  eosio_assert(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
+  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
 
   // Find objective
   objectives objective(_self, _self.value);
@@ -192,16 +192,16 @@ void bespiral::updobjective(std::uint64_t objective_id, std::string description,
   communities community(_self, _self.value);
   const auto &cmm = community.get(found_objective.community.raw(), "Can't find community with given community_id");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if editor belongs to the community
   networks network(_self, _self.value);
   auto editor_id = gen_uuid(found_objective.community.raw(), editor.value);
   auto itr_editor = network.find(editor_id);
-  eosio_assert(itr_editor != network.end(), "Editor doesn't belong to the community");
+  eosio::check(itr_editor != network.end(), "Editor doesn't belong to the community");
 
   // Validate Auth can be either the community creator or the objective creator
-  eosio_assert(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
+  eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
 
   objective.modify(found_objective, _self, [&](auto &row) {
                                              row.description = description;
@@ -216,57 +216,57 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                             std::string validators_str, std::uint8_t is_completed,
                             eosio::name creator) {
   // Validate creator
-  eosio_assert(is_account(creator), "invalid account for creator");
+  eosio::check(is_account(creator), "invalid account for creator");
   require_auth(creator);
 
   // Validates that the objective exists
   objectives objective(_self, _self.value);
   auto itr_obj = objective.find(objective_id);
-  eosio_assert(itr_obj != objective.end(), "Can't find objective with given objective_id");
+  eosio::check(itr_obj != objective.end(), "Can't find objective with given objective_id");
   auto &obj = *itr_obj;
 
   // Validate community
   communities community(_self, _self.value);
   auto itr_cmm = community.find(obj.community.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given objective_id");
+  eosio::check(itr_cmm != community.end(), "Can't find community with given objective_id");
   auto &cmm = *itr_cmm;
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Creator must belong to the community
   networks network(_self, _self.value);
   auto creator_id = gen_uuid(cmm.symbol.raw(), creator.value);
   auto itr_creator = network.find(creator_id);
-  eosio_assert(itr_creator != network.end(), "Creator doesn't belong to the community");
+  eosio::check(itr_creator != network.end(), "Creator doesn't belong to the community");
 
   // Validate assets
-  eosio_assert(reward.is_valid(), "invalid reward");
-  eosio_assert(reward.amount >= 0, "reward must be greater than or equal to 0");
-  eosio_assert(reward.symbol == obj.community, "reward must be a community token");
+  eosio::check(reward.is_valid(), "invalid reward");
+  eosio::check(reward.amount >= 0, "reward must be greater than or equal to 0");
+  eosio::check(reward.symbol == obj.community, "reward must be a community token");
 
-  eosio_assert(verifier_reward.is_valid(), "invalid verifier_reward");
-  eosio_assert(verifier_reward.amount >= 0, "verifier reward must be greater than or equal to 0");
-  eosio_assert(verifier_reward.symbol == obj.community, "verifier_reward must be a community token");
+  eosio::check(verifier_reward.is_valid(), "invalid verifier_reward");
+  eosio::check(verifier_reward.amount >= 0, "verifier reward must be greater than or equal to 0");
+  eosio::check(verifier_reward.symbol == obj.community, "verifier_reward must be a community token");
 
   // Validate description
-  eosio_assert(description.length() <= 256, "Invalid length for description, must be less or equal than 256 chars");
+  eosio::check(description.length() <= 256, "Invalid length for description, must be less or equal than 256 chars");
 
   // Validate deadline
   if (deadline > 0) {
-    eosio_assert(now() < deadline, "Deadline must be somewhere in the future");
+    eosio::check(now() < deadline, "Deadline must be somewhere in the future");
   }
 
   // Validate usages
   if (usages > 0) {
-    eosio_assert(usages <= 1000, "You can have a maximum of 1000 uses");
+    eosio::check(usages <= 1000, "You can have a maximum of 1000 uses");
   }
 
   // Validate verification type
-  eosio_assert(verification_type == "claimable" || verification_type == "automatic", "verification type must be either 'claimable' or 'automatic'");
+  eosio::check(verification_type == "claimable" || verification_type == "automatic", "verification type must be either 'claimable' or 'automatic'");
 
   // Validate that if we have verifications, it need to be at least three and it must be odd
   if (verifications > 0) {
-    eosio_assert(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
+    eosio::check(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
   // ========================================= End validation, start upsert
@@ -310,15 +310,15 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
   if (verification_type == "claimable") {
     // Validate list of validators
     std::vector<std::string> strs = split(validators_str, "-");
-    eosio_assert(strs.size() >= verifications, "You cannot have a bigger number of verifications than accounts in the validator list");
+    eosio::check(strs.size() >= verifications, "You cannot have a bigger number of verifications than accounts in the validator list");
 
     // Ensure list of validators in unique
     sort(strs.begin(), strs.end());
     auto strs_it = std::unique(strs.begin(), strs.end());
-    eosio_assert(strs_it == strs.end(), "You cannot add a validator more than once to an action");
+    eosio::check(strs_it == strs.end(), "You cannot add a validator more than once to an action");
 
     // Make sure we have at least 2 verifiers
-    eosio_assert(strs.size() >= 2, "You need at least two verifiers in a claimable action");
+    eosio::check(strs.size() >= 2, "You need at least two verifiers in a claimable action");
 
     // Define validators table, scoped by action
     validators validator(_self, action_id);
@@ -334,13 +334,13 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
     std::vector<std::string> validator_v = split(validators_str, "-");
     for (auto i : validator_v) {
       eosio::name acc = eosio::name{i};
-      eosio_assert((bool)acc, "account from validator list cannot be empty");
-      eosio_assert(is_account(acc), "account from validator list don't exist");
+      eosio::check((bool)acc, "account from validator list cannot be empty");
+      eosio::check(is_account(acc), "account from validator list don't exist");
 
       // Must belong to the community
       auto validator_id = gen_uuid(cmm.symbol.raw(), acc.value);
       auto itr_validator = network.find(validator_id);
-      eosio_assert(itr_validator != network.end(), "one of the validators doesn't belong to the community");
+      eosio::check(itr_validator != network.end(), "one of the validators doesn't belong to the community");
 
       // Add list of validators
       validator.emplace(_self, [&](auto &v) {
@@ -356,46 +356,46 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
 /// Verify an automatic action
 void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier) {
   // Validates verifier
-  eosio_assert(is_account(verifier), "invalid account for verifier");
-  eosio_assert(is_account(maker), "invalid account for maker");
+  eosio::check(is_account(verifier), "invalid account for verifier");
+  eosio::check(is_account(maker), "invalid account for maker");
   require_auth(verifier);
 
   // Validates if action exists
   actions action(_self, _self.value);
   auto itr_objact = action.find(action_id);
-  eosio_assert(itr_objact != action.end(), "Can't find action with given action_id");
+  eosio::check(itr_objact != action.end(), "Can't find action with given action_id");
   auto &objact = *itr_objact;
 
   // Validates verifier belongs to the action community
   objectives objective(_self, _self.value);
   auto itr_obj = objective.find(objact.objective_id);
-  eosio_assert(itr_obj != objective.end(), "Can't find objective with given action_id");
+  eosio::check(itr_obj != objective.end(), "Can't find objective with given action_id");
   auto &obj = *itr_obj;
 
   communities community(_self, _self.value);
   auto itr_cmm = community.find(obj.community.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given action_id");
+  eosio::check(itr_cmm != community.end(), "Can't find community with given action_id");
   auto &cmm = *itr_cmm;
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   networks network(_self, _self.value);
   auto verifier_id = gen_uuid(cmm.symbol.raw(), verifier.value);
   auto itr_network = network.find(verifier_id);
-  eosio_assert(itr_network != network.end(), "Verifier doesn't belong to the community");
+  eosio::check(itr_network != network.end(), "Verifier doesn't belong to the community");
 
   // Validates if maker belongs to the action community
   auto maker_id = gen_uuid(cmm.symbol.raw(), maker.value);
   auto itr_maker_network = network.find(maker_id);
-  eosio_assert(itr_maker_network != network.end(), "Maker doesn't belong to the community");
+  eosio::check(itr_maker_network != network.end(), "Maker doesn't belong to the community");
 
   // Validate if the action type is `automatic`
-  eosio_assert(objact.verification_type == "automatic", "Can't verify actions that aren't automatic, you'll need to open a claim");
+  eosio::check(objact.verification_type == "automatic", "Can't verify actions that aren't automatic, you'll need to open a claim");
 
-  eosio_assert(objact.is_completed == false, "This action is already completed");
+  eosio::check(objact.is_completed == false, "This action is already completed");
 
   if (objact.usages > 0) {
-    eosio_assert(objact.usages_left >= 1, "There are no usages left for this action");
+    eosio::check(objact.usages_left >= 1, "There are no usages left for this action");
   }
 
   // change status of verification
@@ -430,45 +430,45 @@ void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::n
 /// Start a new claim on an action
 void bespiral::claimaction(std::uint64_t action_id, eosio::name maker) {
   // Validate maker
-  eosio_assert(is_account(maker), "invalid account for maker");
+  eosio::check(is_account(maker), "invalid account for maker");
   require_auth(maker);
 
   // Validates if action exists
   actions action(_self, _self.value);
   auto itr_objact = action.find(action_id);
-  eosio_assert(itr_objact != action.end(), "Can't find action with given action_id");
+  eosio::check(itr_objact != action.end(), "Can't find action with given action_id");
   auto &objact = *itr_objact;
 
   // Check if action is completed, have usages left or the deadline has been met
-  eosio_assert(objact.is_completed == false, "This is action is already completed, can't open claim");
+  eosio::check(objact.is_completed == false, "This is action is already completed, can't open claim");
   if (objact.deadline > 0) {
-      eosio_assert(objact.deadline > now(), "Deadline exceeded");
+      eosio::check(objact.deadline > now(), "Deadline exceeded");
   }
 
   if (objact.usages > 0) {
-    eosio_assert(objact.usages_left >= 1, "There are no usages left for this action");
+    eosio::check(objact.usages_left >= 1, "There are no usages left for this action");
   }
 
   // Check if the action is claimable
-  eosio_assert(objact.verification_type == "claimable", "You can only open claims in claimable actions");
+  eosio::check(objact.verification_type == "claimable", "You can only open claims in claimable actions");
 
   // Validates maker belongs to the action community
   objectives objective(_self, _self.value);
   auto itr_obj = objective.find(objact.objective_id);
-  eosio_assert(itr_obj != objective.end(), "Can't find objective with given action_id");
+  eosio::check(itr_obj != objective.end(), "Can't find objective with given action_id");
   auto &obj = *itr_obj;
 
   communities community(_self, _self.value);
   auto itr_cmm = community.find(obj.community.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given action_id");
+  eosio::check(itr_cmm != community.end(), "Can't find community with given action_id");
   auto &cmm = *itr_cmm;
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   networks network(_self, _self.value);
   auto maker_id = gen_uuid(cmm.symbol.raw(), maker.value);
   auto itr_network = network.find(maker_id);
-  eosio_assert(itr_network != network.end(), "Maker doesn't belong to the community");
+  eosio::check(itr_network != network.end(), "Maker doesn't belong to the community");
 
 
   // Get last used claim id and update item_index table
@@ -493,31 +493,31 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   claims claim_table(_self, _self.value);
   // claimsnew claim_table(_self, _self.value);
   auto itr_clm = claim_table.find(claim_id);
-  eosio_assert(itr_clm != claim_table.end(), "Can't find claim with given claim_id");
+  eosio::check(itr_clm != claim_table.end(), "Can't find claim with given claim_id");
   auto &claim = *itr_clm;
 
   // Check if claim is already verified
-  eosio_assert(claim.status == "pending", "Can't vote on already verified claim");
+  eosio::check(claim.status == "pending", "Can't vote on already verified claim");
 
   // Validates if action exists
   actions action(_self, _self.value);
   auto itr_objact = action.find(claim.action_id);
-  eosio_assert(itr_objact != action.end(), "Can't find action with given claim_id");
+  eosio::check(itr_objact != action.end(), "Can't find action with given claim_id");
   auto &objact = *itr_objact;
 
   // Validates that the objective exists
   objectives objective(_self, _self.value);
   auto itr_obj = objective.find(objact.objective_id);
-  eosio_assert(itr_obj != objective.end(), "Can't find objective with given claim_id");
+  eosio::check(itr_obj != objective.end(), "Can't find objective with given claim_id");
   auto &obj = *itr_obj;
 
   // Validate community
   communities community(_self, _self.value);
   auto itr_cmm = community.find(obj.community.raw());
-  eosio_assert(itr_cmm != community.end(), "Can't find community with given claim_id");
+  eosio::check(itr_cmm != community.end(), "Can't find community with given claim_id");
   auto &cmm = *itr_cmm;
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if user belongs to the action_validator list
   validators validator(_self, objact.id);
@@ -528,17 +528,17 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
     }
     itr_validators++;
   }
-  eosio_assert(validator_count > 0, "Verifier is not in the action validator list");
+  eosio::check(validator_count > 0, "Verifier is not in the action validator list");
 
   // Check if action is completed, have usages left or the deadline has been met
-  eosio_assert(objact.is_completed == false, "This is action is already completed, can't verify claim");
+  eosio::check(objact.is_completed == false, "This is action is already completed, can't verify claim");
 
   if (objact.deadline > 0) {
-    eosio_assert(objact.deadline > now(), "Deadline exceeded");
+    eosio::check(objact.deadline > now(), "Deadline exceeded");
   }
 
   if (objact.usages > 0) {
-    eosio_assert(objact.usages_left >= 1, "There are no usages left for this action");
+    eosio::check(objact.usages_left >= 1, "There are no usages left for this action");
   }
 
   // Get check index
@@ -551,7 +551,7 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   if(itr_check_claim != check_by_claim.end()) {
     for (; itr_check_claim != check_by_claim.end(); itr_check_claim++) {
       auto check_claim = *itr_check_claim;
-      eosio_assert(check_claim.validator != verifier, "The verifier cannot check the same claim more than once");
+      eosio::check(check_claim.validator != verifier, "The verifier cannot check the same claim more than once");
     }
   }
 
@@ -642,21 +642,21 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
   require_auth(from);
 
   // Validate quantity
-  eosio_assert(quantity.is_valid(), "Quantity is invalid");
-  eosio_assert(quantity.amount >= 0, "Invalid amount of quantity, must be greater than or equal to 0");
+  eosio::check(quantity.is_valid(), "Quantity is invalid");
+  eosio::check(quantity.amount >= 0, "Invalid amount of quantity, must be greater than or equal to 0");
 
   // Check if stock is tracked
   if (track_stock >= 1) {
-    eosio_assert(units > 0, "Invalid number of units, must use a positive value");
+    eosio::check(units > 0, "Invalid number of units, must use a positive value");
   } else {
     // Discard units value if not tracking stock
     units = 0;
   }
 
   // Validate Strings
-  eosio_assert(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio_assert(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
-  eosio_assert(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
+  eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
+  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
+  eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
 
   // Validate user belongs to community
   auto from_id = gen_uuid(quantity.symbol.raw(), from.value);
@@ -667,7 +667,7 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
   communities community(_self, _self.value);
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Get last used objective id and update item_index table
   uint64_t sale_id;
@@ -700,28 +700,28 @@ void bespiral::updatesale(std::uint64_t sale_id, std::string title,
 
 
   // Validate quantity
-  eosio_assert(quantity.is_valid(), "Quantity is invalid");
-  eosio_assert(quantity.amount >= 0, "Invalid amount of quantity, must use a positive value");
+  eosio::check(quantity.is_valid(), "Quantity is invalid");
+  eosio::check(quantity.amount >= 0, "Invalid amount of quantity, must use a positive value");
 
   // Check if stock is tracked
   if (found_sale.track_stock >= 1 && track_stock == 1) {
-    eosio_assert(units >= 0, "Invalid number of units, must be greater than or equal to 0");
+    eosio::check(units >= 0, "Invalid number of units, must be greater than or equal to 0");
   } else {
     // Discard units value if not tracking stock
     units = 0;
   }
 
   // Validate Strings
-  eosio_assert(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio_assert(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
-  eosio_assert(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
+  eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
+  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
+  eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
 
 
   // Check if community exists
   communities community(_self, _self.value);
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate user belongs to community
   auto id = gen_uuid(quantity.symbol.raw(), found_sale.creator.value);
@@ -743,14 +743,14 @@ void bespiral::deletesale(std::uint64_t sale_id) {
   // Find sale
   sales sale(_self, _self.value);
   auto itr_sale = sale.find(sale_id);
-  eosio_assert(itr_sale != sale.end(), "Can't find any sale with the given sale_id");
+  eosio::check(itr_sale != sale.end(), "Can't find any sale with the given sale_id");
   const auto &found_sale = *itr_sale;
 
   // Check if community exists
   communities community(_self, _self.value);
   const auto &cmm = community.get(found_sale.community.raw(), "Can't find community with given Symbol");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate user
   require_auth(found_sale.creator);
@@ -768,22 +768,22 @@ void bespiral::reactsale(std::uint64_t sale_id, eosio::name from, std::string ty
   const auto &found_sale = sale.get(sale_id, "Can't find any sale with given sale_id");
 
   // Validate user is not the sale creator
-  eosio_assert(from != found_sale.creator, "Can't react to your own sale");
+  eosio::check(from != found_sale.creator, "Can't react to your own sale");
 
   // Check if community exists
   communities community(_self, _self.value);
   const auto &cmm = community.get(found_sale.community.raw(), "Can't find community with given Symbol");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate user belongs to sale's community
   auto from_id = gen_uuid(found_sale.community.raw(), from.value);
   networks network(_self, _self.value);
   auto itr_network = network.find(from_id);
-  eosio_assert(itr_network != network.end(), "This account can't react to a sale from a community it doesn't belong");
+  eosio::check(itr_network != network.end(), "This account can't react to a sale from a community it doesn't belong");
 
   // Validate vote type
-  eosio_assert(
+  eosio::check(
           type == "thumbsup"
           || type == "thumbsdown"
           || type == "none"
@@ -796,10 +796,10 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
   require_auth(from);
 
   // Validate 'to' account
-  eosio_assert(is_account(to), "The sale creator (to) account doesn't exists");
+  eosio::check(is_account(to), "The sale creator (to) account doesn't exists");
 
   // Validate accounts are different
-  eosio_assert(from != to, "Can't sale for yourself");
+  eosio::check(from != to, "Can't sale for yourself");
 
   // Find sale
   sales sale(_self, _self.value);
@@ -807,25 +807,25 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
 
   if (found_sale.track_stock == 1) {
     // Validate units
-    eosio_assert(units > 0, "Invalid number of units, must be greater than 0");
+    eosio::check(units > 0, "Invalid number of units, must be greater than 0");
 
     // Validate sale has that amount of units available
-    eosio_assert(found_sale.units >= units, "Sale doesn't have that many units available");
+    eosio::check(found_sale.units >= units, "Sale doesn't have that many units available");
 
     // Check amount depending on quantity
     const auto found_sale_sub_total = found_sale.quantity.amount * units;
     const auto from_total_offered = quantity.amount * units;
-    eosio_assert(from_total_offered == found_sale_sub_total, "Amount offered doesn't correspond to expected value");
+    eosio::check(from_total_offered == found_sale_sub_total, "Amount offered doesn't correspond to expected value");
   } else {
     // Without trackStock
-    eosio_assert(quantity == found_sale.quantity, "Quantity must be the same as the sale price");
+    eosio::check(quantity == found_sale.quantity, "Quantity must be the same as the sale price");
   }
 
   // Check if community exists
   communities community(_self, _self.value);
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
-  eosio_assert(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate 'from' user belongs to sale community
   auto from_id = gen_uuid(found_sale.community.raw(), from.value);
@@ -833,7 +833,7 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
   const auto &netlink = network.get(from_id, "You can't use transfersale to this sale if you aren't part of the community");
 
   // Validate 'to' user is the sale creator
-  eosio_assert(found_sale.creator == to, "Sale creator and sale doesn't match");
+  eosio::check(found_sale.creator == to, "Sale creator and sale doesn't match");
 
   // Update sale
   if (found_sale.track_stock == 1) {
@@ -862,7 +862,7 @@ void bespiral::deleteobj(std::uint64_t id) {
 
   objectives objective(_self, _self.value);
   auto x = objective.find(id);
-  eosio_assert(x != objective.end(), "Cant find objective with given di");
+  eosio::check(x != objective.end(), "Cant find objective with given di");
   objective.erase(x);
 }
 
@@ -871,7 +871,7 @@ void bespiral::deleteact(std::uint64_t id) {
 
   actions action(_self, _self.value);
   auto found_action = action.find(id);
-  eosio_assert(found_action != action.end(), "Cant find action with given id");
+  eosio::check(found_action != action.end(), "Cant find action with given id");
   action.erase(found_action);
 }
 
@@ -947,7 +947,7 @@ void bespiral::migrateafter(std::uint64_t claim_id, std::uint64_t increment) {
 
 // Get available key
 uint64_t bespiral::get_available_id(std::string table) {
-  eosio_assert(table == "actions" || table == "objectives" || table == "sales" || table == "claims", "Table index not available");
+  eosio::check(table == "actions" || table == "objectives" || table == "sales" || table == "claims", "Table index not available");
 
   // Init indexes table
   indexes default_indexes;

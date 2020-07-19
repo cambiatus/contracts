@@ -16,30 +16,30 @@
 void token::create(eosio::name issuer, eosio::asset max_supply,
                    eosio::asset min_balance, std::string type) {
   auto sym = max_supply.symbol;
-  eosio_assert(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
-  eosio_assert(type == "mcc" || type == "expiry", "type must be 'mcc' or 'expiry'");
+  eosio::check(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
+  eosio::check(type == "mcc" || type == "expiry", "type must be 'mcc' or 'expiry'");
 
   // Find existing community
   bespiral_communities communities(community_account, community_account.value);
   const auto& cmm = communities.get(sym.raw(), "can't find community. BeSpiral Tokens require a community.");
 
-  eosio_assert(sym.is_valid(), "invalid symbol");
-  eosio_assert(max_supply.is_valid(), "invalid max_supply");
-  eosio_assert(max_supply.amount > 0, "max max_supply must be positive");
+  eosio::check(sym.is_valid(), "invalid symbol");
+  eosio::check(max_supply.is_valid(), "invalid max_supply");
+  eosio::check(max_supply.amount > 0, "max max_supply must be positive");
 
   // Community creator must be the one creating the token
   require_auth(cmm.creator);
 
   // MCC only validations
   if (type == "mcc") {
-    eosio_assert(min_balance.is_valid(), "invalid min_balance");
-    eosio_assert(min_balance.amount <= 0, "min_balance must be equal or less than 0");
-    eosio_assert(max_supply.symbol == min_balance.symbol, "unmatched symbols for max_supply and min_balance. They must be the same");
+    eosio::check(min_balance.is_valid(), "invalid min_balance");
+    eosio::check(min_balance.amount <= 0, "min_balance must be equal or less than 0");
+    eosio::check(max_supply.symbol == min_balance.symbol, "unmatched symbols for max_supply and min_balance. They must be the same");
   }
 
   stats statstable(_self, sym.code().raw());
   auto existing = statstable.find(sym.code().raw());
-  eosio_assert(existing  == statstable.end(), "token with this symbol already exists");
+  eosio::check(existing  == statstable.end(), "token with this symbol already exists");
 
   statstable.emplace(_self, [&](auto& s) {
     s.supply.symbol = max_supply.symbol;
@@ -79,11 +79,11 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
    @version 1.0
 */
 void token::update(eosio::asset max_supply, eosio::asset min_balance) {
-  eosio_assert(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
+  eosio::check(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
 
-  eosio_assert(min_balance.is_valid(), "invalid min_balance");
-  eosio_assert(max_supply.is_valid(), "invalid max_supply");
-  eosio_assert(max_supply.amount > 0, "max max_supply must be positive");
+  eosio::check(min_balance.is_valid(), "invalid min_balance");
+  eosio::check(max_supply.is_valid(), "invalid max_supply");
+  eosio::check(max_supply.amount > 0, "max max_supply must be positive");
 
   // Find existing community
   bespiral_communities communities(community_account, community_account.value);
@@ -112,8 +112,8 @@ void token::update(eosio::asset max_supply, eosio::asset min_balance) {
  */
 void token::issue(eosio::name to, eosio::asset quantity, std::string memo) {
   eosio::symbol sym = quantity.symbol;
-  eosio_assert(sym.is_valid(), "invalid symbol name");
-  eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
+  eosio::check(sym.is_valid(), "invalid symbol name");
+  eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
   stats statstable(_self, sym.code().raw());
   const auto& st = statstable.get(sym.code().raw(), "token with given symbol does not exist, create token before issue");
@@ -125,10 +125,10 @@ void token::issue(eosio::name to, eosio::asset quantity, std::string memo) {
     require_auth(_self);
   }
 
-  eosio_assert(quantity.is_valid(), "invalid quantity");
-  eosio_assert(quantity.amount > 0, "must issue positive quantity");
-  eosio_assert(quantity.symbol == st.supply.symbol, "symbol mismatch");
-  eosio_assert(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
+  eosio::check(quantity.is_valid(), "invalid quantity");
+  eosio::check(quantity.amount > 0, "must issue positive quantity");
+  eosio::check(quantity.symbol == st.supply.symbol, "symbol mismatch");
+  eosio::check(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
   statstable.modify(st, _self, [&](auto& s) {
                                  s.supply += quantity;
@@ -148,7 +148,7 @@ void token::issue(eosio::name to, eosio::asset quantity, std::string memo) {
 }
 
 void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo) {
-  eosio_assert(from != to, "cannot transfer to self");
+  eosio::check(from != to, "cannot transfer to self");
 
   // Require auth from self or from contract
   if (has_auth(from)) {
@@ -157,7 +157,7 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
     require_auth(_self);
   }
 
-  eosio_assert(is_account(to), "destination account doesn't exists");
+  eosio::check(is_account(to), "destination account doesn't exists");
 
   // Find symbol stats
   auto sym = quantity.symbol;
@@ -165,21 +165,21 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
   const auto& st = statstable.get(sym.code().raw(), "token with given symbol doesn't exists");
 
   // Validate quantity and memo
-  eosio_assert(quantity.is_valid(), "invalid quantity");
-  eosio_assert(quantity.amount > 0, "quantity must be positive");
-  eosio_assert(quantity.symbol == st.max_supply.symbol, "symbol precision mismatch");
-  eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
+  eosio::check(quantity.is_valid(), "invalid quantity");
+  eosio::check(quantity.amount > 0, "quantity must be positive");
+  eosio::check(quantity.symbol == st.max_supply.symbol, "symbol precision mismatch");
+  eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
   // Check if from belongs to the community
   bespiral_networks network(community_account, community_account.value);
   auto from_id = gen_uuid(quantity.symbol.raw(), from.value);
   auto itr_from = network.find(from_id);
-  eosio_assert(itr_from != network.end(), "from account doesn't belong to the community");
+  eosio::check(itr_from != network.end(), "from account doesn't belong to the community");
 
   // Check if to belongs to the community
   auto to_id = gen_uuid(quantity.symbol.raw(), to.value);
   auto itr_to = network.find(to_id);
-  eosio_assert(itr_to != network.end(), "to account doesn't belong to the community");
+  eosio::check(itr_to != network.end(), "to account doesn't belong to the community");
 
   // Transfer values
   sub_balance(from, quantity, st);
@@ -210,19 +210,19 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
   require_auth(_self);
 
   auto sym = quantity.symbol;
-  eosio_assert(sym.is_valid(), "invalid symbol name");
-  eosio_assert(memo.size() <= 256, "memo has more than 256 bytes");
+  eosio::check(sym.is_valid(), "invalid symbol name");
+  eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
   token::stats statstable(_self, sym.code().raw());
   auto existing = statstable.find(sym.code().raw());
-  eosio_assert(existing != statstable.end(), "token with symbol does not exist");
+  eosio::check(existing != statstable.end(), "token with symbol does not exist");
   const auto& st = *existing;
 
-  eosio_assert(st.type != "mcc", "BeSpiral only retire tokens of the 'expiry' type");
+  eosio::check(st.type != "mcc", "BeSpiral only retire tokens of the 'expiry' type");
 
-  eosio_assert(quantity.is_valid(), "invalid quantity");
-  eosio_assert(quantity.amount > 0, "must retire positive quantity");
-  eosio_assert(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
+  eosio::check(quantity.is_valid(), "invalid quantity");
+  eosio::check(quantity.amount > 0, "must retire positive quantity");
+  eosio::check(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
 
   token::accounts accounts(_self, from.value);
   auto from_account = accounts.get(quantity.symbol.code().raw(), "Can't find the account");
@@ -262,7 +262,7 @@ void token::initacc(eosio::symbol currency, eosio::name account) {
   bespiral_networks network(community_account, community_account.value);
   auto network_id = gen_uuid(currency.raw(), account.value);
   auto itr_net = network.find(network_id);
-  eosio_assert(itr_net != network.end(), "account doesn't belong to the community");
+  eosio::check(itr_net != network.end(), "account doesn't belong to the community");
 
   // Create account table entry
   accounts accounts(_self, account.value);
@@ -279,17 +279,17 @@ void token::initacc(eosio::symbol currency, eosio::name account) {
 
 void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount) {
   // Validate data
-  eosio_assert(currency.is_valid(), "invalid symbol name");
+  eosio::check(currency.is_valid(), "invalid symbol name");
 
   // Validate community
   token::stats statstable(_self, currency.code().raw());
   auto existing = statstable.find(currency.code().raw());
-  eosio_assert(existing != statstable.end(), "token with symbol does not exist");
+  eosio::check(existing != statstable.end(), "token with symbol does not exist");
   const auto& st = *existing;
 
-  eosio_assert(st.type != "mcc", "you can only configure tokens of the 'expiry' type");
-  eosio_assert(currency == renovation_amount.symbol, "symbol precision mismatch");
-  eosio_assert(currency == st.supply.symbol, "symbol precision mismatch");
+  eosio::check(st.type != "mcc", "you can only configure tokens of the 'expiry' type");
+  eosio::check(currency == renovation_amount.symbol, "symbol precision mismatch");
+  eosio::check(currency == st.supply.symbol, "symbol precision mismatch");
 
   // Only the token issuer can configure that
   require_auth(st.issuer);
@@ -312,8 +312,8 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
 }
 
 void token::sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats& st) {
-  eosio_assert(value.is_valid(), "Invalid value");
-  eosio_assert(value.amount > 0, "Can only transfer positive values");
+  eosio::check(value.is_valid(), "Invalid value");
+  eosio::check(value.amount > 0, "Can only transfer positive values");
 
   // Check for existing balance
   token::accounts accounts(_self, owner.value);
@@ -323,7 +323,7 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
   if (st.type == "mcc") {
     // Add balance
     if (from == accounts.end()) {
-      eosio_assert((value.amount * -1) >= st.min_balance.amount, "overdrawn community limit");
+      eosio::check((value.amount * -1) >= st.min_balance.amount, "overdrawn community limit");
 
       accounts.emplace(_self, [&](auto& a) {
                                 a.balance = value;
@@ -332,7 +332,7 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
                               });
     } else {
       auto new_balance = from->balance.amount - value.amount;
-      eosio_assert(new_balance >= st.min_balance.amount, "overdrawn community limit");
+      eosio::check(new_balance >= st.min_balance.amount, "overdrawn community limit");
       accounts.modify(from, _self, [&](auto& a) {
                                      a.balance.amount -= value.amount;
                                      a.last_activity = now();
@@ -343,8 +343,8 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
 
   // Expiry
   if (st.type == "expiry") {
-    eosio_assert(from != accounts.end(), "No balance object found");
-    eosio_assert(from->balance.amount >= value.amount, "overdrawn balance");
+    eosio::check(from != accounts.end(), "No balance object found");
+    eosio::check(from->balance.amount >= value.amount, "overdrawn balance");
     accounts.modify(from, _self, [&](auto& a) {
                                    a.balance -= value;
                                    a.last_activity = now();
@@ -354,8 +354,8 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
 }
 
 void token::add_balance(eosio::name recipient, eosio::asset value, const token::currency_stats& st) {
-  eosio_assert(value.is_valid(), "Invalid value");
-  eosio_assert(value.amount > 0, "Can only transfer positive values");
+  eosio::check(value.is_valid(), "Invalid value");
+  eosio::check(value.amount > 0, "Can only transfer positive values");
 
   accounts accounts(_self, recipient.value);
   auto to = accounts.find(value.symbol.code().raw());
