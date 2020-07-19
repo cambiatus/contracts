@@ -1,8 +1,6 @@
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/asset.hpp>
-#include <eosiolib/system.h>
-#include <eosiolib/singleton.hpp>
-#include <eosiolib/crypto.h>
+#include <eosio/eosio.hpp>
+#include <eosio/asset.hpp>
+#include <eosio/singleton.hpp>
 
 class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contract {
  public:
