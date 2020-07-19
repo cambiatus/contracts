@@ -53,3 +53,7 @@ std::vector<std::string> split(std::string str, std::string delim) {
   }
   return result;
 }
+
+uint32_t now() {
+  return eosio::current_time_point().sec_since_epoch();
+}
