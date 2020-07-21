@@ -1,6 +1,7 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Jun 17 13:00:07 2020",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
     "version": "eosio::abi/1.1",
+    "types": [],
     "structs": [
         {
             "name": "action",
@@ -713,7 +714,6 @@
             ]
         }
     ],
-    "types": [],
     "actions": [
         {
             "name": "claimaction",
@@ -723,7 +723,7 @@
         {
             "name": "clean",
             "type": "clean",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: clean placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "create",
@@ -738,12 +738,12 @@
         {
             "name": "deleteact",
             "type": "deleteact",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: deleteact placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "deleteobj",
             "type": "deleteobj",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: deleteobj placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "deletesale",
@@ -753,12 +753,12 @@
         {
             "name": "migrate",
             "type": "migrate",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: migrate placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "migrateafter",
             "type": "migrateafter",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: migrateafter placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "netlink",
@@ -778,7 +778,7 @@
         {
             "name": "setindices",
             "type": "setindices",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: setindices placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "transfersale",
@@ -798,12 +798,12 @@
         {
             "name": "updobjective",
             "type": "updobjective",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: updobjective placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "upsertaction",
             "type": "upsertaction",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: upsertaction placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "verifyaction",
@@ -903,6 +903,5 @@
             "body": "---\nspec-version: 0.0.1\ntitle: Data Ownership\nsummary: The smart contract promises to only use the data in accordance of the terms defined in the Ricardian Contract, now and at all future dates.\nicon:"
         }
     ],
-    "variants": [],
-    "abi_extensions": []
+    "variants": []
 }

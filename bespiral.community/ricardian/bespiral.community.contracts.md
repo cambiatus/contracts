@@ -95,3 +95,59 @@ spec-version: 0.0.1
 title: Process a sale transfer
 summary: Enable different users to exchange value for a given sale. It requires you to send: `sale_id`, `from`, `to`, `quantity` and `units`. No information is going to be saved, only used to update previous sale information. Note that `from` is the one interested in the sale, `to` the sale creator, `quantity` is related to price and `units` to number of items available.
 icon:
+
+<h1 class="contract">updobjective</h1>
+---
+spec-version: 0.0.1
+title: updobjective placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">upsertaction</h1>
+---
+spec-version: 0.0.1
+title: upsertaction placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">setindices</h1>
+---
+spec-version: 0.0.1
+title: setindices placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">deleteobj</h1>
+---
+spec-version: 0.0.1
+title: deleteobj placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">deleteact</h1>
+---
+spec-version: 0.0.1
+title: deleteact placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">migrate</h1>
+---
+spec-version: 0.0.1
+title: migrate placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">clean</h1>
+---
+spec-version: 0.0.1
+title: clean placeholder
+summary: placeholder
+icon:
+
+<h1 class="contract">migrateafter</h1>
+---
+spec-version: 0.0.1
+title: migrateafter placeholder
+summary: placeholder
+icon:

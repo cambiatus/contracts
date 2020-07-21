@@ -1,7 +1,6 @@
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/asset.hpp>
-#include <eosiolib/transaction.hpp>
-#include <eosiolib/system.h>
+#include <eosio/eosio.hpp>
+#include <eosio/asset.hpp>
+#include <eosio/transaction.hpp>
 
 class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
  public:
