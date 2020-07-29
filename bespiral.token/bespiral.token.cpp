@@ -118,12 +118,8 @@ void token::issue(eosio::name to, eosio::asset quantity, std::string memo) {
   stats statstable(_self, sym.code().raw());
   const auto& st = statstable.get(sym.code().raw(), "token with given symbol does not exist, create token before issue");
 
-  // Require auth from the bespiral community contract or the issuer
-  if (has_auth(st.issuer)) {
-    require_auth(st.issuer);
-  } else {
-    require_auth(_self);
-  }
+  // Require auth from the bespiral community contract
+  require_auth(_self);
 
   eosio::check(quantity.is_valid(), "invalid quantity");
   eosio::check(quantity.amount > 0, "must issue positive quantity");
@@ -218,7 +214,7 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
   eosio::check(existing != statstable.end(), "token with symbol does not exist");
   const auto& st = *existing;
 
-  eosio::check(st.type != "mcc", "BeSpiral only retire tokens of the 'expiry' type");
+  // eosio::check(st.type != "mcc", "BeSpiral only retire tokens of the 'expiry' type");
 
   eosio::check(quantity.is_valid(), "invalid quantity");
   eosio::check(quantity.amount > 0, "must retire positive quantity");
