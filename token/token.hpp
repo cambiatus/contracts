@@ -2,6 +2,9 @@
 #include <eosio/asset.hpp>
 #include <eosio/transaction.hpp>
 
+#define TOSTR_(T) #T
+#define TOSTR(T) TOSTR_(T)
+
 class [[eosio::contract("cambiatus.token")]] token : public eosio::contract
 {
 public:
@@ -80,7 +83,8 @@ public:
   token::expiry_options get_expiration_opts(const token::currency_stats &st);
 };
 
-const auto community_account = eosio::name{"cambiatus.cm"};
+const auto community_account = eosio::name{TOSTR(__COMMUNITY_ACCOUNT__)};
+
 struct community
 {
   eosio::symbol symbol;

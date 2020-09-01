@@ -2,6 +2,9 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
+#define TOSTR_(T) #T
+#define TOSTR(T) TOSTR_(T)
+
 class [[eosio::contract("cambiatus.community")]] bespiral : public eosio::contract
 {
 public:
@@ -294,8 +297,9 @@ public:
   bespiral(eosio::name receiver, eosio::name code, eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}
 };
 
+const auto currency_account = eosio::name{TOSTR(__TOKEN_ACCOUNT__)};
+
 // Add global reference for a table from the token contract
-const auto currency_account = eosio::name{"cambiatus.tk"};
 struct currency_stats
 {
   eosio::asset supply;
