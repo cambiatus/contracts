@@ -2,12 +2,13 @@
 #include <eosio/asset.hpp>
 #include <eosio/transaction.hpp>
 
-class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
- public:
-
+class [[eosio::contract("cambiatus.token")]] token : public eosio::contract
+{
+public:
   using contract::contract;
 
-  TABLE account {
+  TABLE account
+  {
     eosio::asset balance;
     uint32_t last_activity;
 
@@ -16,7 +17,8 @@ class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
     EOSLIB_SERIALIZE(account, (balance)(last_activity));
   };
 
-  TABLE currency_stats {
+  TABLE currency_stats
+  {
     eosio::asset supply;
     eosio::asset max_supply;
     eosio::asset min_balance;
@@ -28,7 +30,8 @@ class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
     EOSLIB_SERIALIZE(currency_stats, (supply)(max_supply)(min_balance)(issuer)(type));
   };
 
-  TABLE expiry_options {
+  TABLE expiry_options
+  {
     eosio::symbol currency;
     std::uint32_t expiration_period;
     eosio::asset renovation_amount;
@@ -66,33 +69,39 @@ class [[eosio::contract("bespiral.token")]] token : public eosio::contract {
   /// Init empty balance for a given account
   ACTION initacc(eosio::symbol currency, eosio::name account);
 
-  typedef eosio::multi_index< eosio::name{"accounts"}, account > accounts;
-  typedef eosio::multi_index< eosio::name{"stat"}, currency_stats > stats;
-  typedef eosio::multi_index< eosio::name{"expiryopts"}, expiry_options > expiry_opts;
+  typedef eosio::multi_index<eosio::name{"accounts"}, account> accounts;
+  typedef eosio::multi_index<eosio::name{"stat"}, currency_stats> stats;
+  typedef eosio::multi_index<eosio::name{"expiryopts"}, expiry_options> expiry_opts;
 
-  void sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats& st);
-  void add_balance(eosio::name owner, eosio::asset value, const token::currency_stats& st);
-  void renovate_expiration(eosio::name account, const token::currency_stats& st);
+  void sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st);
+  void add_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st);
+  void renovate_expiration(eosio::name account, const token::currency_stats &st);
 
-  token::expiry_options get_expiration_opts(const token::currency_stats& st);
+  token::expiry_options get_expiration_opts(const token::currency_stats &st);
 };
 
-const auto community_account = eosio::name{"bes.cmm"};
-struct community {
+const auto community_account = eosio::name{"cambiatus.cm"};
+struct community
+{
   eosio::symbol symbol;
 
   eosio::name creator;
   std::string logo;
   std::string title;
   std::string description;
+
   eosio::asset inviter_reward;
   eosio::asset invited_reward;
+
+  std::uint8_t has_objectives;
+  std::uint8_t has_shop;
 
   std::uint64_t primary_key() const { return symbol.raw(); }
 };
 typedef eosio::multi_index<eosio::name{"community"}, community> bespiral_communities;
 
-struct network {
+struct network
+{
   std::uint64_t id;
 
   eosio::symbol community;
