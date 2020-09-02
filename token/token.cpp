@@ -1,8 +1,8 @@
-#include "bespiral.token.hpp"
+#include "token.hpp"
 #include "../utils/utils.cpp"
 
 /**
-   Creates a BeSpiral token.
+   Creates a Cambiatus token.
    @author Julien Lucca
    @version 1.0
 
@@ -14,14 +14,15 @@
    3) Symbol must be unique and the same for both the community and the token
  */
 void token::create(eosio::name issuer, eosio::asset max_supply,
-                   eosio::asset min_balance, std::string type) {
+                   eosio::asset min_balance, std::string type)
+{
   auto sym = max_supply.symbol;
   eosio::check(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
   eosio::check(type == "mcc" || type == "expiry", "type must be 'mcc' or 'expiry'");
 
   // Find existing community
   bespiral_communities communities(community_account, community_account.value);
-  const auto& cmm = communities.get(sym.raw(), "can't find community. BeSpiral Tokens require a community.");
+  const auto &cmm = communities.get(sym.raw(), "can't find community. BeSpiral Tokens require a community.");
 
   eosio::check(sym.is_valid(), "invalid symbol");
   eosio::check(max_supply.is_valid(), "invalid max_supply");
@@ -31,7 +32,8 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
   require_auth(cmm.creator);
 
   // MCC only validations
-  if (type == "mcc") {
+  if (type == "mcc")
+  {
     eosio::check(min_balance.is_valid(), "invalid min_balance");
     eosio::check(min_balance.amount <= 0, "min_balance must be equal or less than 0");
     eosio::check(max_supply.symbol == min_balance.symbol, "unmatched symbols for max_supply and min_balance. They must be the same");
@@ -39,9 +41,9 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
 
   stats statstable(_self, sym.code().raw());
   auto existing = statstable.find(sym.code().raw());
-  eosio::check(existing  == statstable.end(), "token with this symbol already exists");
+  eosio::check(existing == statstable.end(), "token with this symbol already exists");
 
-  statstable.emplace(_self, [&](auto& s) {
+  statstable.emplace(_self, [&](auto &s) {
     s.supply.symbol = max_supply.symbol;
     s.max_supply = max_supply;
     s.min_balance = min_balance;
@@ -53,32 +55,32 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
   require_recipient(cmm.creator);
 
   // Netlink issuer
-  if (issuer != cmm.creator) {
+  if (issuer != cmm.creator)
+  {
     require_recipient(issuer);
     eosio::action netlink_issuer = eosio::action(eosio::permission_level{cmm.creator, eosio::name{"active"}}, // Permission
-                                                 community_account, // Account
-                                                 eosio::name{"netlink"}, // Action
+                                                 community_account,                                           // Account
+                                                 eosio::name{"netlink"},                                      // Action
                                                  // cmm_asset, new_user, inviter
-                                                 std::make_tuple(max_supply, issuer, cmm.creator)
-                                                 );
+                                                 std::make_tuple(max_supply, issuer, cmm.creator));
     netlink_issuer.send();
   }
 
   // Create new balance for the creator
   accounts accounts(_self, issuer.value);
-  accounts.emplace(_self, [&](auto& a) {
-                            a.balance = eosio::asset(0, max_supply.symbol);
-                            a.last_activity = now();
-                          });
+  accounts.emplace(_self, [&](auto &a) {
+    a.balance = eosio::asset(0, max_supply.symbol);
+    a.last_activity = now();
+  });
 }
-
 
 /**
    Update token configurations
    @author Julien Lucca
    @version 1.0
 */
-void token::update(eosio::asset max_supply, eosio::asset min_balance) {
+void token::update(eosio::asset max_supply, eosio::asset min_balance)
+{
   eosio::check(max_supply.symbol == min_balance.symbol, "All assets must share the same symbol");
 
   eosio::check(min_balance.is_valid(), "invalid min_balance");
@@ -87,18 +89,18 @@ void token::update(eosio::asset max_supply, eosio::asset min_balance) {
 
   // Find existing community
   bespiral_communities communities(community_account, community_account.value);
-  const auto& cmm = communities.get(max_supply.symbol.raw(), "can't find community. BeSpiral Tokens require a community.");
+  const auto &cmm = communities.get(max_supply.symbol.raw(), "can't find community. BeSpiral Tokens require a community.");
 
   // Find token stats
   stats statstable(_self, max_supply.symbol.code().raw());
-  const auto& st = statstable.get(min_balance.symbol.code().raw(), "token with given symbol does not exist, create token before issue");
+  const auto &st = statstable.get(min_balance.symbol.code().raw(), "token with given symbol does not exist, create token before issue");
 
   require_auth(st.issuer);
 
-  statstable.modify(st, _self, [&](auto& s) {
-                                 s.max_supply = max_supply;
-                                 s.min_balance = min_balance;
-                               });
+  statstable.modify(st, _self, [&](auto &s) {
+    s.max_supply = max_supply;
+    s.min_balance = min_balance;
+  });
 }
 
 /**
@@ -110,13 +112,14 @@ void token::update(eosio::asset max_supply, eosio::asset min_balance) {
 
    You can choose to send the newly minted tokens to a specific account.
  */
-void token::issue(eosio::name to, eosio::asset quantity, std::string memo) {
+void token::issue(eosio::name to, eosio::asset quantity, std::string memo)
+{
   eosio::symbol sym = quantity.symbol;
   eosio::check(sym.is_valid(), "invalid symbol name");
   eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
   stats statstable(_self, sym.code().raw());
-  const auto& st = statstable.get(sym.code().raw(), "token with given symbol does not exist, create token before issue");
+  const auto &st = statstable.get(sym.code().raw(), "token with given symbol does not exist, create token before issue");
 
   // Require auth from the bespiral community contract
   require_auth(_self);
@@ -126,30 +129,34 @@ void token::issue(eosio::name to, eosio::asset quantity, std::string memo) {
   eosio::check(quantity.symbol == st.supply.symbol, "symbol mismatch");
   eosio::check(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
-  statstable.modify(st, _self, [&](auto& s) {
-                                 s.supply += quantity;
-                               });
+  statstable.modify(st, _self, [&](auto &s) {
+    s.supply += quantity;
+  });
 
   add_balance(st.issuer, quantity, st);
 
-  if (to != st.issuer) {
+  if (to != st.issuer)
+  {
     require_recipient(st.issuer);
 
     SEND_INLINE_ACTION(*this,
                        transfer,
-                       { _self, eosio::name{"active"}},
-                       { st.issuer, to, quantity, memo}
-    );
+                       {_self, eosio::name{"active"}},
+                       {st.issuer, to, quantity, memo});
   }
 }
 
-void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo) {
+void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo)
+{
   eosio::check(from != to, "cannot transfer to self");
 
   // Require auth from self or from contract
-  if (has_auth(from)) {
+  if (has_auth(from))
+  {
     require_auth(from);
-  } else {
+  }
+  else
+  {
     require_auth(_self);
   }
 
@@ -157,8 +164,8 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
 
   // Find symbol stats
   auto sym = quantity.symbol;
-  stats statstable( _self, sym.code().raw() );
-  const auto& st = statstable.get(sym.code().raw(), "token with given symbol doesn't exists");
+  stats statstable(_self, sym.code().raw());
+  const auto &st = statstable.get(sym.code().raw(), "token with given symbol doesn't exists");
 
   // Validate quantity and memo
   eosio::check(quantity.is_valid(), "invalid quantity");
@@ -182,13 +189,14 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
   add_balance(to, quantity, st);
 
   // Schedule retirement
-  if (st.type == "expiry") {
+  if (st.type == "expiry")
+  {
     token::expiry_options opts = get_expiration_opts(st);
     std::string memo = "Your tokens expired! You need to use them within " + std::to_string(opts.expiration_period) + " seconds!";
     eosio::transaction retire_transaction{};
     retire_transaction.actions.emplace_back(eosio::permission_level{_self, eosio::name{"active"}}, // Permission
-                                            _self, // Account
-                                            eosio::name{"retire"}, // Action
+                                            _self,                                                 // Account
+                                            eosio::name{"retire"},                                 // Action
                                             // Params: from, quantity, memo
                                             std::make_tuple(to, quantity, memo));
 
@@ -202,7 +210,8 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
   It can only be called and signed from the contract itself and it is used by the expiry feature.
   It removes a certain quantity of tokens out of the circulation if the owner doesn't use it
  */
-void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
+void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
+{
   require_auth(_self);
 
   auto sym = quantity.symbol;
@@ -212,7 +221,7 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
   token::stats statstable(_self, sym.code().raw());
   auto existing = statstable.find(sym.code().raw());
   eosio::check(existing != statstable.end(), "token with symbol does not exist");
-  const auto& st = *existing;
+  const auto &st = *existing;
 
   // eosio::check(st.type != "mcc", "BeSpiral only retire tokens of the 'expiry' type");
 
@@ -227,12 +236,14 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
   token::expiry_options opts = get_expiration_opts(st);
 
   // Do nothing if it isn't expired yet
-  if (from_account.last_activity + opts.expiration_period < now()) {
+  if (from_account.last_activity + opts.expiration_period < now())
+  {
     return;
   }
 
   // When the quantity is bigger, just invalidates what the user have
-  if (from_account.balance >= quantity) {
+  if (from_account.balance >= quantity)
+  {
     quantity = from_account.balance;
   }
 
@@ -240,18 +251,19 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo) {
   sub_balance(from, quantity, st);
 
   // Decrease available supply
-  statstable.modify(st, _self, [&]( auto& s ) {
-                                 s.supply -= quantity;
-                               });
+  statstable.modify(st, _self, [&](auto &s) {
+    s.supply -= quantity;
+  });
 }
 
-void token::initacc(eosio::symbol currency, eosio::name account) {
+void token::initacc(eosio::symbol currency, eosio::name account)
+{
   // Validate auth -- can only be called by the BeSpiral contracts
   require_auth(_self);
 
   // Make sure token exists on the stats table
   stats statstable(_self, currency.code().raw());
-  const auto& st = statstable.get(currency.code().raw(), "token with given symbol does not exist, create token before initacc");
+  const auto &st = statstable.get(currency.code().raw(), "token with given symbol does not exist, create token before initacc");
 
   // Make sure account belongs to the given community
   // Check if from belongs to the community
@@ -264,16 +276,17 @@ void token::initacc(eosio::symbol currency, eosio::name account) {
   accounts accounts(_self, account.value);
   auto found_account = accounts.find(currency.code().raw());
 
-  if (found_account == accounts.end()) {
-    accounts.emplace(_self, [&](auto& a) {
-                              a.balance = eosio::asset(0, st.supply.symbol);
-                              a.last_activity = now();
-                            });
+  if (found_account == accounts.end())
+  {
+    accounts.emplace(_self, [&](auto &a) {
+      a.balance = eosio::asset(0, st.supply.symbol);
+      a.last_activity = now();
+    });
   }
 }
 
-
-void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount) {
+void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount)
+{
   // Validate data
   eosio::check(currency.is_valid(), "invalid symbol name");
 
@@ -281,7 +294,7 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   token::stats statstable(_self, currency.code().raw());
   auto existing = statstable.find(currency.code().raw());
   eosio::check(existing != statstable.end(), "token with symbol does not exist");
-  const auto& st = *existing;
+  const auto &st = *existing;
 
   eosio::check(st.type != "mcc", "you can only configure tokens of the 'expiry' type");
   eosio::check(currency == renovation_amount.symbol, "symbol precision mismatch");
@@ -294,20 +307,24 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   token::expiry_opts opts(_self, _self.value);
   auto old_opts = opts.find(currency.code().raw());
 
-  if (old_opts == opts.end()) {
-    opts.emplace(_self, [&](auto& a) {
-                          a.expiration_period = expiration_period;
-                          a.renovation_amount = renovation_amount;
-                        });
-  } else {
-    opts.modify(old_opts, _self, [&](auto& a) {
-                                   a.expiration_period = expiration_period;
-                                   a.renovation_amount = renovation_amount;
-                                 });
+  if (old_opts == opts.end())
+  {
+    opts.emplace(_self, [&](auto &a) {
+      a.expiration_period = expiration_period;
+      a.renovation_amount = renovation_amount;
+    });
+  }
+  else
+  {
+    opts.modify(old_opts, _self, [&](auto &a) {
+      a.expiration_period = expiration_period;
+      a.renovation_amount = renovation_amount;
+    });
   }
 }
 
-void token::sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats& st) {
+void token::sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st)
+{
   eosio::check(value.is_valid(), "Invalid value");
   eosio::check(value.amount > 0, "Can only transfer positive values");
 
@@ -316,63 +333,73 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
   auto from = accounts.find(value.symbol.code().raw());
 
   // MCC
-  if (st.type == "mcc") {
+  if (st.type == "mcc")
+  {
     // Add balance
-    if (from == accounts.end()) {
+    if (from == accounts.end())
+    {
       eosio::check((value.amount * -1) >= st.min_balance.amount, "overdrawn community limit");
 
-      accounts.emplace(_self, [&](auto& a) {
-                                a.balance = value;
-                                a.balance.amount *= -1;
-                                a.last_activity = now();
-                              });
-    } else {
+      accounts.emplace(_self, [&](auto &a) {
+        a.balance = value;
+        a.balance.amount *= -1;
+        a.last_activity = now();
+      });
+    }
+    else
+    {
       auto new_balance = from->balance.amount - value.amount;
       eosio::check(new_balance >= st.min_balance.amount, "overdrawn community limit");
-      accounts.modify(from, _self, [&](auto& a) {
-                                     a.balance.amount -= value.amount;
-                                     a.last_activity = now();
-                                   });
+      accounts.modify(from, _self, [&](auto &a) {
+        a.balance.amount -= value.amount;
+        a.last_activity = now();
+      });
     }
     return;
   }
 
   // Expiry
-  if (st.type == "expiry") {
+  if (st.type == "expiry")
+  {
     eosio::check(from != accounts.end(), "No balance object found");
     eosio::check(from->balance.amount >= value.amount, "overdrawn balance");
-    accounts.modify(from, _self, [&](auto& a) {
-                                   a.balance -= value;
-                                   a.last_activity = now();
-                                 });
+    accounts.modify(from, _self, [&](auto &a) {
+      a.balance -= value;
+      a.last_activity = now();
+    });
     return;
   }
 }
 
-void token::add_balance(eosio::name recipient, eosio::asset value, const token::currency_stats& st) {
+void token::add_balance(eosio::name recipient, eosio::asset value, const token::currency_stats &st)
+{
   eosio::check(value.is_valid(), "Invalid value");
   eosio::check(value.amount > 0, "Can only transfer positive values");
 
   accounts accounts(_self, recipient.value);
   auto to = accounts.find(value.symbol.code().raw());
 
-  if (to == accounts.end()) {
-    accounts.emplace(_self, [&](auto& a) {
-                              a.balance = value;
-                              a.last_activity = now();
-                            });
-  } else {
-    accounts.modify(to, _self, [&](auto& a) {
-                                 a.balance += value;
-                                 a.last_activity = now();
-                               });
+  if (to == accounts.end())
+  {
+    accounts.emplace(_self, [&](auto &a) {
+      a.balance = value;
+      a.last_activity = now();
+    });
+  }
+  else
+  {
+    accounts.modify(to, _self, [&](auto &a) {
+      a.balance += value;
+      a.last_activity = now();
+    });
   }
 }
 
 /*
   Gets the configuration for a given community. If it doesn't have any, it uses the contract default
  */
-token::expiry_options token::get_expiration_opts(const token::currency_stats& st) {
+token::expiry_options token::get_expiration_opts(const token::currency_stats &st)
+{
   // Default expiration values
   // 90 days * 24 hours * 60 minutes * 60 seconds
   std::uint32_t validation_period = 7776000;
@@ -381,8 +408,9 @@ token::expiry_options token::get_expiration_opts(const token::currency_stats& st
   token::expiry_opts opts(_self, _self.value);
   auto existing_opts = opts.find(st.supply.symbol.code().raw());
 
-  if (existing_opts != opts.end()) {
-    const auto& exp_opts = *existing_opts;
+  if (existing_opts != opts.end())
+  {
+    const auto &exp_opts = *existing_opts;
     validation_period = exp_opts.expiration_period;
     minimum_amount = exp_opts.renovation_amount;
   }
@@ -394,6 +422,4 @@ token::expiry_options token::get_expiration_opts(const token::currency_stats& st
 }
 
 EOSIO_DISPATCH(token,
-               (create)(update)(issue)
-               (transfer)(retire)(setexpiry)
-               (initacc));
+               (create)(update)(issue)(transfer)(retire)(setexpiry)(initacc));

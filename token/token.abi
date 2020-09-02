@@ -192,37 +192,37 @@
         {
             "name": "create",
             "type": "create",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: create placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         },
         {
             "name": "initacc",
             "type": "initacc",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: initacc placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         },
         {
             "name": "issue",
             "type": "issue",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: issue placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         },
         {
             "name": "retire",
             "type": "retire",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: retire placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         },
         {
             "name": "setexpiry",
             "type": "setexpiry",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: setexpiry placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         },
         {
             "name": "transfer",
             "type": "transfer",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: transfer placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         },
         {
             "name": "update",
             "type": "update",
-            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: update placeholder\nsummary: placeholder\nicon:"
+            "ricardian_contract": ""
         }
     ],
     "tables": [
@@ -248,11 +248,6 @@
             "key_types": []
         }
     ],
-    "ricardian_clauses": [
-        {
-            "id": "Data Storage",
-            "body": "---\nspec-version: 0.0.1\ntitle: General Data Storage\nsummary: This smart contract will store data added by the user. The user consents to the storage of this data by signing the transaction.\nicon:"
-        }
-    ],
+    "ricardian_clauses": [],
     "variants": []
 }

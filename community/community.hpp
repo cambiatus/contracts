@@ -2,12 +2,16 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
-class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contract {
- public:
+#define TOSTR_(T) #T
+#define TOSTR(T) TOSTR_(T)
 
+class [[eosio::contract("cambiatus.community")]] bespiral : public eosio::contract
+{
+public:
   using contract::contract;
 
-  TABLE community {
+  TABLE community
+  {
     eosio::symbol symbol;
 
     eosio::name creator;
@@ -24,12 +28,11 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     uint64_t primary_key() const { return symbol.raw(); };
 
     EOSLIB_SERIALIZE(community,
-                     (symbol)(creator)(logo)(name)(description)
-                     (inviter_reward)(invited_reward)
-                     (has_objectives)(has_shop));
+                     (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop));
   };
 
-  TABLE network {
+  TABLE network
+  {
     std::uint64_t id;
 
     eosio::symbol community;
@@ -44,7 +47,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                      (id)(community)(invited_user)(invited_by));
   };
 
-  TABLE objective {
+  TABLE objective
+  {
     std::uint64_t id;
     std::string description;
     eosio::symbol community;
@@ -55,20 +59,20 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     std::uint64_t by_cmm() const { return community.raw(); }
 
     EOSLIB_SERIALIZE(objective,
-                     (id)(description)
-                     (community)(creator));
+                     (id)(description)(community)(creator));
   };
 
-  TABLE action {
+  TABLE action
+  {
     std::uint64_t id;
     std::uint64_t objective_id;
     std::string description;
     eosio::asset reward;
     eosio::asset verifier_reward;
     std::uint64_t deadline; // Max date where it can be claimed
-    std::uint64_t usages; // Max usages
+    std::uint64_t usages;   // Max usages
     std::uint64_t usages_left;
-    std::uint64_t verifications; // # verifications needed
+    std::uint64_t verifications;   // # verifications needed
     std::string verification_type; // Can be 'automatic' and 'claimable'
     std::uint8_t is_completed;
     eosio::name creator;
@@ -77,13 +81,11 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     std::uint64_t by_objective() const { return objective_id; }
 
     EOSLIB_SERIALIZE(action,
-                     (id)(objective_id)(description)(reward)
-                     (verifier_reward)(deadline)(usages)
-                     (usages_left)(verifications)
-                     (verification_type)(is_completed)(creator));
+                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator));
   };
 
-  TABLE action_validator {
+  TABLE action_validator
+  {
     std::uint64_t id;
     std::uint64_t action_id;
     eosio::name validator;
@@ -95,7 +97,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                      (id)(action_id)(validator));
   };
 
-  TABLE claim {
+  TABLE claim
+  {
     std::uint64_t id;
     std::uint64_t action_id;
     eosio::name claimer;
@@ -108,7 +111,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                      (id)(action_id)(claimer)(status));
   };
 
-  TABLE check {
+  TABLE check
+  {
     std::uint64_t id;
     std::uint64_t claim_id;
     eosio::name validator;
@@ -121,7 +125,8 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
                      (id)(claim_id)(validator)(is_verified));
   };
 
-  TABLE sale {
+  TABLE sale
+  {
     std::uint64_t id;
     eosio::name creator;
     eosio::symbol community;
@@ -129,20 +134,19 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
     std::string description;
     std::string image;
     std::uint8_t track_stock;
-    eosio::asset quantity;    // Actual price of product/service
-    std::uint64_t units;      // How many are available
+    eosio::asset quantity; // Actual price of product/service
+    std::uint64_t units;   // How many are available
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_cmm() const { return community.raw(); }
     std::uint64_t by_user() const { return creator.value; }
 
     EOSLIB_SERIALIZE(sale,
-                     (id)(creator)(community)
-                     (title)(description)(image)
-                     (track_stock)(quantity)(units));
+                     (id)(creator)(community)(title)(description)(image)(track_stock)(quantity)(units));
   };
 
-  TABLE indexes {
+  TABLE indexes
+  {
     std::uint64_t last_used_sale_id;
     std::uint64_t last_used_objective_id;
     std::uint64_t last_used_action_id;
@@ -219,9 +223,9 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   /// Offchain event hook for when a transfer occours in our shop
   ACTION transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units);
 
-	/// @abi action
-	/// Set the indices for a chain
-	ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
+  /// @abi action
+  /// Set the indices for a chain
+  ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
 
   /// @abi action
   /// Deletes an objective
@@ -244,46 +248,46 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   typedef eosio::multi_index<eosio::name{"network"},
                              bespiral::network,
                              eosio::indexed_by<eosio::name{"usersbycmm"},
-                                               eosio::const_mem_fun<bespiral::network, uint64_t, &bespiral::network::users_by_cmm>>
-                             > networks;
+                                               eosio::const_mem_fun<bespiral::network, uint64_t, &bespiral::network::users_by_cmm>>>
+      networks;
 
   typedef eosio::multi_index<eosio::name{"objective"},
                              bespiral::objective,
                              eosio::indexed_by<eosio::name{"bycmm"},
-                                               eosio::const_mem_fun<bespiral::objective, uint64_t, &bespiral::objective::by_cmm>>
-                             > objectives;
+                                               eosio::const_mem_fun<bespiral::objective, uint64_t, &bespiral::objective::by_cmm>>>
+      objectives;
 
   typedef eosio::multi_index<eosio::name{"action"},
                              bespiral::action,
                              eosio::indexed_by<eosio::name{"byobj"},
-                                               eosio::const_mem_fun<bespiral::action, uint64_t, &bespiral::action::by_objective>>
-                             > actions;
+                                               eosio::const_mem_fun<bespiral::action, uint64_t, &bespiral::action::by_objective>>>
+      actions;
 
   typedef eosio::multi_index<eosio::name{"validator"},
                              bespiral::action_validator,
                              eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<bespiral::action_validator, uint64_t, &bespiral::action_validator::by_action>>
-                             > validators;
+                                               eosio::const_mem_fun<bespiral::action_validator, uint64_t, &bespiral::action_validator::by_action>>>
+      validators;
 
   typedef eosio::multi_index<eosio::name{"claim"},
                              bespiral::claim,
                              eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<bespiral::claim, uint64_t, &bespiral::claim::by_action>>
-                             > claims;
+                                               eosio::const_mem_fun<bespiral::claim, uint64_t, &bespiral::claim::by_action>>>
+      claims;
 
   typedef eosio::multi_index<eosio::name{"check"},
                              bespiral::check,
                              eosio::indexed_by<eosio::name{"byclaim"},
-                                               eosio::const_mem_fun<bespiral::check, uint64_t, &bespiral::check::by_claim>>
-                             > checks;
+                                               eosio::const_mem_fun<bespiral::check, uint64_t, &bespiral::check::by_claim>>>
+      checks;
 
   typedef eosio::multi_index<eosio::name{"sale"},
                              bespiral::sale,
                              eosio::indexed_by<eosio::name{"bycmm"},
                                                eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_cmm>>,
                              eosio::indexed_by<eosio::name{"byuser"},
-                                               eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>
-                            > sales;
+                                               eosio::const_mem_fun<bespiral::sale, uint64_t, &bespiral::sale::by_user>>>
+      sales;
 
   typedef eosio::singleton<eosio::name{"indexes"}, bespiral::indexes> item_indexes;
 
@@ -293,9 +297,11 @@ class [[eosio::contract("bespiral.community")]] bespiral : public eosio::contrac
   bespiral(eosio::name receiver, eosio::name code, eosio::datastream<const char *> ds) : contract(receiver, code, ds), curr_indexes(_self, _self.value) {}
 };
 
+const auto currency_account = eosio::name{TOSTR(__TOKEN_ACCOUNT__)};
+
 // Add global reference for a table from the token contract
-const auto currency_account = eosio::name{"bes.token"};
-struct currency_stats {
+struct currency_stats
+{
   eosio::asset supply;
   eosio::asset max_supply;
   eosio::asset min_balance;
