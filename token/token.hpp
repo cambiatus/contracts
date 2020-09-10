@@ -70,7 +70,7 @@ public:
 
   /// @abi action
   /// Init empty balance for a given account
-  ACTION initacc(eosio::symbol currency, eosio::name account);
+  ACTION initacc(eosio::symbol currency, eosio::name account, eosio::name inviter);
 
   typedef eosio::multi_index<eosio::name{"accounts"}, account> accounts;
   typedef eosio::multi_index<eosio::name{"stat"}, currency_stats> stats;

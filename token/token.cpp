@@ -256,10 +256,18 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
   });
 }
 
-void token::initacc(eosio::symbol currency, eosio::name account)
+void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inviter)
 {
-  // Validate auth -- can only be called by the BeSpiral contracts
-  require_auth(_self);
+  // Validate auth -- can only be called by the Cambiatus contracts
+  // require_auth(_self);
+  if (eosio::get_sender() == community_account)
+  {
+    require_auth(inviter);
+  }
+  else
+  {
+    require_auth(_self);
+  }
 
   // Make sure token exists on the stats table
   stats statstable(_self, currency.code().raw());
@@ -310,6 +318,7 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   if (old_opts == opts.end())
   {
     opts.emplace(_self, [&](auto &a) {
+      a.currency = currency;
       a.expiration_period = expiration_period;
       a.renovation_amount = renovation_amount;
     });
@@ -317,6 +326,7 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   else
   {
     opts.modify(old_opts, _self, [&](auto &a) {
+      a.currency = currency;
       a.expiration_period = expiration_period;
       a.renovation_amount = renovation_amount;
     });
