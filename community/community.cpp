@@ -1,10 +1,10 @@
 #include "community.hpp"
 #include "../utils/utils.cpp"
 
-void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
-                      std::string name, std::string description,
-                      eosio::asset inviter_reward, eosio::asset invited_reward,
-                      std::uint8_t has_objectives, std::uint8_t has_shop)
+void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
+                       std::string name, std::string description,
+                       eosio::asset inviter_reward, eosio::asset invited_reward,
+                       std::uint8_t has_objectives, std::uint8_t has_shop)
 {
   require_auth(creator);
 
@@ -42,19 +42,19 @@ void bespiral::create(eosio::asset cmm_asset, eosio::name creator, std::string l
     c.has_shop = has_shop;
   });
 
-  SEND_INLINE_ACTION(*this,                            // Account
-                     netlink,                          // Action
-                     {creator, eosio::name{"active"}}, // Permission
-                     // cmm_asset, new_user, inviter
-                     {cmm_asset, creator, creator});
+  eosio::action netlink = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                        get_self(),                                                 // Account
+                                        eosio::name{"netlink"},                                     // Action
+                                        std::make_tuple(cmm_asset, creator, creator));
+  netlink.send();
 
   // Notify creator
   require_recipient(creator);
 }
 
-void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name,
-                      std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
-                      std::uint8_t has_objectives, std::uint8_t has_shop)
+void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string name,
+                       std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
+                       std::uint8_t has_objectives, std::uint8_t has_shop)
 {
   communities community(_self, _self.value);
   const auto &cmm = community.get(cmm_asset.symbol.raw(), "can't find any community with given asset");
@@ -77,19 +77,25 @@ void bespiral::update(eosio::asset cmm_asset, std::string logo, std::string name
   });
 }
 
-void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user)
+void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user)
 {
   eosio::check(is_account(new_user), "new user account doesn't exists");
 
-  // Check for inviter auth, otherwise check for backend's auth
-  if (has_auth(inviter))
+  // This action can be performed by:
+  // 1. The contract itself
+  // 2. The inviter, directly
+  // 3. The backend account, on behalf of the inviter
+  if (eosio::get_sender() == get_self())
+  {
+    require_auth(get_self());
+  }
+  else if (has_auth(inviter))
   {
     require_auth(inviter);
   }
   else
   {
-    // ATTENTION: `bespiral` account is configured on the backend and hardcoded here. You may have trouble with this
-    require_auth(eosio::name{"bespiral"});
+    require_auth(backend_account);
   }
 
   // Validates community
@@ -153,15 +159,15 @@ void bespiral::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name 
   }
   else
   {
-    eosio::action init_account = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
-                                               currency_account,                                                 // Account
-                                               eosio::name{"initacc"},                                           // Action
-                                               std::make_tuple(cmm.invited_reward.symbol, new_user));
+    eosio::action init_account = eosio::action(eosio::permission_level{inviter, eosio::name{"active"}}, // Permission
+                                               currency_account,                                        // Account
+                                               eosio::name{"initacc"},                                  // Action
+                                               std::make_tuple(cmm.invited_reward.symbol, new_user, inviter));
     init_account.send();
   }
 }
 
-void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator)
+void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator)
 {
   require_auth(creator);
 
@@ -191,7 +197,7 @@ void bespiral::newobjective(eosio::asset cmm_asset, std::string description, eos
   });
 }
 
-void bespiral::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor)
+void cambiatus::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor)
 {
   require_auth(editor);
 
@@ -221,13 +227,13 @@ void bespiral::updobjective(std::uint64_t objective_id, std::string description,
   });
 }
 
-void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
-                            std::string description, eosio::asset reward,
-                            eosio::asset verifier_reward, std::uint64_t deadline,
-                            std::uint64_t usages, std::uint64_t usages_left,
-                            std::uint64_t verifications, std::string verification_type,
-                            std::string validators_str, std::uint8_t is_completed,
-                            eosio::name creator)
+void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
+                             std::string description, eosio::asset reward,
+                             eosio::asset verifier_reward, std::uint64_t deadline,
+                             std::uint64_t usages, std::uint64_t usages_left,
+                             std::uint64_t verifications, std::string verification_type,
+                             std::string validators_str, std::uint8_t is_completed,
+                             eosio::name creator)
 {
   // Validate creator
   eosio::check(is_account(creator), "invalid account for creator");
@@ -377,7 +383,7 @@ void bespiral::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
 
 /// @abi action
 /// Verify an automatic action
-void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier)
+void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier)
 {
   // Validates verifier
   eosio::check(is_account(verifier), "invalid account for verifier");
@@ -434,9 +440,9 @@ void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::n
   });
 
   // Find Token
-  // bespiral_tokens tokens(currency_account, currency_account.value);
-  bespiral_tokens tokens(currency_account, cmm.symbol.code().raw());
-  const auto &token = tokens.get(cmm.symbol.code().raw(), "Can't find token configurations on bespiral token contract");
+  // cambiatus_tokens tokens(currency_account, currency_account.value);
+  cambiatus_tokens tokens(currency_account, cmm.symbol.code().raw());
+  const auto &token = tokens.get(cmm.symbol.code().raw(), "Can't find token configurations on cambiatus token contract");
 
   if (objact.reward.amount > 0)
   {
@@ -455,7 +461,7 @@ void bespiral::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::n
 
 /// @abi action
 /// Start a new claim on an action
-void bespiral::claimaction(std::uint64_t action_id, eosio::name maker)
+void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker)
 {
   // Validate maker
   eosio::check(is_account(maker), "invalid account for maker");
@@ -517,7 +523,7 @@ void bespiral::claimaction(std::uint64_t action_id, eosio::name maker)
 
 /// @abi action
 /// Send a vote to a given claim
-void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote)
+void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote)
 {
   // Validates verifier belongs to the action community
   claims claim_table(_self, _self.value);
@@ -683,9 +689,9 @@ void bespiral::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::ui
   }
 }
 
-void bespiral::createsale(eosio::name from, std::string title, std::string description,
-                          eosio::asset quantity, std::string image,
-                          std::uint8_t track_stock, std::uint64_t units)
+void cambiatus::createsale(eosio::name from, std::string title, std::string description,
+                           eosio::asset quantity, std::string image,
+                           std::uint8_t track_stock, std::uint64_t units)
 {
   // Validate user
   require_auth(from);
@@ -740,9 +746,9 @@ void bespiral::createsale(eosio::name from, std::string title, std::string descr
   });
 }
 
-void bespiral::updatesale(std::uint64_t sale_id, std::string title,
-                          std::string description, eosio::asset quantity,
-                          std::string image, std::uint8_t track_stock, std::uint64_t units)
+void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
+                           std::string description, eosio::asset quantity,
+                           std::string image, std::uint8_t track_stock, std::uint64_t units)
 {
   // Find sale
   sales sale(_self, _self.value);
@@ -793,7 +799,7 @@ void bespiral::updatesale(std::uint64_t sale_id, std::string title,
   });
 }
 
-void bespiral::deletesale(std::uint64_t sale_id)
+void cambiatus::deletesale(std::uint64_t sale_id)
 {
   // Find sale
   sales sale(_self, _self.value);
@@ -814,7 +820,7 @@ void bespiral::deletesale(std::uint64_t sale_id)
   sale.erase(itr_sale);
 }
 
-void bespiral::reactsale(std::uint64_t sale_id, eosio::name from, std::string type)
+void cambiatus::reactsale(std::uint64_t sale_id, eosio::name from, std::string type)
 {
   // Validate user
   require_auth(from);
@@ -844,7 +850,7 @@ void bespiral::reactsale(std::uint64_t sale_id, eosio::name from, std::string ty
 }
 
 // to = sale creator
-void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units)
+void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units)
 {
   // Validate user
   require_auth(from);
@@ -902,7 +908,7 @@ void bespiral::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name
 }
 
 // set chain indices
-void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id)
+void cambiatus::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id)
 {
   require_auth(_self);
   indexes default_indexes;
@@ -916,7 +922,7 @@ void bespiral::setindices(std::uint64_t sale_id, std::uint64_t objective_id, std
   curr_indexes.set(current_indexes, _self);
 }
 
-void bespiral::deleteobj(std::uint64_t id)
+void cambiatus::deleteobj(std::uint64_t id)
 {
   require_auth(_self);
 
@@ -926,7 +932,7 @@ void bespiral::deleteobj(std::uint64_t id)
   objective.erase(x);
 }
 
-void bespiral::deleteact(std::uint64_t id)
+void cambiatus::deleteact(std::uint64_t id)
 {
   require_auth(_self);
 
@@ -936,7 +942,7 @@ void bespiral::deleteact(std::uint64_t id)
   action.erase(found_action);
 }
 
-void bespiral::migrate(std::uint64_t id, std::uint64_t increment)
+void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
 {
   // require_auth(_self);
 
@@ -963,7 +969,7 @@ void bespiral::migrate(std::uint64_t id, std::uint64_t increment)
   // }
 }
 
-void bespiral::clean(std::string t)
+void cambiatus::clean(std::string t)
 {
   // Clean up the old claims table after the migration
   require_auth(_self);
@@ -987,7 +993,7 @@ void bespiral::clean(std::string t)
   }
 }
 
-void bespiral::migrateafter(std::uint64_t claim_id, std::uint64_t increment)
+void cambiatus::migrateafter(std::uint64_t claim_id, std::uint64_t increment)
 {
   // require_auth(_self);
   // communities communities_table(_self, _self.value);
@@ -1014,7 +1020,7 @@ void bespiral::migrateafter(std::uint64_t claim_id, std::uint64_t increment)
 }
 
 // Get available key
-uint64_t bespiral::get_available_id(std::string table)
+uint64_t cambiatus::get_available_id(std::string table)
 {
   eosio::check(table == "actions" || table == "objectives" || table == "sales" || table == "claims", "Table index not available");
 
@@ -1052,7 +1058,7 @@ uint64_t bespiral::get_available_id(std::string table)
   return id;
 }
 
-EOSIO_DISPATCH(bespiral,
+EOSIO_DISPATCH(cambiatus,
                (create)(update)(netlink)                                     // Basic community
                (newobjective)(updobjective)(upsertaction)                    // Objectives and Actions
                (verifyaction)(claimaction)(verifyclaim)                      // Verifications and Claims
