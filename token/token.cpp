@@ -22,7 +22,7 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
 
   // Find existing community
   bespiral_communities communities(community_account, community_account.value);
-  const auto &cmm = communities.get(sym.raw(), "can't find community. BeSpiral Tokens require a community.");
+  const auto &cmm = communities.get(sym.raw(), "can't find community. Cambiatus Tokens require a community.");
 
   eosio::check(sym.is_valid(), "invalid symbol");
   eosio::check(max_supply.is_valid(), "invalid max_supply");
@@ -89,7 +89,7 @@ void token::update(eosio::asset max_supply, eosio::asset min_balance)
 
   // Find existing community
   bespiral_communities communities(community_account, community_account.value);
-  const auto &cmm = communities.get(max_supply.symbol.raw(), "can't find community. BeSpiral Tokens require a community.");
+  const auto &cmm = communities.get(max_supply.symbol.raw(), "can't find community. Cambiatus Tokens require a community.");
 
   // Find token stats
   stats statstable(_self, max_supply.symbol.code().raw());
@@ -208,7 +208,7 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
   eosio::check(existing != statstable.end(), "token with symbol does not exist");
   const auto &st = *existing;
 
-  // eosio::check(st.type != "mcc", "BeSpiral only retire tokens of the 'expiry' type");
+  eosio::check(st.type == "expiry", "Cambiatus only retire tokens of the 'expiry' type");
 
   eosio::check(quantity.is_valid(), "invalid quantity");
   eosio::check(quantity.amount > 0, "must retire positive quantity");
