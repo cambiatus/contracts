@@ -278,6 +278,20 @@ void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inv
   }
 }
 
+/**
+ * Upsert Expiration options for a given currency.
+ * @author Julien Lucca
+ * @version 1.0
+ *
+ * Upsert expiration details on `expiryopts` table. Also fill amounts for every account on the network and schedules its retirement
+ *
+ * 1) Upserts given expiration options (`expiration_period` in seconds and `renovation_amount` in eosio::asset) for the given `currency`
+ * 2) Iterates over the network table. For every account on the community.
+ *  2.1) Generate new schedule ID, a compound of the currency symbol and the account name
+ *  2.2) Looks for any scheduled `retire` calls and cancels it
+ *  2.3) Issue for the account the given `renovation_amount`
+ *  2.4) Schedules a `retire` action for the given `renovation_amount` after the given `expiration_period` using the generated schedule ID
+ */
 void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount)
 {
   // Validate data
