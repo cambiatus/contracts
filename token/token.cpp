@@ -187,22 +187,6 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
   // Transfer values
   sub_balance(from, quantity, st);
   add_balance(to, quantity, st);
-
-  // Schedule retirement
-  if (st.type == "expiry")
-  {
-    token::expiry_options opts = get_expiration_opts(st);
-    std::string memo = "Your tokens expired! You need to use them within " + std::to_string(opts.expiration_period) + " seconds!";
-    eosio::transaction retire_transaction{};
-    retire_transaction.actions.emplace_back(eosio::permission_level{_self, eosio::name{"active"}}, // Permission
-                                            _self,                                                 // Account
-                                            eosio::name{"retire"},                                 // Action
-                                            // Params: from, quantity, memo
-                                            std::make_tuple(to, quantity, memo));
-
-    retire_transaction.delay_sec = opts.expiration_period;
-    // retire_transaction.send(n, _self, true);
-  }
 }
 
 /*
