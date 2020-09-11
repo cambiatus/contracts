@@ -196,7 +196,8 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
  */
 void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
 {
-  require_auth(_self);
+  eosio::check(eosio::get_sender() == get_self(), "This action can only be called from the contract");
+  require_auth(get_self());
 
   auto sym = quantity.symbol;
   eosio::check(sym.is_valid(), "invalid symbol name");
