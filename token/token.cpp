@@ -327,43 +327,27 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
   token::accounts accounts(_self, owner.value);
   auto from = accounts.find(value.symbol.code().raw());
 
-  // MCC
-  if (st.type == "mcc")
+  // Add balance table entry
+  if (from == accounts.end())
   {
-    // Add balance
-    if (from == accounts.end())
-    {
-      eosio::check((value.amount * -1) >= st.min_balance.amount, "overdrawn community limit");
+    eosio::check((value.amount * -1) >= st.min_balance.amount, "overdrawn community limit");
 
-      accounts.emplace(_self, [&](auto &a) {
-        a.balance = value;
-        a.balance.amount *= -1;
-        a.last_activity = now();
-      });
-    }
-    else
-    {
-      auto new_balance = from->balance.amount - value.amount;
-      eosio::check(new_balance >= st.min_balance.amount, "overdrawn community limit");
-      accounts.modify(from, _self, [&](auto &a) {
-        a.balance.amount -= value.amount;
-        a.last_activity = now();
-      });
-    }
-    return;
-  }
-
-  // Expiry
-  if (st.type == "expiry")
-  {
-    eosio::check(from != accounts.end(), "No balance object found");
-    eosio::check(from->balance.amount >= value.amount, "overdrawn balance");
-    accounts.modify(from, _self, [&](auto &a) {
-      a.balance -= value;
+    accounts.emplace(_self, [&](auto &a) {
+      a.balance = value;
+      a.balance.amount *= -1;
       a.last_activity = now();
     });
-    return;
   }
+  else
+  {
+    auto new_balance = from->balance.amount - value.amount;
+    eosio::check(new_balance >= st.min_balance.amount, "overdrawn community limit");
+    accounts.modify(from, _self, [&](auto &a) {
+      a.balance.amount -= value.amount;
+      a.last_activity = now();
+    });
+  }
+  return;
 }
 
 void token::add_balance(eosio::name recipient, eosio::asset value, const token::currency_stats &st)
