@@ -330,6 +330,28 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
       a.renovation_amount = renovation_amount;
     });
   }
+
+  // TODO: Start working on the Network loop
+  // You should first get a call on the community contract, find the network table structure you need and do validations
+
+  bespiral_networks network(community_account, community_account.value);
+  auto network_by_cmm = network.get_index<eosio::name{"usersbycmm"}>();
+  for (auto itr = network_by_cmm.find(currency.raw()); itr != network_by_cmm.end(); itr++)
+  {
+    // TODO Issue tokens too
+
+    auto id = gen_uuid(currency.raw(), itr->invited_user.value);
+    eosio::cancel_deferred(id);
+
+    std::string memo = "Your tokens expired! Its been " + std::to_string(expiration_period) + " seconds since the emission!";
+    eosio::action retire = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                         get_self(),                                                 // Account
+                                         eosio::name{"retire"},                                      // Action
+                                         std::make_tuple(itr->invited_user, currency, memo));
+
+    // TODO: Remove this. Print row values for now
+    eosio::print_f("Network table: {%, % with ID %}\n", itr->community, itr->invited_user, id);
+  }
 }
 
 void token::sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st)

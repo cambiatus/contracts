@@ -113,5 +113,11 @@ struct network
   eosio::name invited_by;
 
   std::uint64_t primary_key() const { return id; }
+  std::uint64_t users_by_cmm() const { return community.raw(); }
 };
-typedef eosio::multi_index<eosio::name{"network"}, network> bespiral_networks;
+
+typedef eosio::multi_index<eosio::name{"network"},
+                           network,
+                           eosio::indexed_by<eosio::name{"usersbycmm"},
+                                             eosio::const_mem_fun<network, uint64_t, &network::users_by_cmm>>>
+    bespiral_networks;
