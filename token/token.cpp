@@ -196,7 +196,6 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
  */
 void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
 {
-  eosio::check(eosio::get_sender() == get_self(), "This action can only be called from the contract");
   require_auth(get_self());
 
   auto sym = quantity.symbol;
@@ -220,14 +219,8 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
   // Get expiration values
   token::expiry_options opts = get_expiration_opts(st);
 
-  // Do nothing if it isn't expired yet
-  if (from_account.last_activity + opts.expiration_period < now())
-  {
-    return;
-  }
-
   // When the quantity is bigger, just invalidates what the user have
-  if (from_account.balance >= quantity)
+  if (from_account.balance <= quantity)
   {
     quantity = from_account.balance;
   }
@@ -331,26 +324,34 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
     });
   }
 
-  // TODO: Start working on the Network loop
-  // You should first get a call on the community contract, find the network table structure you need and do validations
-
+  // Setup expiration
   bespiral_networks network(community_account, community_account.value);
   auto network_by_cmm = network.get_index<eosio::name{"usersbycmm"}>();
   for (auto itr = network_by_cmm.find(currency.raw()); itr != network_by_cmm.end(); itr++)
   {
-    // TODO Issue tokens too
+    std::string issue_memo = "Token Renewal, you received " +
+                             renovation_amount.to_string() +
+                             " tokens, valid for " +
+                             std::to_string(expiration_period) +
+                             " seconds.";
+    eosio::action issue = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                        get_self(),                                                 // Account
+                                        eosio::name{"issue"},                                       // Action
+                                        std::make_tuple(itr->invited_user, renovation_amount, issue_memo));
+    issue.send();
 
-    auto id = gen_uuid(currency.raw(), itr->invited_user.value);
-    eosio::cancel_deferred(id);
+    auto schedule_id = gen_uuid(currency.raw(), itr->invited_user.value);
+    std::string retire_memo = "Your tokens expired! Its been " +
+                              std::to_string(expiration_period) +
+                              " seconds since the emission!";
 
-    std::string memo = "Your tokens expired! Its been " + std::to_string(expiration_period) + " seconds since the emission!";
-    eosio::action retire = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
-                                         get_self(),                                                 // Account
-                                         eosio::name{"retire"},                                      // Action
-                                         std::make_tuple(itr->invited_user, currency, memo));
-
-    // TODO: Remove this. Print row values for now
-    eosio::print_f("Network table: {%, % with ID %}\n", itr->community, itr->invited_user, id);
+    eosio::transaction retire{};
+    retire.actions.emplace_back(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                get_self(),                                                 // Account
+                                eosio::name{"retire"},                                      // Action
+                                std::make_tuple(itr->invited_user, renovation_amount, retire_memo));
+    retire.delay_sec = expiration_period;
+    retire.send(schedule_id, get_self(), true);
   }
 }
 
