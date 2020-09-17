@@ -5,7 +5,7 @@
 #define TOSTR_(T) #T
 #define TOSTR(T) TOSTR_(T)
 
-class [[eosio::contract("cambiatus.community")]] cambiatus : public eosio::contract
+class [[eosio::contract("community")]] cambiatus : public eosio::contract
 {
 public:
   using contract::contract;
