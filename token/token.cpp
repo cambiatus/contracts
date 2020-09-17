@@ -189,16 +189,22 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
   add_balance(to, quantity, st);
 }
 
-/*
-  Retire tokens of a given account
+/**
+  Retire all tokens of a given currency
+  @author Julien Lucca
+  @version 1.0
+
   It can only be called and signed from the contract itself and it is used by the expiry feature.
-  It removes a certain quantity of tokens out of the circulation if the owner doesn't use it
+  It removes all tokens out of the circulation
  */
-void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
+// void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
+void token::retire(eosio::symbol currency, std::string user_type, std::string memo)
 {
   require_auth(get_self());
 
-  auto sym = quantity.symbol;
+  eosio::check(user_type == "natural" || user_type == "juridical", "User type must be 'natural' or 'juridical'");
+
+  auto sym = currency;
   eosio::check(sym.is_valid(), "invalid symbol name");
   eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
@@ -209,29 +215,30 @@ void token::retire(eosio::name from, eosio::asset quantity, std::string memo)
 
   eosio::check(st.type == "expiry", "Cambiatus only retire tokens of the 'expiry' type");
 
-  eosio::check(quantity.is_valid(), "invalid quantity");
-  eosio::check(quantity.amount > 0, "must retire positive quantity");
-  eosio::check(quantity.symbol == st.supply.symbol, "symbol precision mismatch");
-
-  token::accounts accounts(_self, from.value);
-  auto from_account = accounts.get(quantity.symbol.code().raw(), "Can't find the account");
-
-  // Get expiration values
-  token::expiry_options opts = get_expiration_opts(st);
-
-  // When the quantity is bigger, just invalidates what the user have
-  if (from_account.balance <= quantity)
+  bespiral_networks network(community_account, community_account.value);
+  auto network_by_cmm = network.get_index<eosio::name{"usersbycmm"}>();
+  for (auto itr = network_by_cmm.find(currency.raw()); itr != network_by_cmm.end(); itr++)
   {
-    quantity = from_account.balance;
+    // Make sure to retire only of a single type
+    if (itr->user_type == user_type)
+    {
+      token::accounts accounts(_self, itr->invited_user.value);
+      auto from_account = accounts.find(sym.code().raw());
+
+      if (from_account != accounts.end())
+      {
+        // Decrease available supply
+        statstable.modify(st, _self, [&](auto &s) {
+          s.supply -= from_account->balance;
+        });
+
+        accounts.modify(from_account, _self, [&](auto &a) {
+          a.balance = eosio::asset(0, currency);
+          a.last_activity = now();
+        });
+      }
+    }
   }
-
-  // Decrease balance from the user
-  sub_balance(from, quantity, st);
-
-  // Decrease available supply
-  statstable.modify(st, _self, [&](auto &s) {
-    s.supply -= quantity;
-  });
 }
 
 void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inviter)
@@ -280,12 +287,10 @@ void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inv
  *
  * 1) Upserts given expiration options (`expiration_period` in seconds and `renovation_amount` in eosio::asset) for the given `currency`
  * 2) Iterates over the network table. For every account on the community.
- *  2.1) Generate new schedule ID, a compound of the currency symbol and the account name
- *  2.2) Looks for any scheduled `retire` calls and cancels it
- *  2.3) Issue for the account the given `renovation_amount`
- *  2.4) Schedules a `retire` action for the given `renovation_amount` after the given `expiration_period` using the generated schedule ID
+ *  2.1) Issue for the account the given `renovation_amount`
+ * 3) Schedules a `retire` action for the given `currency` after the given `expiration_period`
  */
-void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount)
+void token::setexpiry(eosio::symbol currency, std::uint32_t natural_expiration_period, std::uint32_t juridical_expiration_period, eosio::asset renovation_amount)
 {
   // Validate data
   eosio::check(currency.is_valid(), "invalid symbol name");
@@ -311,7 +316,8 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   {
     opts.emplace(_self, [&](auto &a) {
       a.currency = currency;
-      a.expiration_period = expiration_period;
+      a.natural_expiration_period = natural_expiration_period;
+      a.juridical_expiration_period = juridical_expiration_period;
       a.renovation_amount = renovation_amount;
     });
   }
@@ -319,7 +325,8 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   {
     opts.modify(old_opts, _self, [&](auto &a) {
       a.currency = currency;
-      a.expiration_period = expiration_period;
+      a.natural_expiration_period = natural_expiration_period;
+      a.juridical_expiration_period = juridical_expiration_period;
       a.renovation_amount = renovation_amount;
     });
   }
@@ -329,30 +336,47 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t expiration_period, e
   auto network_by_cmm = network.get_index<eosio::name{"usersbycmm"}>();
   for (auto itr = network_by_cmm.find(currency.raw()); itr != network_by_cmm.end(); itr++)
   {
-    std::string issue_memo = "Token Renewal, you received " +
-                             renovation_amount.to_string() +
-                             " tokens, valid for " +
-                             std::to_string(expiration_period) +
-                             " seconds.";
-    eosio::action issue = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
-                                        get_self(),                                                 // Account
-                                        eosio::name{"issue"},                                       // Action
-                                        std::make_tuple(itr->invited_user, renovation_amount, issue_memo));
-    issue.send();
+    // Only natural users receive the
+    if (itr->user_type == "natural")
+    {
 
-    auto schedule_id = gen_uuid(currency.raw(), itr->invited_user.value);
-    std::string retire_memo = "Your tokens expired! Its been " +
-                              std::to_string(expiration_period) +
-                              " seconds since the emission!";
-
-    eosio::transaction retire{};
-    retire.actions.emplace_back(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
-                                get_self(),                                                 // Account
-                                eosio::name{"retire"},                                      // Action
-                                std::make_tuple(itr->invited_user, renovation_amount, retire_memo));
-    retire.delay_sec = expiration_period;
-    retire.send(schedule_id, get_self(), true);
+      std::string issue_memo = "Token Renewal, you received " +
+                               renovation_amount.to_string() +
+                               " tokens, valid for " +
+                               std::to_string(natural_expiration_period) +
+                               " seconds.";
+      eosio::action issue = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                          get_self(),                                                 // Account
+                                          eosio::name{"issue"},                                       // Action
+                                          std::make_tuple(itr->invited_user, renovation_amount, issue_memo));
+      issue.send();
+    }
   }
+
+  auto natural_schedule_id = gen_uuid(currency.raw(), eosio::name{"natural"}.value);
+  std::string natural_retire_memo = "Your tokens expired! Its been " + std::to_string(natural_expiration_period) + " seconds since the emission!";
+  std::string natural_str = "natural";
+
+  eosio::transaction retire_natural{};
+  retire_natural.actions.emplace_back(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                      get_self(),                                                 // Account
+                                      eosio::name{"retire"},                                      // Action
+                                      std::make_tuple(currency, natural_str, natural_retire_memo));
+  retire_natural.delay_sec = natural_expiration_period;
+  retire_natural.send(natural_schedule_id, get_self(), true);
+
+  // Schedule retirement for juridical
+  auto juridical_schedule_id = gen_uuid(currency.raw(), eosio::name{"juridical"}.value);
+  std::string juridical_retire_memo = "Your tokens expired! Its been " + std::to_string(juridical_expiration_period) + " seconds since the emission!";
+  std::string juridical_str = "juridical";
+
+  eosio::transaction retire_juridical{};
+  retire_juridical.actions.emplace_back(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
+                                        get_self(),                                                 // Account
+                                        eosio::name{"retire"},                                      // Action
+                                        std::make_tuple(currency, juridical_str, juridical_retire_memo));
+  retire_juridical.delay_sec = juridical_expiration_period;
+  retire_juridical.send(juridical_schedule_id, get_self(), true);
 }
 
 void token::sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st)
@@ -409,32 +433,6 @@ void token::add_balance(eosio::name recipient, eosio::asset value, const token::
       a.last_activity = now();
     });
   }
-}
-
-/*
-  Gets the configuration for a given community. If it doesn't have any, it uses the contract default
- */
-token::expiry_options token::get_expiration_opts(const token::currency_stats &st)
-{
-  // Default expiration values
-  // 90 days * 24 hours * 60 minutes * 60 seconds
-  std::uint32_t validation_period = 7776000;
-  eosio::asset minimum_amount = eosio::asset(50, st.supply.symbol);
-
-  token::expiry_opts opts(_self, _self.value);
-  auto existing_opts = opts.find(st.supply.symbol.code().raw());
-
-  if (existing_opts != opts.end())
-  {
-    const auto &exp_opts = *existing_opts;
-    validation_period = exp_opts.expiration_period;
-    minimum_amount = exp_opts.renovation_amount;
-  }
-
-  auto expiry_struct = token::expiry_options();
-  expiry_struct.expiration_period = validation_period;
-  expiry_struct.renovation_amount = minimum_amount;
-  return expiry_struct;
 }
 
 EOSIO_DISPATCH(token,

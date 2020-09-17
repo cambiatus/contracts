@@ -74,7 +74,11 @@
                     "type": "symbol"
                 },
                 {
-                    "name": "expiration_period",
+                    "name": "natural_expiration_period",
+                    "type": "uint32"
+                },
+                {
+                    "name": "juridical_expiration_period",
                     "type": "uint32"
                 },
                 {
@@ -93,6 +97,10 @@
                 },
                 {
                     "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "inviter",
                     "type": "name"
                 }
             ]
@@ -120,12 +128,12 @@
             "base": "",
             "fields": [
                 {
-                    "name": "from",
-                    "type": "name"
+                    "name": "currency",
+                    "type": "symbol"
                 },
                 {
-                    "name": "quantity",
-                    "type": "asset"
+                    "name": "user_type",
+                    "type": "string"
                 },
                 {
                     "name": "memo",
@@ -142,7 +150,11 @@
                     "type": "symbol"
                 },
                 {
-                    "name": "expiration_period",
+                    "name": "natural_expiration_period",
+                    "type": "uint32"
+                },
+                {
+                    "name": "juridical_expiration_period",
                     "type": "uint32"
                 },
                 {
@@ -192,37 +204,37 @@
         {
             "name": "create",
             "type": "create",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: create placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "initacc",
             "type": "initacc",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: initacc placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "issue",
             "type": "issue",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: issue placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "retire",
             "type": "retire",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: retire placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "setexpiry",
             "type": "setexpiry",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: setexpiry placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "transfer",
             "type": "transfer",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: transfer placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "update",
             "type": "update",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: update placeholder\nsummary: placeholder\nicon:"
         }
     ],
     "tables": [
@@ -248,6 +260,11 @@
             "key_types": []
         }
     ],
-    "ricardian_clauses": [],
+    "ricardian_clauses": [
+        {
+            "id": "Data Storage",
+            "body": "---\nspec-version: 0.0.1\ntitle: General Data Storage\nsummary: This smart contract will store data added by the user. The user consents to the storage of this data by signing the transaction.\nicon:"
+        }
+    ],
     "variants": []
 }
