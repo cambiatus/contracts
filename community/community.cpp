@@ -45,7 +45,7 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
   eosio::action netlink = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
                                         get_self(),                                                 // Account
                                         eosio::name{"netlink"},                                     // Action
-                                        std::make_tuple(cmm_asset, creator, creator));
+                                        std::make_tuple(cmm_asset, creator, creator, "natural"));
   netlink.send();
 
   // Notify creator
@@ -77,7 +77,7 @@ void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string nam
   });
 }
 
-void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user)
+void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user, std::string user_type)
 {
   eosio::check(is_account(new_user), "new user account doesn't exists");
 
@@ -97,6 +97,9 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
   {
     require_auth(backend_account);
   }
+
+  // Validate user type
+  eosio::check(user_type == "natural" || user_type == "juridical", "User type must be 'natural' or 'juridical'");
 
   // Validates community
   eosio::symbol cmm_symbol = cmm_asset.symbol;
@@ -123,6 +126,7 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
     r.community = cmm_symbol;
     r.invited_user = new_user;
     r.invited_by = inviter;
+    r.user_type = user_type;
   });
 
   // Notify user
@@ -989,6 +993,15 @@ void cambiatus::clean(std::string t)
     for (auto itr = communities_table.begin(); itr != communities_table.end();)
     {
       itr = communities_table.erase(itr);
+    }
+  }
+
+  if (t == "network")
+  {
+    networks network_table(_self, _self.value);
+    for (auto itr = network_table.begin(); itr != network_table.end();)
+    {
+      itr = network_table.erase(itr);
     }
   }
 }

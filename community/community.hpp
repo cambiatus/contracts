@@ -5,7 +5,7 @@
 #define TOSTR_(T) #T
 #define TOSTR(T) TOSTR_(T)
 
-class [[eosio::contract("cambiatus.community")]] cambiatus : public eosio::contract
+class [[eosio::contract("community")]] cambiatus : public eosio::contract
 {
 public:
   using contract::contract;
@@ -38,13 +38,14 @@ public:
     eosio::symbol community;
     eosio::name invited_user;
     eosio::name invited_by;
+    std::string user_type;
 
     // keys and indexes
     std::uint64_t primary_key() const { return id; }
     std::uint64_t users_by_cmm() const { return community.raw(); }
 
     EOSLIB_SERIALIZE(network,
-                     (id)(community)(invited_user)(invited_by));
+                     (id)(community)(invited_user)(invited_by)(user_type));
   };
 
   TABLE objective
@@ -167,7 +168,7 @@ public:
 
   /// @abi action
   /// Adds a user to a community
-  ACTION netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user);
+  ACTION netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user, std::string user_type);
 
   /// @abi action
   /// Create a new community objective

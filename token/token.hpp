@@ -5,7 +5,7 @@
 #define TOSTR_(T) #T
 #define TOSTR(T) TOSTR_(T)
 
-class [[eosio::contract("cambiatus.token")]] token : public eosio::contract
+class [[eosio::contract("token")]] token : public eosio::contract
 {
 public:
   using contract::contract;
@@ -36,12 +36,13 @@ public:
   TABLE expiry_options
   {
     eosio::symbol currency;
-    std::uint32_t expiration_period;
+    std::uint32_t natural_expiration_period;
+    std::uint32_t juridical_expiration_period;
     eosio::asset renovation_amount;
 
     uint64_t primary_key() const { return currency.code().raw(); }
 
-    EOSLIB_SERIALIZE(expiry_options, (currency)(expiration_period)(renovation_amount));
+    EOSLIB_SERIALIZE(expiry_options, (currency)(natural_expiration_period)(juridical_expiration_period)(renovation_amount));
   };
 
   /// @abi action
@@ -62,11 +63,11 @@ public:
 
   /// @abi action
   /// Retire tokens from a given account
-  ACTION retire(eosio::name from, eosio::asset quantity, std::string memo);
+  ACTION retire(eosio::symbol currency, std::string user_type, std::string memo);
 
   /// @abi action
   /// Set expiry options to a given token
-  ACTION setexpiry(eosio::symbol currency, std::uint32_t expiration_period, eosio::asset renovation_amount);
+  ACTION setexpiry(eosio::symbol currency, std::uint32_t natural_expiration_period, std::uint32_t juridical_expiration_period, eosio::asset renovation_amount);
 
   /// @abi action
   /// Init empty balance for a given account
@@ -79,8 +80,6 @@ public:
   void sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st);
   void add_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st);
   void renovate_expiration(eosio::name account, const token::currency_stats &st);
-
-  token::expiry_options get_expiration_opts(const token::currency_stats &st);
 };
 
 const auto community_account = eosio::name{TOSTR(__COMMUNITY_ACCOUNT__)};
@@ -111,6 +110,7 @@ struct network
   eosio::symbol community;
   eosio::name invited_user;
   eosio::name invited_by;
+  std::string user_type;
 
   std::uint64_t primary_key() const { return id; }
   std::uint64_t users_by_cmm() const { return community.raw(); }

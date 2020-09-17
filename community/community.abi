@@ -356,6 +356,10 @@
                 {
                     "name": "new_user",
                     "type": "name"
+                },
+                {
+                    "name": "user_type",
+                    "type": "string"
                 }
             ]
         },
@@ -378,6 +382,10 @@
                 {
                     "name": "invited_by",
                     "type": "name"
+                },
+                {
+                    "name": "user_type",
+                    "type": "string"
                 }
             ]
         },
