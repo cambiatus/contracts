@@ -726,102 +726,102 @@
         {
             "name": "claimaction",
             "type": "claimaction",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle:\nsummary:\nicon:"
         },
         {
             "name": "clean",
             "type": "clean",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: clean placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "create",
             "type": "create",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Create new community\nsummary: Creates a new community on BeSpiral. It requires you to send: `cmm_asset`, `creator`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. A BeSpiral community is closelly tied to a BeSpiral Token. A community allows a group of people with common goals and objectives to connect and allow the creation of incentives to reach those objectives. It also help to buy and sell products\nicon:"
         },
         {
             "name": "createsale",
             "type": "createsale",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Create a sale on a given community\nsummary: Enable a single user to create a new sale (either buy or sell) on a given community. It requires you to send: `from`, `title`, `description`, `quantity`, `image`, `is_buy` and `units`. All information sent is going to be saved. Note that `quantity` is related to price and `units` to number of items available.\nicon:"
         },
         {
             "name": "deleteact",
             "type": "deleteact",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: deleteact placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "deleteobj",
             "type": "deleteobj",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: deleteobj placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "deletesale",
             "type": "deletesale",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Delete a sale\nsummary: Enable the sale creator to remove a single sale. It requires you to send: `sale_id`. No information is going to be saved.\nicon:"
         },
         {
             "name": "migrate",
             "type": "migrate",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: migrate placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "migrateafter",
             "type": "migrateafter",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: migrateafter placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "netlink",
             "type": "netlink",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Invites a new account to a given community\nsummary: Add a user to the BeSpiral community network. It requires you to send: `cmm_asset`, `inviter` and `new_user`. We'll save who invited the new account and on which community\nicon:"
         },
         {
             "name": "newobjective",
             "type": "newobjective",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle:\nsummary:\nicon:"
         },
         {
             "name": "reactsale",
             "type": "reactsale",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: React to a sale\nsummary: Enable any user in the same community (except by creator) to react to a sale. It requires you to send: `sale_id`, `from` and `type`. No information is going to be saved.\nicon:"
         },
         {
             "name": "setindices",
             "type": "setindices",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: setindices placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "transfersale",
             "type": "transfersale",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Process a sale transfer\nsummary: Enable different users to exchange value for a given sale. It requires you to send: `sale_id`, `from`, `to`, `quantity` and `units`. No information is going to be saved, only used to update previous sale information. Note that `from` is the one interested in the sale, `to` the sale creator, `quantity` is related to price and `units` to number of items available.\nicon:"
         },
         {
             "name": "update",
             "type": "update",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Update some information about a community\nsummary: Update information on a existing community on BeSpiral. It requires you to send: `cmm_asset`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. All information will be saved, with the exception of the asset that cannot be changed\nicon:"
         },
         {
             "name": "updatesale",
             "type": "updatesale",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: Update a sale\nsummary: Enable the sale creator to update some details of a single sale. It requires you to send: `sale_id`, `title`, `description`, `quantity`, `image` and `units`. Except by `sale_id`, all information sent is going to be updated. Note that `quantity` is related to price and `units` to number of items available.\nicon:"
         },
         {
             "name": "updobjective",
             "type": "updobjective",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: updobjective placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "upsertaction",
             "type": "upsertaction",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle: upsertaction placeholder\nsummary: placeholder\nicon:"
         },
         {
             "name": "verifyaction",
             "type": "verifyaction",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle:\nsummary:\nicon:"
         },
         {
             "name": "verifyclaim",
             "type": "verifyclaim",
-            "ricardian_contract": ""
+            "ricardian_contract": "---\nspec-version: 0.0.1\ntitle:\nsummary:\nicon:"
         }
     ],
     "tables": [
@@ -889,6 +889,27 @@
             "key_types": []
         }
     ],
-    "ricardian_clauses": [],
+    "ricardian_clauses": [
+        {
+            "id": "Data Storage",
+            "body": "---\nspec-version: 0.0.1\ntitle: General Data Storage\nsummary: This smart contract will store data added by the user. The user consents to the storage of this data by signing the transaction.\nicon:"
+        },
+        {
+            "id": "Data Usage",
+            "body": "---\nspec-version: 0.0.1\ntitle: General Data Use\nsummary: This smart contract will store user data. The smart contract will not use the stored data for any purpose outside store and delete.\nicon:"
+        },
+        {
+            "id": "Data Ownership",
+            "body": "---\nspec-version: 0.0.1\ntitle: Data Ownership\nsummary: The user of this smart contract verifies that the data is owned by the smart contract, and that the smart contract can use the data in accordance to the terms defined in the Ricardian Contract.\nicon:"
+        },
+        {
+            "id": "Data Distribution",
+            "body": "---\nspec-version: 0.0.1\ntitle: Data Ownership\nsummary: The smart contract promises to not actively share or distribute the address data. The user of the smart contract understands that data stored in a multi index table is not private data and can be accessed by any user of the blockchain.\nicon:"
+        },
+        {
+            "id": "Data Future",
+            "body": "---\nspec-version: 0.0.1\ntitle: Data Ownership\nsummary: The smart contract promises to only use the data in accordance of the terms defined in the Ricardian Contract, now and at all future dates.\nicon:"
+        }
+    ],
     "variants": []
 }

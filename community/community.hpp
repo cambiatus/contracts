@@ -24,11 +24,12 @@ public:
 
     std::uint8_t has_objectives;
     std::uint8_t has_shop;
+    std::uint8_t has_kyc;
 
     uint64_t primary_key() const { return symbol.raw(); };
 
     EOSLIB_SERIALIZE(community,
-                     (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop));
+                     (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc));
   };
 
   TABLE network
