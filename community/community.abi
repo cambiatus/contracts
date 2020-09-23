@@ -182,6 +182,10 @@
                 {
                     "name": "has_shop",
                     "type": "uint8"
+                },
+                {
+                    "name": "has_kyc",
+                    "type": "uint8"
                 }
             ]
         },
@@ -223,6 +227,10 @@
                 },
                 {
                     "name": "has_shop",
+                    "type": "uint8"
+                },
+                {
+                    "name": "has_kyc",
                     "type": "uint8"
                 }
             ]

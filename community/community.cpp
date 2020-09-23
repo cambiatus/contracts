@@ -4,7 +4,7 @@
 void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                        std::string name, std::string description,
                        eosio::asset inviter_reward, eosio::asset invited_reward,
-                       std::uint8_t has_objectives, std::uint8_t has_shop)
+                       std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc)
 {
   require_auth(creator);
 
@@ -40,12 +40,15 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
     c.invited_reward = invited_reward;
     c.has_objectives = has_objectives;
     c.has_shop = has_shop;
+    c.has_kyc = has_kyc;
   });
+
+  std::string user_type = "natural";
 
   eosio::action netlink = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
                                         get_self(),                                                 // Account
                                         eosio::name{"netlink"},                                     // Action
-                                        std::make_tuple(cmm_asset, creator, creator, "natural"));
+                                        std::make_tuple(cmm_asset, creator, creator, user_type));
   netlink.send();
 
   // Notify creator
@@ -978,6 +981,8 @@ void cambiatus::clean(std::string t)
   // Clean up the old claims table after the migration
   require_auth(_self);
 
+  eosio::check(t == "claim" || t == "community" || t == "network" || t == "action" || t == "objective", "invalid value for table name");
+
   if (t == "claim")
   {
     claims claim_table(_self, _self.value);
@@ -1002,6 +1007,24 @@ void cambiatus::clean(std::string t)
     for (auto itr = network_table.begin(); itr != network_table.end();)
     {
       itr = network_table.erase(itr);
+    }
+  }
+
+  if (t == "action")
+  {
+    actions action_table(_self, _self.value);
+    for (auto itr = action_table.begin(); itr != action_table.end();)
+    {
+      itr = action_table.erase(itr);
+    }
+  }
+
+  if (t == "objective")
+  {
+    objectives objective_table(_self, _self.value);
+    for (auto itr = objective_table.begin(); itr != objective_table.end();)
+    {
+      itr = objective_table.erase(itr);
     }
   }
 }
