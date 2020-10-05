@@ -732,7 +732,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
   communities community(_self, _self.value);
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_shop, "This community don't have shop enabled.");
 
   // Get last used objective id and update item_index table
   uint64_t sale_id;
