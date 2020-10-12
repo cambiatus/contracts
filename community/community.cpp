@@ -951,29 +951,37 @@ void cambiatus::deleteact(std::uint64_t id)
 
 void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
 {
-  // require_auth(_self);
+  require_auth(_self);
 
-  // communities community_table(_self, _self.value);
-  // new_communities new_communities_table(_self, _self.value);
+  actions actions_table(_self, _self.value);
+  new_actions new_actions_table(_self, _self.value);
 
-  // for (auto itr = community_table.begin(); itr != community_table.end();) {
-  //   auto &community = *itr;
+  auto itr = id > 0 ? actions_table.find(id) : actions_table.begin();
 
-  //   new_communities_table.emplace(_self, [&](auto &r) {
-  //                                        r.symbol = community.symbol;
+  while (itr != actions_table.end())
+  {
+    auto &action = *itr;
 
-  //                                        r.creator = community.creator;
-  //                                        r.logo = community.logo;
-  //                                        r.name = community.name;
-  //                                        r.description = community.description;
-  //                                        r.inviter_reward = community.inviter_reward;
-  //                                        r.invited_reward = community.invited_reward;
-  //                                        r.has_objectives = 1;
-  //                                        r.has_shop = 1;
-  //                                      });
+    new_actions_table.emplace(_self, [&](auto &r) {
+      r.id = action.id;
+      r.objective_id = action.objective_id;
+      r.description = action.description;
+      r.reward = action.reward;
+      r.verifier_reward = action.verifier_reward;
+      r.deadline = action.deadline;
+      r.usages = action.usages;
+      r.usages_left = action.usages_left;
+      r.verifications = action.verifications;
+      r.verification_type = action.verification_type;
+      r.is_completed = action.is_completed;
+      r.creator = action.creator;
+      r.has_proof_photo = 0;
+      r.has_proof_number = 0;
+      r.photo_proof_instructions = "";
+    });
 
-  //   itr++;
-  // }
+    itr++;
+  }
 }
 
 void cambiatus::clean(std::string t)
@@ -1029,30 +1037,40 @@ void cambiatus::clean(std::string t)
   }
 }
 
-void cambiatus::migrateafter(std::uint64_t claim_id, std::uint64_t increment)
+void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
 {
-  // require_auth(_self);
-  // communities communities_table(_self, _self.value);
-  // new_communities new_communities_table(_self, _self.value);
+  require_auth(_self);
 
-  // for (auto itr = new_communities_table.begin(); itr != new_communities_table.end();) {
-  //   auto &new_community = *itr;
+  actions actions_table(_self, _self.value);
+  new_actions new_actions_table(_self, _self.value);
 
-  //   communities_table.emplace(_self, [&](auto &r) {
-  //                                          r.symbol = new_community.symbol;
+  auto itr = id > 0 ? new_actions_table.find(id) : new_actions_table.begin();
 
-  //                                          r.creator = new_community.creator;
-  //                                          r.logo = new_community.logo;
-  //                                          r.name = new_community.name;
-  //                                          r.description = new_community.description;
-  //                                          r.inviter_reward = new_community.inviter_reward;
-  //                                          r.invited_reward = new_community.invited_reward;
-  //                                          r.has_objectives = new_community.has_objectives;
-  //                                          r.has_shop = new_community.has_shop;
-  //                                        });
+  while (itr != new_actions_table.end())
+  {
+    auto &action = *itr;
 
-  //   itr++;
-  // }
+    actions_table.emplace(_self, [&](auto &r) {
+      r.id = action.id;
+      r.objective_id = action.objective_id;
+      r.description = action.description;
+      r.reward = action.reward;
+      r.verifier_reward = action.verifier_reward;
+      r.deadline = action.deadline;
+      r.usages = action.usages;
+      r.usages_left = action.usages_left;
+      r.verifications = action.verifications;
+      r.verification_type = action.verification_type;
+      r.is_completed = action.is_completed;
+      r.creator = action.creator;
+      // TODO: uncomment after migrating
+      // r.has_proof_photo = 0;
+      // r.has_proof_number = 0;
+      // r.photo_proof_instructions = "";
+    });
+
+    itr++;
+  }
 }
 
 // Get available key

@@ -398,6 +398,72 @@
             ]
         },
         {
+            "name": "newaction",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "objective_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "reward",
+                    "type": "asset"
+                },
+                {
+                    "name": "verifier_reward",
+                    "type": "asset"
+                },
+                {
+                    "name": "deadline",
+                    "type": "uint64"
+                },
+                {
+                    "name": "usages",
+                    "type": "uint64"
+                },
+                {
+                    "name": "usages_left",
+                    "type": "uint64"
+                },
+                {
+                    "name": "verifications",
+                    "type": "uint64"
+                },
+                {
+                    "name": "verification_type",
+                    "type": "string"
+                },
+                {
+                    "name": "is_completed",
+                    "type": "uint8"
+                },
+                {
+                    "name": "creator",
+                    "type": "name"
+                },
+                {
+                    "name": "has_proof_photo",
+                    "type": "uint8"
+                },
+                {
+                    "name": "has_proof_number",
+                    "type": "uint8"
+                },
+                {
+                    "name": "photo_proof_instructions",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "newobjective",
             "base": "",
             "fields": [
@@ -871,6 +937,13 @@
         {
             "name": "network",
             "type": "network",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "newaction",
+            "type": "newaction",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
