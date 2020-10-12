@@ -240,7 +240,10 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
                              std::uint64_t usages, std::uint64_t usages_left,
                              std::uint64_t verifications, std::string verification_type,
                              std::string validators_str, std::uint8_t is_completed,
-                             eosio::name creator)
+                             eosio::name creator) 
+                             // TODO: uncomment after migration
+                             // std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
+                             // std::string photo_proof_instructions)
 {
   // Validate creator
   eosio::check(is_account(creator), "invalid account for creator");
@@ -299,6 +302,11 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     eosio::check(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
+  // Verify proofs parameters
+  // TODO: uncomment after migration
+  // eosio::check(photo_proof_instructions.length() <= 256, 
+  //   "Invalid length for photo proof instructions, must be less or equal than 256 chars");
+
   // ========================================= End validation, start upsert
 
   // Find action
@@ -323,6 +331,10 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.verification_type = verification_type;
       a.is_completed = 0;
       a.creator = creator;
+      // TODO: uncomment after migration
+      // a.has_proof_photo = has_proof_photo;
+      // a.has_proof_code = has_proof_code;
+      // a.photo_proof_instructions = photo_proof_instructions;
     });
   }
   else
@@ -337,6 +349,10 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.verifications = verifications;
       a.verification_type = verification_type;
       a.is_completed = is_completed;
+      // TODO: uncomment after migration
+      // a.has_proof_photo = has_proof_photo;
+      // a.has_proof_code = has_proof_code;
+      // a.photo_proof_instructions = photo_proof_instructions;
     });
   }
 

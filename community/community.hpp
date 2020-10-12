@@ -206,6 +206,7 @@ public:
 
   /// @abi action
   /// Update action
+  // TODO: refactor to action structure?
   ACTION upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                       std::string description, eosio::asset reward,
                       eosio::asset verifier_reward, std::uint64_t deadline,
@@ -213,6 +214,9 @@ public:
                       std::uint64_t verifications, std::string verification_type,
                       std::string validators_str, std::uint8_t is_completed,
                       eosio::name creator);
+                      // TODO: uncomment after migration
+                      // std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
+                      // std::string photo_proof_instructions);
 
   /// @abi action
   /// Start a new claim on an action
