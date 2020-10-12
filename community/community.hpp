@@ -101,14 +101,14 @@ public:
     std::uint8_t is_completed;
     eosio::name creator;
     std::uint8_t has_proof_photo;
-    std::uint8_t has_proof_number;
+    std::uint8_t has_proof_code;
     std::string photo_proof_instructions;
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_objective() const { return objective_id; }
 
     EOSLIB_SERIALIZE(newaction,
-                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator)(has_proof_photo)(has_proof_number)(photo_proof_instructions));
+                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator)(has_proof_photo)(has_proof_code)(photo_proof_instructions));
   };
 
   TABLE action_validator
@@ -217,6 +217,8 @@ public:
   /// @abi action
   /// Start a new claim on an action
   ACTION claimaction(std::uint64_t action_id, eosio::name maker);
+                     // TODO: uncomment after migration
+                     // std::string proof_photo, std::string proof_code);
 
   /// @abi action
   /// Send a vote verification for a given claim. It has to be `claimable` verification_type

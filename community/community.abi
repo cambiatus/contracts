@@ -454,7 +454,7 @@
                     "type": "uint8"
                 },
                 {
-                    "name": "has_proof_number",
+                    "name": "has_proof_code",
                     "type": "uint8"
                 },
                 {

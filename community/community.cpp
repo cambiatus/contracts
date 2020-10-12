@@ -469,6 +469,8 @@ void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::
 /// @abi action
 /// Start a new claim on an action
 void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker)
+                            // todo: uncomment after migration
+                            // std::string proof_photo, std::string proof_code)
 {
   // Validate maker
   eosio::check(is_account(maker), "invalid account for maker");
@@ -494,6 +496,21 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker)
 
   // Check if the action is claimable
   eosio::check(objact.verification_type == "claimable", "You can only open claims in claimable actions");
+
+  // Check action proofs
+  // TODO: uncomment after migration
+  // eosio::check(proof_photo.length() <= 256,
+  //              "Invalid length for proof photo url, must be less than 256 characters");
+  // eosio::check(proof_code.length() <= 30,
+  //              "Invalid length for proof code, must be less than 30 characters");
+  // if (objact.has_proof_photo)
+  // {
+  //   eosio::check(!proof_photo.is_empty(), "action requires proof photo")
+  // }
+  // if (objact.has_proof_code)
+  // {
+  //   eosio::check(!proof_code.is_empty(), "action requires proof code")
+  // }
 
   // Validates maker belongs to the action community
   objectives objective(_self, _self.value);
@@ -976,7 +993,7 @@ void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
       r.is_completed = action.is_completed;
       r.creator = action.creator;
       r.has_proof_photo = 0;
-      r.has_proof_number = 0;
+      r.has_proof_code = 0;
       r.photo_proof_instructions = "";
     });
 
@@ -1065,7 +1082,7 @@ void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
       r.creator = action.creator;
       // TODO: uncomment after migrating
       // r.has_proof_photo = 0;
-      // r.has_proof_number = 0;
+      // r.has_proof_code = 0;
       // r.photo_proof_instructions = "";
     });
 
