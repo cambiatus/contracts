@@ -8,7 +8,7 @@ cleos='cleos' # running local
 CMM_CONTRACT='cambiatus.cm'
 TK_CONTRACT='cambiatus.tk'
 BACKEND_ACC='cambiatus'
-OBJECTIVE_ID=703020281 # todo: change as needed for your environment
+OBJECTIVE_ID=64 # todo: change as needed for your environment
 
 LUCCA_KEY='EOS6UzXrw93HKhugfRewVNpU5aM9hSUSmcwWtWgecDgYi6nwEHMuu'
 TEST_KEY='EOS8LtuSpUvAPWEJkzea1tAzzeWsWSrTpEsCmwacFbFxXz4Xjn5R4'
@@ -44,16 +44,15 @@ function create_test_community() {
     # as 18 may 2020, this insert yielded an ID of 64
     $cleos push action $CMM_CONTRACT newobjective '["0 CLM", "Test claims", "claimcreator"]' -p claimcreator
 
-    $cleos get table $CMM_CONTRACT $CMM_CONTRACT action
+    $cleos get table $CMM_CONTRACT $CMM_CONTRACT objective
     echo "please save the objective id from above"
 }
 
 function create_actions() {
-    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 3 verifications", "1 CLM", "0 CLM", 0, 0, 0, 3, "claimable", "claimverif1-claimverif2-claimverif3-claimverif4", 0, "claimcreator"]' -p claimcreator
-    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 4 verifications", "1 CLM", "0 CLM", 0, 0, 0, 5, "claimable", "claimverif1-claimverif2-claimverif3-claimverif4-claimverif5", 0, "claimcreator"]' -p claimcreator
+    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 3 verifications", "1 CLM", "0 CLM", 0, 0, 0, 3, "claimable", "claimverif1-claimverif2-claimverif3-claimverif4", 0, "claimcreator", 1, 1, "please add pics"]' -p claimcreator
+    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 4 verifications", "1 CLM", "0 CLM", 0, 0, 0, 5, "claimable", "claimverif1-claimverif2-claimverif3-claimverif4-claimverif5", 0, "claimcreator", 0, 0, ""]' -p claimcreator
 
     $cleos get table $CMM_CONTRACT $CMM_CONTRACT action
-    echo "please save the objective id from above"
 }
 
 function claim_actions() {

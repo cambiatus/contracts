@@ -78,12 +78,17 @@ public:
     std::string verification_type; // Can be 'automatic' and 'claimable'
     std::uint8_t is_completed;
     eosio::name creator;
+    std::uint8_t has_proof_photo;
+    std::uint8_t has_proof_code;
+    std::string photo_proof_instructions;
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_objective() const { return objective_id; }
 
     EOSLIB_SERIALIZE(action,
-                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator));
+                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)
+                     (usages)(usages_left)(verifications)(verification_type)(is_completed)
+                     (creator)(has_proof_photo)(has_proof_code)(photo_proof_instructions));
   };
 
   TABLE newaction
@@ -206,23 +211,20 @@ public:
 
   /// @abi action
   /// Update action
-  // TODO: refactor to action structure?
   ACTION upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
                       std::string description, eosio::asset reward,
                       eosio::asset verifier_reward, std::uint64_t deadline,
                       std::uint64_t usages, std::uint64_t usages_left,
                       std::uint64_t verifications, std::string verification_type,
                       std::string validators_str, std::uint8_t is_completed,
-                      eosio::name creator);
-                      // TODO: uncomment after migration
-                      // std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
-                      // std::string photo_proof_instructions);
+                      eosio::name creator,
+                      std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
+                      std::string photo_proof_instructions);
 
   /// @abi action
   /// Start a new claim on an action
-  ACTION claimaction(std::uint64_t action_id, eosio::name maker);
-                     // TODO: uncomment after migration
-                     // std::string proof_photo, std::string proof_code);
+  ACTION claimaction(std::uint64_t action_id, eosio::name maker,
+                     std::string proof_photo, std::string proof_code);
 
   /// @abi action
   /// Send a vote verification for a given claim. It has to be `claimable` verification_type
