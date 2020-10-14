@@ -3,12 +3,12 @@
 # Make sure we don't use any unset variables
 set -eux
 
-# cleos='cleos -u https://eosio.cambiatus.io'
+# cleos='cleos -u https://staging.cambiatus.io'
 cleos='cleos' # running local
 CMM_CONTRACT='cambiatus.cm'
 TK_CONTRACT='cambiatus.tk'
 BACKEND_ACC='cambiatus'
-OBJECTIVE_ID=64 # todo: change as needed for your environment
+OBJECTIVE_ID=703020281 # todo: change as needed for your environment
 
 LUCCA_KEY='EOS6UzXrw93HKhugfRewVNpU5aM9hSUSmcwWtWgecDgYi6nwEHMuu'
 TEST_KEY='EOS8LtuSpUvAPWEJkzea1tAzzeWsWSrTpEsCmwacFbFxXz4Xjn5R4'
@@ -30,7 +30,7 @@ function create_test_users() {
 
 function create_test_community() {
     echo "======== Creating Test Community / Actions"
-    $cleos push action $CMM_CONTRACT create '["0 CLM", "claimcreator", "", "Claimers", "", "0 CLM", "0 CLM", 1, 0, 0]' -p claimcreator
+    $cleos push action $CMM_CONTRACT create '["0 CLM", "claimcreator", "", "Claimers", "", "1 CLM", "10 CLM", 1, 0, 0]' -p claimcreator
     $cleos push action $TK_CONTRACT create '["claimcreator", "21000000 CLM", "-1000 CLM", "mcc"]' -p claimcreator
 
     # TODO: it's not working, fix the netlink action signatures?
@@ -40,15 +40,20 @@ function create_test_community() {
     $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "claimverif3", "natural"]' -p claimcreator
     $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "claimverif4", "natural"]' -p claimcreator
     $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "claimverif5", "natural"]' -p claimcreator
-    $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "lucca", "natural"]' -p claimcreator
 
     # as 18 may 2020, this insert yielded an ID of 64
     $cleos push action $CMM_CONTRACT newobjective '["0 CLM", "Test claims", "claimcreator"]' -p claimcreator
+
+    $cleos get table $CMM_CONTRACT $CMM_CONTRACT action
+    echo "please save the objective id from above"
 }
 
 function create_actions() {
-    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 3 verifications", "1 CLM", "0 CLM", 0, 0, 0, 1, "claimable", "claimcreator", 0, "claimcreator"]' -p claimcreator
-    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 4 verifications", "1 CLM", "0 CLM", 0, 0, 0, 1, "claimable", "claimcreator", 0, "claimcreator"]' -p claimcreator
+    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 3 verifications", "1 CLM", "0 CLM", 0, 0, 0, 3, "claimable", "claimverif1-claimverif2-claimverif3-claimverif4", 0, "claimcreator"]' -p claimcreator
+    $cleos push action $CMM_CONTRACT upsertaction '[0, '$OBJECTIVE_ID', "Claim with 4 verifications", "1 CLM", "0 CLM", 0, 0, 0, 5, "claimable", "claimverif1-claimverif2-claimverif3-claimverif4-claimverif5", 0, "claimcreator"]' -p claimcreator
+
+    $cleos get table $CMM_CONTRACT $CMM_CONTRACT action
+    echo "please save the objective id from above"
 }
 
 function claim_actions() {
@@ -149,6 +154,6 @@ function vote_claim() {
 }
 
 # create_test_users
-create_test_community
-# create_actions
+# create_test_community
+create_actions
 # claim_actions

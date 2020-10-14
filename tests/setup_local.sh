@@ -20,6 +20,8 @@ nohup nodeos -e -p eosio \
     --plugin eosio::producer_plugin \
     --plugin eosio::producer_api_plugin \
     --plugin eosio::chain_api_plugin \
+    --plugin eosio::history_plugin \
+    --plugin eosio::history_api_plugin \
     --plugin eosio::http_plugin \
     --plugin eosio::state_history_plugin \
     --access-control-allow-origin='*' \
@@ -58,9 +60,15 @@ cleos push action eosio activate '["f0af56d2c5a48d60a4a5b5c903edfb7db3a736a94ed5
 sleep 1s
 
 cleos create account eosio $CONTRACT $PUBLIC_KEY $PUBLIC_KEY
-cleos set account permission $CONTRACT active --add-code
 cleos create account eosio $TOKEN_CONTRACT $PUBLIC_KEY $PUBLIC_KEY
+
+cleos set account permission $TOKEN_CONTRACT active '{"threshold": 1, "keys": [{"key": "'$PUBLIC_KEY'", "weight": 1}], "accounts": [{"permission": {"actor": "'$CONTRACT'", "permission": "eosio.code"}, "weight": 1}]}' owner
+
+cleos set account permission $CONTRACT active '{"threshold": 1, "keys": [{"key": "'$PUBLIC_KEY'", "weight": 1}], "accounts": [{"permission": {"actor": "'$TOKEN_CONTRACT'", "permission": "eosio.code"}, "weight": 1}]}' owner
+
+cleos set account permission $CONTRACT active --add-code
 cleos set account permission $TOKEN_CONTRACT active --add-code
+
 cleos create account eosio $BACKEND_ACC $PUBLIC_KEY $PUBLIC_KEY
 
 cleos set code $CONTRACT ../community/community.wasm
