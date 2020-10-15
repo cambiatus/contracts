@@ -594,14 +594,23 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // Assert that verifier hasn't done this previously
   auto check_by_claim = check.get_index<eosio::name{"byclaim"}>();
   auto itr_check_claim = check_by_claim.find(claim_id);
+  uint64_t checks_count = 0;
 
+  // If has any checks
   if (itr_check_claim != check_by_claim.end())
   {
     for (; itr_check_claim != check_by_claim.end(); itr_check_claim++)
     {
       auto check_claim = *itr_check_claim;
-      eosio::check(check_claim.validator != verifier, "The verifier cannot check the same claim more than once");
+
+      // Increment counter if there is a vote already
+      if (check_claim.validator == verifier)
+      {
+        checks_count++;
+      }
     }
+
+    eosio::check(checks_count != 0, "The verifier cannot check the same claim more than once");
   }
 
   // Add new check
