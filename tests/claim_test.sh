@@ -33,7 +33,6 @@ function create_test_community() {
     $cleos push action $CMM_CONTRACT create '["0 CLM", "claimcreator", "", "Claimers", "", "1 CLM", "10 CLM", 1, 0, 0]' -p claimcreator
     $cleos push action $TK_CONTRACT create '["claimcreator", "21000000 CLM", "-1000 CLM", "mcc"]' -p claimcreator
 
-    # TODO: it's not working, fix the netlink action signatures?
     $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "claimclaimer", "natural"]' -p claimcreator@active
     $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "claimverif1", "natural"]' -p claimcreator@active
     $cleos push action $CMM_CONTRACT netlink '["0 CLM", "claimcreator", "claimverif2", "natural"]' -p claimcreator
