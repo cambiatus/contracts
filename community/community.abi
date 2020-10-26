@@ -418,7 +418,7 @@
             ]
         },
         {
-            "name": "newaction",
+            "name": "newclaim",
             "base": "",
             "fields": [
                 {
@@ -426,59 +426,23 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "objective_id",
+                    "name": "action_id",
                     "type": "uint64"
                 },
                 {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "reward",
-                    "type": "asset"
-                },
-                {
-                    "name": "verifier_reward",
-                    "type": "asset"
-                },
-                {
-                    "name": "deadline",
-                    "type": "uint64"
-                },
-                {
-                    "name": "usages",
-                    "type": "uint64"
-                },
-                {
-                    "name": "usages_left",
-                    "type": "uint64"
-                },
-                {
-                    "name": "verifications",
-                    "type": "uint64"
-                },
-                {
-                    "name": "verification_type",
-                    "type": "string"
-                },
-                {
-                    "name": "is_completed",
-                    "type": "uint8"
-                },
-                {
-                    "name": "creator",
+                    "name": "claimer",
                     "type": "name"
                 },
                 {
-                    "name": "has_proof_photo",
-                    "type": "uint8"
+                    "name": "status",
+                    "type": "string"
                 },
                 {
-                    "name": "has_proof_code",
-                    "type": "uint8"
+                    "name": "proof_photo",
+                    "type": "string"
                 },
                 {
-                    "name": "photo_proof_instructions",
+                    "name": "proof_code",
                     "type": "string"
                 }
             ]
@@ -974,8 +938,8 @@
             "key_types": []
         },
         {
-            "name": "newaction",
-            "type": "newaction",
+            "name": "newclaim",
+            "type": "newclaim",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

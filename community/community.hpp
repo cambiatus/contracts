@@ -91,31 +91,6 @@ public:
                      (creator)(has_proof_photo)(has_proof_code)(photo_proof_instructions));
   };
 
-  TABLE newaction
-  {
-    std::uint64_t id;
-    std::uint64_t objective_id;
-    std::string description;
-    eosio::asset reward;
-    eosio::asset verifier_reward;
-    std::uint64_t deadline; // Max date where it can be claimed
-    std::uint64_t usages;   // Max usages
-    std::uint64_t usages_left;
-    std::uint64_t verifications;   // # verifications needed
-    std::string verification_type; // Can be 'automatic' and 'claimable'
-    std::uint8_t is_completed;
-    eosio::name creator;
-    std::uint8_t has_proof_photo;
-    std::uint8_t has_proof_code;
-    std::string photo_proof_instructions;
-
-    std::uint64_t primary_key() const { return id; }
-    std::uint64_t by_objective() const { return objective_id; }
-
-    EOSLIB_SERIALIZE(newaction,
-                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator)(has_proof_photo)(has_proof_code)(photo_proof_instructions));
-  };
-
   TABLE action_validator
   {
     std::uint64_t id;
@@ -141,6 +116,21 @@ public:
 
     EOSLIB_SERIALIZE(claim,
                      (id)(action_id)(claimer)(status));
+  };
+
+  TABLE newclaim
+  {
+    std::uint64_t id;
+    std::uint64_t action_id;
+    eosio::name claimer;
+    std::string status; // Can be: `approved` `rejected` `pending`
+    std::string proof_photo;
+    std::string proof_code;
+
+    std::uint64_t primary_key() const { return id; }
+
+    EOSLIB_SERIALIZE(newclaim,
+                     (id)(action_id)(claimer)(status)(proof_photo)(proof_code));
   };
 
   TABLE check
@@ -298,9 +288,6 @@ public:
                                                eosio::const_mem_fun<cambiatus::action, uint64_t, &cambiatus::action::by_objective>>>
       actions;
 
-  // temp actions migration table
-  typedef eosio::multi_index<eosio::name{"newaction"}, cambiatus::newaction> new_actions;
-
   typedef eosio::multi_index<eosio::name{"validator"},
                              cambiatus::action_validator,
                              eosio::indexed_by<eosio::name{"byaction"},
@@ -312,6 +299,9 @@ public:
                              eosio::indexed_by<eosio::name{"byaction"},
                                                eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action>>>
       claims;
+
+  // temp claim migration table
+  typedef eosio::multi_index<eosio::name{"newclaim"}, cambiatus::newclaim> new_claims;
 
   typedef eosio::multi_index<eosio::name{"check"},
                              cambiatus::check,

@@ -989,31 +989,22 @@ void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
 {
   require_auth(_self);
 
-  actions actions_table(_self, _self.value);
-  new_actions new_actions_table(_self, _self.value);
+  claims claims_table(_self, _self.value);
+  new_claims new_claims(_self, _self.value);
 
-  auto itr = id > 0 ? actions_table.find(id) : actions_table.begin();
+  auto itr = id > 0 ? claims_table.find(id) : claims_table.begin();
 
-  while (itr != actions_table.end())
+  while (itr != claims_table.end())
   {
-    auto &action = *itr;
+    auto &item = *itr;
 
-    new_actions_table.emplace(_self, [&](auto &r) {
-      r.id = action.id;
-      r.objective_id = action.objective_id;
-      r.description = action.description;
-      r.reward = action.reward;
-      r.verifier_reward = action.verifier_reward;
-      r.deadline = action.deadline;
-      r.usages = action.usages;
-      r.usages_left = action.usages_left;
-      r.verifications = action.verifications;
-      r.verification_type = action.verification_type;
-      r.is_completed = action.is_completed;
-      r.creator = action.creator;
-      r.has_proof_photo = 0;
-      r.has_proof_code = 0;
-      r.photo_proof_instructions = "";
+    new_claims.emplace(_self, [&](auto &r) {
+      r.id = item.id;
+      r.action_id = item.action_id;
+      r.claimer = item.claimer;
+      r.status = item.status;
+      r.proof_photo = "";
+      r.proof_code = "";
     });
 
     itr++;
@@ -1077,35 +1068,35 @@ void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
 {
   require_auth(_self);
 
-  actions actions_table(_self, _self.value);
-  new_actions new_actions_table(_self, _self.value);
+  // actions actions_table(_self, _self.value);
+  // new_actions new_actions_table(_self, _self.value);
 
-  auto itr = id > 0 ? new_actions_table.find(id) : new_actions_table.begin();
+  // auto itr = id > 0 ? new_actions_table.find(id) : new_actions_table.begin();
 
-  while (itr != new_actions_table.end())
-  {
-    auto &action = *itr;
+  // while (itr != new_actions_table.end())
+  // {
+  //   auto &action = *itr;
 
-    actions_table.emplace(_self, [&](auto &r) {
-      r.id = action.id;
-      r.objective_id = action.objective_id;
-      r.description = action.description;
-      r.reward = action.reward;
-      r.verifier_reward = action.verifier_reward;
-      r.deadline = action.deadline;
-      r.usages = action.usages;
-      r.usages_left = action.usages_left;
-      r.verifications = action.verifications;
-      r.verification_type = action.verification_type;
-      r.is_completed = action.is_completed;
-      r.creator = action.creator;
-      r.has_proof_photo = action.has_proof_photo;
-      r.has_proof_code = action.has_proof_code;
-      r.photo_proof_instructions = action.photo_proof_instructions;
-    });
+  //   actions_table.emplace(_self, [&](auto &r) {
+  //     r.id = action.id;
+  //     r.objective_id = action.objective_id;
+  //     r.description = action.description;
+  //     r.reward = action.reward;
+  //     r.verifier_reward = action.verifier_reward;
+  //     r.deadline = action.deadline;
+  //     r.usages = action.usages;
+  //     r.usages_left = action.usages_left;
+  //     r.verifications = action.verifications;
+  //     r.verification_type = action.verification_type;
+  //     r.is_completed = action.is_completed;
+  //     r.creator = action.creator;
+  //     r.has_proof_photo = action.has_proof_photo;
+  //     r.has_proof_code = action.has_proof_code;
+  //     r.photo_proof_instructions = action.photo_proof_instructions;
+  //   });
 
-    itr++;
-  }
+  //   itr++;
+  // }
 }
 
 // Get available key
