@@ -128,6 +128,14 @@
                 {
                     "name": "status",
                     "type": "string"
+                },
+                {
+                    "name": "proof_photo",
+                    "type": "string"
+                },
+                {
+                    "name": "proof_code",
+                    "type": "string"
                 }
             ]
         },
@@ -150,6 +158,10 @@
                 {
                     "name": "proof_code",
                     "type": "string"
+                },
+                {
+                    "name": "proof_time",
+                    "type": "uint32"
                 }
             ]
         },

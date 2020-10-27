@@ -1,5 +1,25 @@
 #include "community.hpp"
 #include "../utils/utils.cpp"
+#include <eosio/crypto.hpp>
+
+inline void verify_sha256_prefix(const std::string& value, const std::string& compared_hash) {
+  auto hash = eosio::sha256(value.c_str(), value.length());
+  auto arr = hash.extract_as_byte_array();
+  
+  const char* hex_characters = "0123456789abcdef";
+  std::string hash_prefix;
+  const uint8_t* d = reinterpret_cast<const uint8_t*>(arr.data());
+  
+  auto prefix_size = compared_hash.length();
+  for( uint32_t i = 0; i < prefix_size; ++i ) {
+      hash_prefix += hex_characters[d[i] >> 4];
+      hash_prefix += hex_characters[d[i] & 0x0f];
+  }
+
+  eosio::check(compared_hash == hash_prefix, 
+    "fail to verify hash: " + compared_hash + " should be " + hash_prefix);
+}
+
 
 void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                        std::string name, std::string description,
@@ -481,7 +501,7 @@ void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::
 /// @abi action
 /// Start a new claim on an action
 void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
-                            std::string proof_photo, std::string proof_code)
+                            std::string proof_photo, std::string proof_code, uint32_t proof_time)
 {
   // Validate maker
   eosio::check(is_account(maker), "invalid account for maker");
@@ -519,7 +539,13 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   }
   if (objact.has_proof_code)
   {
-    eosio::check(!proof_code.empty(), "action requires proof code");
+    eosio::check(!proof_code.empty() && proof_time > 0, "action requires proof code");
+  }
+
+  if (!proof_code.empty()) {
+    std::string proof = std::to_string(action_id) + std::to_string(maker.value) 
+                      + std::to_string(proof_time);
+    verify_sha256_prefix(proof, proof_code);
   }
 
   // Validates maker belongs to the action community
@@ -552,6 +578,8 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
     c.action_id = action_id;
     c.claimer = maker;
     c.status = "pending";
+    c.proof_photo = proof_photo;
+    c.proof_code = proof_code;
   });
 }
 
@@ -1068,35 +1096,26 @@ void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
 {
   require_auth(_self);
 
-  // actions actions_table(_self, _self.value);
-  // new_actions new_actions_table(_self, _self.value);
+  claims claims_table(_self, _self.value);
+  new_claims new_claims_table(_self, _self.value);
 
-  // auto itr = id > 0 ? new_actions_table.find(id) : new_actions_table.begin();
+  auto itr = id > 0 ? new_claims_table.find(id) : new_claims_table.begin();
 
-  // while (itr != new_actions_table.end())
-  // {
-  //   auto &action = *itr;
+  while (itr != new_claims_table.end())
+  {
+    auto &item = *itr;
 
-  //   actions_table.emplace(_self, [&](auto &r) {
-  //     r.id = action.id;
-  //     r.objective_id = action.objective_id;
-  //     r.description = action.description;
-  //     r.reward = action.reward;
-  //     r.verifier_reward = action.verifier_reward;
-  //     r.deadline = action.deadline;
-  //     r.usages = action.usages;
-  //     r.usages_left = action.usages_left;
-  //     r.verifications = action.verifications;
-  //     r.verification_type = action.verification_type;
-  //     r.is_completed = action.is_completed;
-  //     r.creator = action.creator;
-  //     r.has_proof_photo = action.has_proof_photo;
-  //     r.has_proof_code = action.has_proof_code;
-  //     r.photo_proof_instructions = action.photo_proof_instructions;
-  //   });
+    claims_table.emplace(_self, [&](auto &r) {
+      r.id = item.id;
+      r.action_id = item.action_id;
+      r.claimer = item.claimer;
+      r.status = item.status;
+      r.proof_photo = "";
+      r.proof_code = "";
+    });
 
-  //   itr++;
-  // }
+    itr++;
+  }
 }
 
 // Get available key
