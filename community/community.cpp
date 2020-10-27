@@ -1017,26 +1017,26 @@ void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
 {
   require_auth(_self);
 
-  claims claims_table(_self, _self.value);
-  new_claims new_claims(_self, _self.value);
+  // claims claims_table(_self, _self.value);
+  // new_claims new_claims(_self, _self.value);
 
-  auto itr = id > 0 ? claims_table.find(id) : claims_table.begin();
+  // auto itr = id > 0 ? claims_table.find(id) : claims_table.begin();
 
-  while (itr != claims_table.end())
-  {
-    auto &item = *itr;
+  // while (itr != claims_table.end())
+  // {
+  //   auto &item = *itr;
 
-    new_claims.emplace(_self, [&](auto &r) {
-      r.id = item.id;
-      r.action_id = item.action_id;
-      r.claimer = item.claimer;
-      r.status = item.status;
-      r.proof_photo = "";
-      r.proof_code = "";
-    });
+  //   new_claims.emplace(_self, [&](auto &r) {
+  //     r.id = item.id;
+  //     r.action_id = item.action_id;
+  //     r.claimer = item.claimer;
+  //     r.status = item.status;
+  //     r.proof_photo = "";
+  //     r.proof_code = "";
+  //   });
 
-    itr++;
-  }
+  //   itr++;
+  // }
 }
 
 void cambiatus::clean(std::string t)
@@ -1096,26 +1096,26 @@ void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
 {
   require_auth(_self);
 
-  claims claims_table(_self, _self.value);
-  new_claims new_claims_table(_self, _self.value);
+  // claims claims_table(_self, _self.value);
+  // new_claims new_claims_table(_self, _self.value);
 
-  auto itr = id > 0 ? new_claims_table.find(id) : new_claims_table.begin();
+  // auto itr = id > 0 ? new_claims_table.find(id) : new_claims_table.begin();
 
-  while (itr != new_claims_table.end())
-  {
-    auto &item = *itr;
+  // while (itr != new_claims_table.end())
+  // {
+  //   auto &item = *itr;
 
-    claims_table.emplace(_self, [&](auto &r) {
-      r.id = item.id;
-      r.action_id = item.action_id;
-      r.claimer = item.claimer;
-      r.status = item.status;
-      r.proof_photo = "";
-      r.proof_code = "";
-    });
+  //   claims_table.emplace(_self, [&](auto &r) {
+  //     r.id = item.id;
+  //     r.action_id = item.action_id;
+  //     r.claimer = item.claimer;
+  //     r.status = item.status;
+  //     r.proof_photo = "";
+  //     r.proof_code = "";
+  //   });
 
-    itr++;
-  }
+  //   itr++;
+  // }
 }
 
 // Get available key

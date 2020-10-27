@@ -118,21 +118,6 @@ public:
                      (id)(action_id)(claimer)(status)(proof_photo)(proof_code));
   };
 
-  TABLE newclaim
-  {
-    std::uint64_t id;
-    std::uint64_t action_id;
-    eosio::name claimer;
-    std::string status; // Can be: `approved` `rejected` `pending`
-    std::string proof_photo;
-    std::string proof_code;
-
-    std::uint64_t primary_key() const { return id; }
-
-    EOSLIB_SERIALIZE(newclaim,
-                     (id)(action_id)(claimer)(status)(proof_photo)(proof_code));
-  };
-
   TABLE check
   {
     std::uint64_t id;
@@ -299,9 +284,6 @@ public:
                              eosio::indexed_by<eosio::name{"byaction"},
                                                eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action>>>
       claims;
-
-  // temp claim migration table
-  typedef eosio::multi_index<eosio::name{"newclaim"}, cambiatus::newclaim> new_claims;
 
   typedef eosio::multi_index<eosio::name{"check"},
                              cambiatus::check,

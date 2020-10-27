@@ -430,36 +430,6 @@
             ]
         },
         {
-            "name": "newclaim",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "action_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "claimer",
-                    "type": "name"
-                },
-                {
-                    "name": "status",
-                    "type": "string"
-                },
-                {
-                    "name": "proof_photo",
-                    "type": "string"
-                },
-                {
-                    "name": "proof_code",
-                    "type": "string"
-                }
-            ]
-        },
-        {
             "name": "newobjective",
             "base": "",
             "fields": [
@@ -945,13 +915,6 @@
         {
             "name": "network",
             "type": "network",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "newclaim",
-            "type": "newclaim",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
