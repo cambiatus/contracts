@@ -10,7 +10,7 @@ inline void verify_sha256_prefix(const std::string& value, const std::string& co
   std::string hash_prefix;
   const uint8_t* d = reinterpret_cast<const uint8_t*>(arr.data());
   
-  auto prefix_size = compared_hash.length();
+  auto prefix_size = compared_hash.length() / 2;
   for( uint32_t i = 0; i < prefix_size; ++i ) {
       hash_prefix += hex_characters[d[i] >> 4];
       hash_prefix += hex_characters[d[i] & 0x0f];
@@ -19,7 +19,6 @@ inline void verify_sha256_prefix(const std::string& value, const std::string& co
   eosio::check(compared_hash == hash_prefix, 
     "fail to verify hash: " + compared_hash + " should be " + hash_prefix);
 }
-
 
 void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                        std::string name, std::string description,
