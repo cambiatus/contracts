@@ -507,6 +507,18 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   eosio::check(is_account(maker), "invalid account for maker");
   require_auth(maker);
 
+  eosio::check(proof_photo.length() <= 256,
+               "Invalid length for proof photo url, must be less than 256 characters");
+
+  if (!proof_code.empty()) 
+  {
+    eosio::check(proof_code.length() == 8, "proof code needs to be 8 chars");
+    eosio::check(now() - proof_time <= proof_expiration_secs, "proof time has expired");
+    std::string proof = std::to_string(action_id) + std::to_string(maker.value) 
+                      + std::to_string(proof_time);
+    verify_sha256_prefix(proof, proof_code);
+  }
+
   // Validates if action exists
   actions action(_self, _self.value);
   auto itr_objact = action.find(action_id);
@@ -529,8 +541,6 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   eosio::check(objact.verification_type == "claimable", "You can only open claims in claimable actions");
 
   // Check action proofs
-  eosio::check(proof_photo.length() <= 256,
-               "Invalid length for proof photo url, must be less than 256 characters");
   if (objact.has_proof_photo)
   {
     eosio::check(!proof_photo.empty(), "action requires proof photo");
@@ -538,15 +548,6 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   if (objact.has_proof_code)
   {
     eosio::check(!proof_code.empty() && proof_time > 0, "action requires proof code");
-  }
-
-  if (!proof_code.empty()) 
-  {
-    eosio::check(proof_code.length() == 8, "proof code needs to be 8 chars");
-    eosio::check(now() - proof_time <= proof_expiration_secs, "proof time has expired");
-    std::string proof = std::to_string(action_id) + std::to_string(maker.value) 
-                      + std::to_string(proof_time);
-    verify_sha256_prefix(proof, proof_code);
   }
 
   // Validates maker belongs to the action community
