@@ -31,7 +31,7 @@ if installed properly, it will add `nodeos` and `cleos` to your binaries.
 Then you can execute the following commands:
 
 ```sh
-WALLET_PASSWORD="PW5JZy495U6ATmFSFUmh7zBj7RDbW9fERKtwmcPbAWc75efVeKQ35"
+WALLET_PASSWORD="YOUR--EOS--WALLET--PASS"
 CONTRACT="cambiatus.cm"
 TOKEN_CONTRACT="cambiatus.tk"
 BACKEND_ACC="cambiatus"
@@ -81,12 +81,4 @@ cleos set abi $CONTRACT ../community/community.abi
 
 cleos set code $TOKEN_CONTRACT ../token/token.wasm
 cleos set abi $TOKEN_CONTRACT ../token/token.abi
-
-cleos create account eosio 'claimcreator' $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio 'claimclaimer' $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio 'claimverif1' $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio 'claimverif2' $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio 'claimverif3' $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio 'claimverif4' $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio 'claimverif5' $PUBLIC_KEY $PUBLIC_KEY
 ```
