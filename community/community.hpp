@@ -309,6 +309,7 @@ public:
 
 const auto currency_account = eosio::name{TOSTR(__TOKEN_ACCOUNT__)};
 const auto backend_account = eosio::name{TOSTR(__BACKEND_ACCOUNT__)};
+const uint32_t proof_expiration_secs = __PROOF_EXPIRATION_SECS__;
 
 // Add global reference for a table from the token contract
 struct currency_stats

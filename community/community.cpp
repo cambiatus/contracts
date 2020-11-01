@@ -542,7 +542,10 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
     eosio::check(!proof_code.empty() && proof_time > 0, "action requires proof code");
   }
 
-  if (!proof_code.empty()) {
+  if (!proof_code.empty()) 
+  {
+    eosio::check(proof_code.length() == 8, "proof code needs to be 8 chars");
+    eosio::check(now() - proof_time <= proof_expiration_secs, "proof time has expired");
     std::string proof = std::to_string(action_id) + std::to_string(maker.value) 
                       + std::to_string(proof_time);
     verify_sha256_prefix(proof, proof_code);
