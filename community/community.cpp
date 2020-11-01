@@ -531,8 +531,6 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   // Check action proofs
   eosio::check(proof_photo.length() <= 256,
                "Invalid length for proof photo url, must be less than 256 characters");
-  eosio::check(proof_code.length() <= 30,
-               "Invalid length for proof code, must be less than 30 characters");
   if (objact.has_proof_photo)
   {
     eosio::check(!proof_photo.empty(), "action requires proof photo");
