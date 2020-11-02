@@ -320,7 +320,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     eosio::check(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
-  // Verify proofs parameters
+  // Validate proofs parameters
   eosio::check(photo_proof_instructions.length() <= 256,
                "Invalid length for photo proof instructions, must be less or equal than 256 chars");
 
