@@ -78,12 +78,15 @@ public:
     std::string verification_type; // Can be 'automatic' and 'claimable'
     std::uint8_t is_completed;
     eosio::name creator;
+    std::uint8_t has_proof_photo;
+    std::uint8_t has_proof_code;
+    std::string photo_proof_instructions;
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_objective() const { return objective_id; }
 
     EOSLIB_SERIALIZE(action,
-                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator));
+                     (id)(objective_id)(description)(reward)(verifier_reward)(deadline)(usages)(usages_left)(verifications)(verification_type)(is_completed)(creator)(has_proof_photo)(has_proof_code)(photo_proof_instructions));
   };
 
   TABLE action_validator
@@ -105,12 +108,14 @@ public:
     std::uint64_t action_id;
     eosio::name claimer;
     std::string status; // Can be: `approved` `rejected` `pending`
+    std::string proof_photo;
+    std::string proof_code;
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_action() const { return action_id; }
 
     EOSLIB_SERIALIZE(claim,
-                     (id)(action_id)(claimer)(status));
+                     (id)(action_id)(claimer)(status)(proof_photo)(proof_code));
   };
 
   TABLE check
@@ -187,11 +192,14 @@ public:
                       std::uint64_t usages, std::uint64_t usages_left,
                       std::uint64_t verifications, std::string verification_type,
                       std::string validators_str, std::uint8_t is_completed,
-                      eosio::name creator);
+                      eosio::name creator,
+                      std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
+                      std::string photo_proof_instructions);
 
   /// @abi action
   /// Start a new claim on an action
-  ACTION claimaction(std::uint64_t action_id, eosio::name maker);
+  ACTION claimaction(std::uint64_t action_id, eosio::name maker,
+                     std::string proof_photo, std::string proof_code, uint32_t proof_time);
 
   /// @abi action
   /// Send a vote verification for a given claim. It has to be `claimable` verification_type
@@ -301,6 +309,7 @@ public:
 
 const auto currency_account = eosio::name{TOSTR(__TOKEN_ACCOUNT__)};
 const auto backend_account = eosio::name{TOSTR(__BACKEND_ACCOUNT__)};
+const uint32_t proof_expiration_secs = __PROOF_EXPIRATION_SECS__;
 
 // Add global reference for a table from the token contract
 struct currency_stats

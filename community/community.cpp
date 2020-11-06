@@ -1,5 +1,24 @@
 #include "community.hpp"
 #include "../utils/utils.cpp"
+#include <eosio/crypto.hpp>
+
+inline void verify_sha256_prefix(const std::string& value, const std::string& compared_hash) {
+  auto hash = eosio::sha256(value.c_str(), value.length());
+  auto arr = hash.extract_as_byte_array();
+  
+  const char* hex_characters = "0123456789abcdef";
+  std::string hash_prefix;
+  const uint8_t* d = reinterpret_cast<const uint8_t*>(arr.data());
+  
+  auto prefix_size = compared_hash.length() / 2;
+  for( uint32_t i = 0; i < prefix_size; ++i ) {
+      hash_prefix += hex_characters[d[i] >> 4];
+      hash_prefix += hex_characters[d[i] & 0x0f];
+  }
+
+  eosio::check(compared_hash == hash_prefix, 
+    "fail to verify hash: " + compared_hash + " should be " + hash_prefix);
+}
 
 void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                        std::string name, std::string description,
@@ -240,7 +259,9 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
                              std::uint64_t usages, std::uint64_t usages_left,
                              std::uint64_t verifications, std::string verification_type,
                              std::string validators_str, std::uint8_t is_completed,
-                             eosio::name creator)
+                             eosio::name creator,
+                             std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
+                             std::string photo_proof_instructions)
 {
   // Validate creator
   eosio::check(is_account(creator), "invalid account for creator");
@@ -299,6 +320,10 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     eosio::check(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
+  // Validate proofs parameters
+  eosio::check(photo_proof_instructions.length() <= 256,
+               "Invalid length for photo proof instructions, must be less or equal than 256 chars");
+
   // ========================================= End validation, start upsert
 
   // Find action
@@ -323,6 +348,9 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.verification_type = verification_type;
       a.is_completed = 0;
       a.creator = creator;
+      a.has_proof_photo = has_proof_photo;
+      a.has_proof_code = has_proof_code;
+      a.photo_proof_instructions = photo_proof_instructions;
     });
   }
   else
@@ -337,6 +365,9 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.verifications = verifications;
       a.verification_type = verification_type;
       a.is_completed = is_completed;
+      a.has_proof_photo = has_proof_photo;
+      a.has_proof_code = has_proof_code;
+      a.photo_proof_instructions = photo_proof_instructions;
     });
   }
 
@@ -468,11 +499,24 @@ void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::
 
 /// @abi action
 /// Start a new claim on an action
-void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker)
+void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
+                            std::string proof_photo, std::string proof_code, uint32_t proof_time)
 {
   // Validate maker
   eosio::check(is_account(maker), "invalid account for maker");
   require_auth(maker);
+
+  eosio::check(proof_photo.length() <= 256,
+               "Invalid length for proof photo url, must be less than 256 characters");
+
+  if (!proof_code.empty()) 
+  {
+    eosio::check(proof_code.length() == 8, "proof code needs to be 8 chars");
+    eosio::check(now() - proof_time <= proof_expiration_secs, "proof time has expired");
+    std::string proof = std::to_string(action_id) + std::to_string(maker.value) 
+                      + std::to_string(proof_time);
+    verify_sha256_prefix(proof, proof_code);
+  }
 
   // Validates if action exists
   actions action(_self, _self.value);
@@ -494,6 +538,16 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker)
 
   // Check if the action is claimable
   eosio::check(objact.verification_type == "claimable", "You can only open claims in claimable actions");
+
+  // Check action proofs
+  if (objact.has_proof_photo)
+  {
+    eosio::check(!proof_photo.empty(), "action requires proof photo");
+  }
+  if (objact.has_proof_code)
+  {
+    eosio::check(!proof_code.empty() && proof_time > 0, "action requires proof code");
+  }
 
   // Validates maker belongs to the action community
   objectives objective(_self, _self.value);
@@ -525,6 +579,8 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker)
     c.action_id = action_id;
     c.claimer = maker;
     c.status = "pending";
+    c.proof_photo = proof_photo;
+    c.proof_code = proof_code;
   });
 }
 
@@ -960,26 +1016,25 @@ void cambiatus::deleteact(std::uint64_t id)
 
 void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
 {
-  // require_auth(_self);
+  require_auth(_self);
 
-  // communities community_table(_self, _self.value);
-  // new_communities new_communities_table(_self, _self.value);
+  // claims claims_table(_self, _self.value);
+  // new_claims new_claims(_self, _self.value);
 
-  // for (auto itr = community_table.begin(); itr != community_table.end();) {
-  //   auto &community = *itr;
+  // auto itr = id > 0 ? claims_table.find(id) : claims_table.begin();
 
-  //   new_communities_table.emplace(_self, [&](auto &r) {
-  //                                        r.symbol = community.symbol;
+  // while (itr != claims_table.end())
+  // {
+  //   auto &item = *itr;
 
-  //                                        r.creator = community.creator;
-  //                                        r.logo = community.logo;
-  //                                        r.name = community.name;
-  //                                        r.description = community.description;
-  //                                        r.inviter_reward = community.inviter_reward;
-  //                                        r.invited_reward = community.invited_reward;
-  //                                        r.has_objectives = 1;
-  //                                        r.has_shop = 1;
-  //                                      });
+  //   new_claims.emplace(_self, [&](auto &r) {
+  //     r.id = item.id;
+  //     r.action_id = item.action_id;
+  //     r.claimer = item.claimer;
+  //     r.status = item.status;
+  //     r.proof_photo = "";
+  //     r.proof_code = "";
+  //   });
 
   //   itr++;
   // }
@@ -1038,27 +1093,27 @@ void cambiatus::clean(std::string t)
   }
 }
 
-void cambiatus::migrateafter(std::uint64_t claim_id, std::uint64_t increment)
+void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
 {
-  // require_auth(_self);
-  // communities communities_table(_self, _self.value);
-  // new_communities new_communities_table(_self, _self.value);
+  require_auth(_self);
 
-  // for (auto itr = new_communities_table.begin(); itr != new_communities_table.end();) {
-  //   auto &new_community = *itr;
+  // claims claims_table(_self, _self.value);
+  // new_claims new_claims_table(_self, _self.value);
 
-  //   communities_table.emplace(_self, [&](auto &r) {
-  //                                          r.symbol = new_community.symbol;
+  // auto itr = id > 0 ? new_claims_table.find(id) : new_claims_table.begin();
 
-  //                                          r.creator = new_community.creator;
-  //                                          r.logo = new_community.logo;
-  //                                          r.name = new_community.name;
-  //                                          r.description = new_community.description;
-  //                                          r.inviter_reward = new_community.inviter_reward;
-  //                                          r.invited_reward = new_community.invited_reward;
-  //                                          r.has_objectives = new_community.has_objectives;
-  //                                          r.has_shop = new_community.has_shop;
-  //                                        });
+  // while (itr != new_claims_table.end())
+  // {
+  //   auto &item = *itr;
+
+  //   claims_table.emplace(_self, [&](auto &r) {
+  //     r.id = item.id;
+  //     r.action_id = item.action_id;
+  //     r.claimer = item.claimer;
+  //     r.status = item.status;
+  //     r.proof_photo = "";
+  //     r.proof_code = "";
+  //   });
 
   //   itr++;
   // }
