@@ -2,22 +2,24 @@
 #include "../utils/utils.cpp"
 #include <eosio/crypto.hpp>
 
-inline void verify_sha256_prefix(const std::string& value, const std::string& compared_hash) {
+inline void verify_sha256_prefix(const std::string &value, const std::string &compared_hash)
+{
   auto hash = eosio::sha256(value.c_str(), value.length());
   auto arr = hash.extract_as_byte_array();
-  
-  const char* hex_characters = "0123456789abcdef";
+
+  const char *hex_characters = "0123456789abcdef";
   std::string hash_prefix;
-  const uint8_t* d = reinterpret_cast<const uint8_t*>(arr.data());
-  
+  const uint8_t *d = reinterpret_cast<const uint8_t *>(arr.data());
+
   auto prefix_size = compared_hash.length() / 2;
-  for( uint32_t i = 0; i < prefix_size; ++i ) {
-      hash_prefix += hex_characters[d[i] >> 4];
-      hash_prefix += hex_characters[d[i] & 0x0f];
+  for (uint32_t i = 0; i < prefix_size; ++i)
+  {
+    hash_prefix += hex_characters[d[i] >> 4];
+    hash_prefix += hex_characters[d[i] & 0x0f];
   }
 
-  eosio::check(compared_hash == hash_prefix, 
-    "fail to verify hash: " + compared_hash + " should be " + hash_prefix);
+  eosio::check(compared_hash == hash_prefix,
+               "fail to verify hash: " + compared_hash + " should be " + hash_prefix);
 }
 
 void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
@@ -509,12 +511,11 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   eosio::check(proof_photo.length() <= 256,
                "Invalid length for proof photo url, must be less than 256 characters");
 
-  if (!proof_code.empty()) 
+  if (!proof_code.empty())
   {
     eosio::check(proof_code.length() == 8, "proof code needs to be 8 chars");
     eosio::check(now() - proof_time <= proof_expiration_secs, "proof time has expired");
-    std::string proof = std::to_string(action_id) + std::to_string(maker.value) 
-                      + std::to_string(proof_time);
+    std::string proof = std::to_string(action_id) + std::to_string(maker.value) + std::to_string(proof_time);
     verify_sha256_prefix(proof, proof_code);
   }
 
@@ -787,6 +788,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
   eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
   eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
   eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
+  eosio::check(units <= 9999, "Invalid number of units");
 
   // Validate user belongs to community
   auto from_id = gen_uuid(quantity.symbol.raw(), from.value);
@@ -848,6 +850,7 @@ void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
   eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
   eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
   eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
+  eosio::check(units <= 9999, "Invalid number of units");
 
   // Check if community exists
   communities community(_self, _self.value);
