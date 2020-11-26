@@ -848,7 +848,6 @@ void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
 
   // Validate Strings
   eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
   eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
   eosio::check(units <= 9999, "Invalid number of units");
 
@@ -866,7 +865,7 @@ void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
   // Update sale
   sale.modify(found_sale, _self, [&](auto &s) {
     s.title = title;
-    s.description = description;
+    s.description = description.substr(0, 255);
     s.image = image;
     s.quantity = quantity;
     s.units = units;
