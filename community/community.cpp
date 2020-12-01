@@ -647,8 +647,7 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
 
   // Get check index
   checks check(_self, _self.value);
-
-  // Assert that verifier hasn't done this previously
+  // Assert that verifier hasn't voted previously
   auto check_by_claim = check.get_index<eosio::name{"byclaim"}>();
   auto itr_check_claim = check_by_claim.find(claim_id);
   uint64_t checks_count = 0;
@@ -661,13 +660,14 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
       auto check_claim = *itr_check_claim;
 
       // Increment counter if there is a vote already
-      if (check_claim.validator == verifier)
+      if (check_claim.validator == verifier && check_claim.claim_id == claim_id)
       {
         checks_count++;
       }
     }
 
-    eosio::check(checks_count != 0, "The verifier cannot check the same claim more than once");
+    // We must not allow the same user to vote twice
+    eosio::check(checks_count == 0, "The verifier cannot check the same claim more than once");
   }
 
   // Add new check
@@ -786,7 +786,6 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
 
   // Validate Strings
   eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
   eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
   eosio::check(units <= 9999, "Invalid number of units");
 
@@ -812,7 +811,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
     s.creator = from;
     s.community = netlink.community;
     s.title = title;
-    s.description = description;
+    s.description = description.substr(0, 255);
     s.image = image;
     s.track_stock = track_stock;
     s.quantity = quantity;
