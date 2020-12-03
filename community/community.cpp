@@ -690,7 +690,6 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     verification_reward.send();
   }
 
-  // We always update the claim status, at each vote
   // In order to know if its approved or rejected, we will have to count all existing checks, to see if we already have all needed
   // Just check `objact.verifications <= check counter`
 
@@ -703,7 +702,7 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // At every vote we will have to update the claim status
   std::uint64_t positive_votes = 0;
   std::uint64_t negative_votes = 0;
-  auto itr_check = check_by_claim.find(claim.id);
+  auto itr_check = check_by_claim.find(claim_id);
   for (; itr_check != check_by_claim.end();)
   {
     if ((*itr_check).is_verified == 1)
