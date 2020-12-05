@@ -647,27 +647,15 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
 
   // Get check index
   checks check(_self, _self.value);
-  // Assert that verifier hasn't voted previously
   auto check_by_claim = check.get_index<eosio::name{"byclaim"}>();
-  auto itr_check_claim = check_by_claim.find(claim_id);
+
+  // Assert that verifier hasn't voted previously
   uint64_t checks_count = 0;
-
-  // If has any checks
-  if (itr_check_claim != check_by_claim.end())
+  for (auto itr_check_claim = check_by_claim.find(claim_id); itr_check_claim != check_by_claim.end(); itr_check_claim++)
   {
-    for (; itr_check_claim != check_by_claim.end(); itr_check_claim++)
-    {
-      auto check_claim = *itr_check_claim;
-
-      // Increment counter if there is a vote already
-      if (check_claim.validator == verifier && check_claim.claim_id == claim_id)
-      {
-        checks_count++;
-      }
-    }
-
-    // We must not allow the same user to vote twice
-    eosio::check(checks_count == 0, "The verifier cannot check the same claim more than once");
+    auto check_claim = *itr_check_claim;
+    bool existing_vote = check_claim.validator == verifier && check_claim.claim_id == claim_id;
+    eosio::check(!existing_vote, "The verifier cannot check the same claim more than once");
   }
 
   // Add new check
@@ -702,18 +690,18 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // At every vote we will have to update the claim status
   std::uint64_t positive_votes = 0;
   std::uint64_t negative_votes = 0;
-  auto itr_check = check_by_claim.find(claim_id);
-  for (; itr_check != check_by_claim.end();)
+  for (auto itr_check = check_by_claim.find(claim_id); itr_check != check_by_claim.end(); itr_check++)
   {
     if ((*itr_check).is_verified == 1)
     {
       positive_votes++;
+      eosio::print("\nFound a positive vote from: ", (*itr_check).validator);
     }
     else
     {
       negative_votes++;
+      eosio::print("\nFound a negative vote from: ", (*itr_check).validator);
     }
-    itr_check++;
   }
 
   std::string status = "pending";
@@ -729,35 +717,30 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     }
   }
 
+  eosio::print("\nFinal status of the claim is: ", status);
   claim_table.modify(itr_clm, _self, [&](auto &c) {
     c.status = status;
   });
 
-  if (status == "approved")
+  if (status == "approved" && objact.reward.amount > 0)
   {
-    if (objact.reward.amount > 0)
-    {
-      // Send reward
-      std::string memo_action = "Thanks for doing an action for your community";
-      eosio::action reward_action = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
-                                                  currency_account,                                                 // Account
-                                                  eosio::name{"issue"},                                             // Action
-                                                  // to, quantity, memo
-                                                  std::make_tuple(claim.claimer, objact.reward, memo_action));
-      reward_action.send();
-    }
+    // Send reward
+    std::string memo_action = "Thanks for doing an action for your community";
+    eosio::action reward_action = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
+                                                currency_account,                                                 // Account
+                                                eosio::name{"issue"},                                             // Action
+                                                // to, quantity, memo
+                                                std::make_tuple(claim.claimer, objact.reward, memo_action));
+    reward_action.send();
   }
 
   // Check if action can be completed. Current claim must be either "approved" or "rejected"
-  if (status != "pending")
+  if (status != "pending" && !objact.is_completed && objact.usages > 0)
   {
-    if (!objact.is_completed && objact.usages > 0)
-    {
-      action.modify(itr_objact, _self, [&](auto &a) {
-        a.usages_left = objact.usages_left - 1;
-        a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
-      });
-    }
+    action.modify(itr_objact, _self, [&](auto &a) {
+      a.usages_left = objact.usages_left - 1;
+      a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
+    });
   }
 }
 
