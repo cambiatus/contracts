@@ -786,7 +786,6 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
 
   // Validate Strings
   eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
   eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
   eosio::check(units <= 9999, "Invalid number of units");
 
@@ -812,7 +811,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
     s.creator = from;
     s.community = netlink.community;
     s.title = title;
-    s.description = description;
+    s.description = description.substr(0, 255);
     s.image = image;
     s.track_stock = track_stock;
     s.quantity = quantity;
