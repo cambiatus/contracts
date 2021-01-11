@@ -41,7 +41,6 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
 
   // Validates string fields
   eosio::check(name.size() <= 256, "name has more than 256 bytes");
-  eosio::check(description.size() <= 256, "description has more than 256 bytes");
   eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
 
   // Check if community was created before
@@ -56,7 +55,7 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
     c.creator = creator;
     c.logo = logo;
     c.name = name;
-    c.description = description;
+    c.description = description.substr(0, 255);
     c.inviter_reward = inviter_reward;
     c.invited_reward = invited_reward;
     c.has_objectives = has_objectives;
@@ -88,12 +87,11 @@ void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string nam
   // Validates string fields
   eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
   eosio::check(name.size() <= 256, "name has more than 256 bytes");
-  eosio::check(description.size() <= 256, "description has more than 256 bytes");
 
   community.modify(cmm, _self, [&](auto &row) {
     row.logo = logo;
     row.name = name;
-    row.description = description;
+    row.description = description.substr(0, 255);
     row.inviter_reward = inviter_reward;
     row.invited_reward = invited_reward;
     row.has_objectives = has_objectives;
@@ -201,7 +199,6 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
 
   eosio::symbol community_symbol = cmm_asset.symbol;
   eosio::check(community_symbol.is_valid(), "Invalid symbol name for community");
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
 
   // Check if community exists
   communities community(_self, _self.value);
@@ -219,7 +216,7 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
   objectives objective(_self, _self.value);
   objective.emplace(_self, [&](auto &o) {
     o.id = get_available_id("objectives");
-    o.description = description;
+    o.description = description.substr(0, 255);
     o.community = community_symbol;
     o.creator = creator;
   });
@@ -228,8 +225,6 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
 void cambiatus::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor)
 {
   require_auth(editor);
-
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
 
   // Find objective
   objectives objective(_self, _self.value);
@@ -251,7 +246,7 @@ void cambiatus::updobjective(std::uint64_t objective_id, std::string description
   eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
 
   objective.modify(found_objective, _self, [&](auto &row) {
-    row.description = description;
+    row.description = description.substr(0, 255);
   });
 }
 
@@ -298,9 +293,6 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
   eosio::check(verifier_reward.amount >= 0, "verifier reward must be greater than or equal to 0");
   eosio::check(verifier_reward.symbol == obj.community, "verifier_reward must be a community token");
 
-  // Validate description
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less or equal than 256 chars");
-
   // Validate deadline
   if (deadline > 0)
   {
@@ -322,10 +314,6 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     eosio::check(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
-  // Validate proofs parameters
-  eosio::check(photo_proof_instructions.length() <= 256,
-               "Invalid length for photo proof instructions, must be less or equal than 256 chars");
-
   // ========================================= End validation, start upsert
 
   // Find action
@@ -340,7 +328,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     action.emplace(_self, [&](auto &a) {
       a.id = action_id;
       a.objective_id = objective_id;
-      a.description = description;
+      a.description = description.substr(0, 255);
       a.reward = reward;
       a.verifier_reward = verifier_reward;
       a.deadline = deadline;
@@ -352,13 +340,13 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.creator = creator;
       a.has_proof_photo = has_proof_photo;
       a.has_proof_code = has_proof_code;
-      a.photo_proof_instructions = photo_proof_instructions;
+      a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
     });
   }
   else
   {
     action.modify(itr_act, _self, [&](auto &a) {
-      a.description = description;
+      a.description = description.substr(0, 255);
       a.reward = reward;
       a.verifier_reward = verifier_reward;
       a.deadline = deadline;
@@ -369,7 +357,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.is_completed = is_completed;
       a.has_proof_photo = has_proof_photo;
       a.has_proof_code = has_proof_code;
-      a.photo_proof_instructions = photo_proof_instructions;
+      a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
     });
   }
 
