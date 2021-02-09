@@ -41,7 +41,6 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
 
   // Validates string fields
   eosio::check(name.size() <= 256, "name has more than 256 bytes");
-  eosio::check(description.size() <= 256, "description has more than 256 bytes");
   eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
 
   // Check if community was created before
@@ -56,7 +55,7 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
     c.creator = creator;
     c.logo = logo;
     c.name = name;
-    c.description = description;
+    c.description = description.substr(0, 255);
     c.inviter_reward = inviter_reward;
     c.invited_reward = invited_reward;
     c.has_objectives = has_objectives;
@@ -88,12 +87,11 @@ void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string nam
   // Validates string fields
   eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
   eosio::check(name.size() <= 256, "name has more than 256 bytes");
-  eosio::check(description.size() <= 256, "description has more than 256 bytes");
 
   community.modify(cmm, _self, [&](auto &row) {
     row.logo = logo;
     row.name = name;
-    row.description = description;
+    row.description = description.substr(0, 255);
     row.inviter_reward = inviter_reward;
     row.invited_reward = invited_reward;
     row.has_objectives = has_objectives;
@@ -201,7 +199,6 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
 
   eosio::symbol community_symbol = cmm_asset.symbol;
   eosio::check(community_symbol.is_valid(), "Invalid symbol name for community");
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
 
   // Check if community exists
   communities community(_self, _self.value);
@@ -219,7 +216,7 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
   objectives objective(_self, _self.value);
   objective.emplace(_self, [&](auto &o) {
     o.id = get_available_id("objectives");
-    o.description = description;
+    o.description = description.substr(0, 255);
     o.community = community_symbol;
     o.creator = creator;
   });
@@ -228,8 +225,6 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
 void cambiatus::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor)
 {
   require_auth(editor);
-
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less than 256 characters");
 
   // Find objective
   objectives objective(_self, _self.value);
@@ -251,7 +246,7 @@ void cambiatus::updobjective(std::uint64_t objective_id, std::string description
   eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
 
   objective.modify(found_objective, _self, [&](auto &row) {
-    row.description = description;
+    row.description = description.substr(0, 255);
   });
 }
 
@@ -298,9 +293,6 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
   eosio::check(verifier_reward.amount >= 0, "verifier reward must be greater than or equal to 0");
   eosio::check(verifier_reward.symbol == obj.community, "verifier_reward must be a community token");
 
-  // Validate description
-  eosio::check(description.length() <= 256, "Invalid length for description, must be less or equal than 256 chars");
-
   // Validate deadline
   if (deadline > 0)
   {
@@ -322,10 +314,6 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     eosio::check(verifications >= 3 && ((verifications & 1) != 0), "You need at least three validators and it must be an odd number");
   }
 
-  // Validate proofs parameters
-  eosio::check(photo_proof_instructions.length() <= 256,
-               "Invalid length for photo proof instructions, must be less or equal than 256 chars");
-
   // ========================================= End validation, start upsert
 
   // Find action
@@ -340,7 +328,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     action.emplace(_self, [&](auto &a) {
       a.id = action_id;
       a.objective_id = objective_id;
-      a.description = description;
+      a.description = description.substr(0, 255);
       a.reward = reward;
       a.verifier_reward = verifier_reward;
       a.deadline = deadline;
@@ -352,13 +340,13 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.creator = creator;
       a.has_proof_photo = has_proof_photo;
       a.has_proof_code = has_proof_code;
-      a.photo_proof_instructions = photo_proof_instructions;
+      a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
     });
   }
   else
   {
     action.modify(itr_act, _self, [&](auto &a) {
-      a.description = description;
+      a.description = description.substr(0, 255);
       a.reward = reward;
       a.verifier_reward = verifier_reward;
       a.deadline = deadline;
@@ -369,7 +357,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       a.is_completed = is_completed;
       a.has_proof_photo = has_proof_photo;
       a.has_proof_code = has_proof_code;
-      a.photo_proof_instructions = photo_proof_instructions;
+      a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
     });
   }
 
@@ -647,27 +635,15 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
 
   // Get check index
   checks check(_self, _self.value);
-
-  // Assert that verifier hasn't done this previously
   auto check_by_claim = check.get_index<eosio::name{"byclaim"}>();
-  auto itr_check_claim = check_by_claim.find(claim_id);
+
+  // Assert that verifier hasn't voted previously
   uint64_t checks_count = 0;
-
-  // If has any checks
-  if (itr_check_claim != check_by_claim.end())
+  for (auto itr_check_claim = check_by_claim.find(claim_id); itr_check_claim != check_by_claim.end(); itr_check_claim++)
   {
-    for (; itr_check_claim != check_by_claim.end(); itr_check_claim++)
-    {
-      auto check_claim = *itr_check_claim;
-
-      // Increment counter if there is a vote already
-      if (check_claim.validator == verifier)
-      {
-        checks_count++;
-      }
-    }
-
-    eosio::check(checks_count != 0, "The verifier cannot check the same claim more than once");
+    auto check_claim = *itr_check_claim;
+    bool existing_vote = check_claim.validator == verifier && check_claim.claim_id == claim_id;
+    eosio::check(!existing_vote, "The verifier cannot check the same claim more than once");
   }
 
   // Add new check
@@ -690,7 +666,6 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     verification_reward.send();
   }
 
-  // We always update the claim status, at each vote
   // In order to know if its approved or rejected, we will have to count all existing checks, to see if we already have all needed
   // Just check `objact.verifications <= check counter`
 
@@ -703,18 +678,18 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // At every vote we will have to update the claim status
   std::uint64_t positive_votes = 0;
   std::uint64_t negative_votes = 0;
-  auto itr_check = check_by_claim.find(claim.id);
-  for (; itr_check != check_by_claim.end();)
+  for (auto itr_check = check_by_claim.find(claim_id); itr_check != check_by_claim.end(); itr_check++)
   {
     if ((*itr_check).is_verified == 1)
     {
       positive_votes++;
+      eosio::print("\nFound a positive vote from: ", (*itr_check).validator);
     }
     else
     {
       negative_votes++;
+      eosio::print("\nFound a negative vote from: ", (*itr_check).validator);
     }
-    itr_check++;
   }
 
   std::string status = "pending";
@@ -730,35 +705,30 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     }
   }
 
+  eosio::print("\nFinal status of the claim is: ", status);
   claim_table.modify(itr_clm, _self, [&](auto &c) {
     c.status = status;
   });
 
-  if (status == "approved")
+  if (status == "approved" && objact.reward.amount > 0)
   {
-    if (objact.reward.amount > 0)
-    {
-      // Send reward
-      std::string memo_action = "Thanks for doing an action for your community";
-      eosio::action reward_action = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
-                                                  currency_account,                                                 // Account
-                                                  eosio::name{"issue"},                                             // Action
-                                                  // to, quantity, memo
-                                                  std::make_tuple(claim.claimer, objact.reward, memo_action));
-      reward_action.send();
-    }
+    // Send reward
+    std::string memo_action = "Thanks for doing an action for your community";
+    eosio::action reward_action = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
+                                                currency_account,                                                 // Account
+                                                eosio::name{"issue"},                                             // Action
+                                                // to, quantity, memo
+                                                std::make_tuple(claim.claimer, objact.reward, memo_action));
+    reward_action.send();
   }
 
   // Check if action can be completed. Current claim must be either "approved" or "rejected"
-  if (status != "pending")
+  if (status != "pending" && !objact.is_completed && objact.usages > 0)
   {
-    if (!objact.is_completed && objact.usages > 0)
-    {
-      action.modify(itr_objact, _self, [&](auto &a) {
-        a.usages_left = objact.usages_left - 1;
-        a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
-      });
-    }
+    action.modify(itr_objact, _self, [&](auto &a) {
+      a.usages_left = objact.usages_left - 1;
+      a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
+    });
   }
 }
 
