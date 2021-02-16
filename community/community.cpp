@@ -678,22 +678,32 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // At every vote we will have to update the claim status
   std::uint64_t positive_votes = 0;
   std::uint64_t negative_votes = 0;
-  for (auto itr_check = check_by_claim.find(claim_id); itr_check != check_by_claim.end(); itr_check++)
+  for (auto itr_vote = check.begin(); itr_vote != check.end(); itr_vote++)
   {
-    if ((*itr_check).is_verified == 1)
+    if (itr_vote->claim_id != claim_id)
+      continue;
+
+    if (itr_vote->is_verified == 1)
     {
       positive_votes++;
-      eosio::print("\nFound a positive vote from: ", (*itr_check).validator);
+      eosio::print("\nFound a positive vote from: ", (*itr_vote).validator);
     }
     else
     {
       negative_votes++;
-      eosio::print("\nFound a negative vote from: ", (*itr_check).validator);
+      eosio::print("\nFound a negative vote from: ", (*itr_vote).validator);
     }
   }
 
+  eosio::print("\nPositive votes: ", positive_votes);
+  eosio::print("\nNegative votes: ", negative_votes);
+
+  std::uint64_t majority = (objact.verifications >> 1) + (objact.verifications & 1);
+
+  eosio::print("\nMajority: ", majority);
+
   std::string status = "pending";
-  if (positive_votes + negative_votes >= objact.verifications)
+  if (positive_votes >= majority || negative_votes >= majority)
   {
     if (positive_votes > negative_votes)
     {
@@ -704,6 +714,9 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
       status = "rejected";
     }
   }
+
+  // TODO: should we keep this check?
+  // eosio::check(positive_votes + negative_votes > objact.verifications, "Cannot compute your vote, already got all votes needed");
 
   eosio::print("\nFinal status of the claim is: ", status);
   claim_table.modify(itr_clm, _self, [&](auto &c) {
