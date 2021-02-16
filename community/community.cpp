@@ -678,7 +678,9 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // At every vote we will have to update the claim status
   std::uint64_t positive_votes = 0;
   std::uint64_t negative_votes = 0;
-  for (auto itr_vote = check.begin(); itr_vote != check.end(); itr_vote++)
+
+  auto checks_with_claim = check.get_index<eosio::name{"byclaim"}>();
+  for (auto itr_vote = checks_with_claim.find(claim_id); itr_vote != checks_with_claim.end(); itr_vote++)
   {
     if (itr_vote->claim_id != claim_id)
       continue;
