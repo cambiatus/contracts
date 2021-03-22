@@ -243,17 +243,6 @@ void token::retire(eosio::symbol currency, std::string user_type, std::string me
 
 void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inviter)
 {
-  // Validate auth -- can only be called by the Cambiatus contracts
-  // require_auth(_self);
-  if (eosio::get_sender() == community_account)
-  {
-    require_auth(inviter);
-  }
-  else
-  {
-    require_auth(_self);
-  }
-
   // Make sure token exists on the stats table
   stats statstable(_self, currency.code().raw());
   const auto &st = statstable.get(currency.code().raw(), "token with given symbol does not exist, create token before initacc");

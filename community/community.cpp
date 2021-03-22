@@ -133,7 +133,9 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
   networks network(_self, _self.value);
   auto existing_netlink = network.find(id);
   if (existing_netlink != network.end())
+  {
     return; // Skip if user already in the network
+  }
 
   // Validates inviter if not the creator
   if (cmm.creator != inviter)
@@ -150,9 +152,6 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
     r.invited_by = inviter;
     r.user_type = user_type;
   });
-
-  // Notify user
-  require_recipient(new_user);
 
   // Skip rewards if inviter and invited is the same, may happen during community creation
   if (inviter == new_user)
@@ -185,11 +184,12 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
   }
   else
   {
-    eosio::action init_account = eosio::action(eosio::permission_level{inviter, eosio::name{"active"}}, // Permission
-                                               currency_account,                                        // Account
-                                               eosio::name{"initacc"},                                  // Action
+    eosio::action init_account = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
+                                               currency_account,                                                 // Account
+                                               eosio::name{"initacc"},                                           // Action
                                                std::make_tuple(cmm.invited_reward.symbol, new_user, inviter));
     init_account.send();
+    require_recipient(new_user);
   }
 }
 
