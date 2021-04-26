@@ -25,7 +25,8 @@ inline void verify_sha256_prefix(const std::string &value, const std::string &co
 void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string logo,
                        std::string name, std::string description,
                        eosio::asset inviter_reward, eosio::asset invited_reward,
-                       std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc)
+                       std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc,
+                       std::uint8_t auto_invite, std::string subdomain)
 {
   require_auth(creator);
 
@@ -77,7 +78,8 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
 
 void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string name,
                        std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
-                       std::uint8_t has_objectives, std::uint8_t has_shop)
+                       std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc,
+                       std::uint8_t auto_invite, std::string subdomain)
 {
   communities community(_self, _self.value);
   const auto &cmm = community.get(cmm_asset.symbol.raw(), "can't find any community with given asset");
@@ -96,6 +98,7 @@ void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string nam
     row.invited_reward = invited_reward;
     row.has_objectives = has_objectives;
     row.has_shop = has_shop;
+    row.has_kyc = has_kyc;
   });
 }
 
