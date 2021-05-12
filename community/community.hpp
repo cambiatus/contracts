@@ -165,14 +165,14 @@ public:
   ACTION create(eosio::asset cmm_asset, eosio::name creator, std::string logo, std::string name,
                 std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
                 std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc,
-                std::uint8_t auto_invite, std::string subdomain);
+                std::uint8_t auto_invite, std::string subdomain, std::string website);
 
   /// @abi action
   /// Updates community attributes
   ACTION update(eosio::asset cmm_asset, std::string logo, std::string name,
                 std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
                 std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc,
-                std::uint8_t auto_invite, std::string subdomain);
+                std::uint8_t auto_invite, std::string subdomain, std::string website);
 
   /// @abi action
   /// Adds a user to a community

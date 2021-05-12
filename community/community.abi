@@ -272,6 +272,10 @@
                 {
                     "name": "subdomain",
                     "type": "string"
+                },
+                {
+                    "name": "website",
+                    "type": "string"
                 }
             ]
         },
@@ -631,6 +635,10 @@
                 },
                 {
                     "name": "subdomain",
+                    "type": "string"
+                },
+                {
+                    "name": "website",
                     "type": "string"
                 }
             ]

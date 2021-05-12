@@ -26,7 +26,7 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
                        std::string name, std::string description,
                        eosio::asset inviter_reward, eosio::asset invited_reward,
                        std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc,
-                       std::uint8_t auto_invite, std::string subdomain)
+                       std::uint8_t auto_invite, std::string subdomain, std::string website)
 {
   require_auth(creator);
 
@@ -50,19 +50,20 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
   eosio::check(existing_cmm == community.end(), "symbol already exists");
 
   // creates new community
-  community.emplace(_self, [&](auto &c) {
-    c.symbol = new_symbol;
+  community.emplace(_self, [&](auto &c)
+                    {
+                      c.symbol = new_symbol;
 
-    c.creator = creator;
-    c.logo = logo;
-    c.name = name;
-    c.description = description.substr(0, 255);
-    c.inviter_reward = inviter_reward;
-    c.invited_reward = invited_reward;
-    c.has_objectives = has_objectives;
-    c.has_shop = has_shop;
-    c.has_kyc = has_kyc;
-  });
+                      c.creator = creator;
+                      c.logo = logo;
+                      c.name = name;
+                      c.description = description.substr(0, 255);
+                      c.inviter_reward = inviter_reward;
+                      c.invited_reward = invited_reward;
+                      c.has_objectives = has_objectives;
+                      c.has_shop = has_shop;
+                      c.has_kyc = has_kyc;
+                    });
 
   std::string user_type = "natural";
 
@@ -79,7 +80,7 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
 void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string name,
                        std::string description, eosio::asset inviter_reward, eosio::asset invited_reward,
                        std::uint8_t has_objectives, std::uint8_t has_shop, std::uint8_t has_kyc,
-                       std::uint8_t auto_invite, std::string subdomain)
+                       std::uint8_t auto_invite, std::string subdomain, std::string website)
 {
   communities community(_self, _self.value);
   const auto &cmm = community.get(cmm_asset.symbol.raw(), "can't find any community with given asset");
@@ -90,16 +91,17 @@ void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string nam
   eosio::check(logo.size() <= 256, "logo has more than 256 bytes");
   eosio::check(name.size() <= 256, "name has more than 256 bytes");
 
-  community.modify(cmm, _self, [&](auto &row) {
-    row.logo = logo;
-    row.name = name;
-    row.description = description.substr(0, 255);
-    row.inviter_reward = inviter_reward;
-    row.invited_reward = invited_reward;
-    row.has_objectives = has_objectives;
-    row.has_shop = has_shop;
-    row.has_kyc = has_kyc;
-  });
+  community.modify(cmm, _self, [&](auto &row)
+                   {
+                     row.logo = logo;
+                     row.name = name;
+                     row.description = description.substr(0, 255);
+                     row.inviter_reward = inviter_reward;
+                     row.invited_reward = invited_reward;
+                     row.has_objectives = has_objectives;
+                     row.has_shop = has_shop;
+                     row.has_kyc = has_kyc;
+                   });
 }
 
 void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user, std::string user_type)
@@ -148,13 +150,14 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
     eosio::check(itr_inviter != network.end(), "unknown inviter");
   }
 
-  network.emplace(_self, [&](auto &r) {
-    r.id = id;
-    r.community = cmm_symbol;
-    r.invited_user = new_user;
-    r.invited_by = inviter;
-    r.user_type = user_type;
-  });
+  network.emplace(_self, [&](auto &r)
+                  {
+                    r.id = id;
+                    r.community = cmm_symbol;
+                    r.invited_user = new_user;
+                    r.invited_by = inviter;
+                    r.user_type = user_type;
+                  });
 
   // Skip rewards if inviter and invited is the same, may happen during community creation
   if (inviter == new_user)
@@ -217,12 +220,13 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
 
   // Insert new objective
   objectives objective(_self, _self.value);
-  objective.emplace(_self, [&](auto &o) {
-    o.id = get_available_id("objectives");
-    o.description = description.substr(0, 255);
-    o.community = community_symbol;
-    o.creator = creator;
-  });
+  objective.emplace(_self, [&](auto &o)
+                    {
+                      o.id = get_available_id("objectives");
+                      o.description = description.substr(0, 255);
+                      o.community = community_symbol;
+                      o.creator = creator;
+                    });
 }
 
 void cambiatus::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor)
@@ -248,9 +252,8 @@ void cambiatus::updobjective(std::uint64_t objective_id, std::string description
   // Validate Auth can be either the community creator or the objective creator
   eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
 
-  objective.modify(found_objective, _self, [&](auto &row) {
-    row.description = description.substr(0, 255);
-  });
+  objective.modify(found_objective, _self, [&](auto &row)
+                   { row.description = description.substr(0, 255); });
 }
 
 void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
@@ -328,40 +331,42 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
     // Get last used action id and update table_index table
     action_id = get_available_id("actions");
 
-    action.emplace(_self, [&](auto &a) {
-      a.id = action_id;
-      a.objective_id = objective_id;
-      a.description = description.substr(0, 255);
-      a.reward = reward;
-      a.verifier_reward = verifier_reward;
-      a.deadline = deadline;
-      a.usages = usages;
-      a.usages_left = usages;
-      a.verifications = verifications;
-      a.verification_type = verification_type;
-      a.is_completed = 0;
-      a.creator = creator;
-      a.has_proof_photo = has_proof_photo;
-      a.has_proof_code = has_proof_code;
-      a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
-    });
+    action.emplace(_self, [&](auto &a)
+                   {
+                     a.id = action_id;
+                     a.objective_id = objective_id;
+                     a.description = description.substr(0, 255);
+                     a.reward = reward;
+                     a.verifier_reward = verifier_reward;
+                     a.deadline = deadline;
+                     a.usages = usages;
+                     a.usages_left = usages;
+                     a.verifications = verifications;
+                     a.verification_type = verification_type;
+                     a.is_completed = 0;
+                     a.creator = creator;
+                     a.has_proof_photo = has_proof_photo;
+                     a.has_proof_code = has_proof_code;
+                     a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
+                   });
   }
   else
   {
-    action.modify(itr_act, _self, [&](auto &a) {
-      a.description = description.substr(0, 255);
-      a.reward = reward;
-      a.verifier_reward = verifier_reward;
-      a.deadline = deadline;
-      a.usages = usages;
-      a.usages_left = usages_left;
-      a.verifications = verifications;
-      a.verification_type = verification_type;
-      a.is_completed = is_completed;
-      a.has_proof_photo = has_proof_photo;
-      a.has_proof_code = has_proof_code;
-      a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
-    });
+    action.modify(itr_act, _self, [&](auto &a)
+                  {
+                    a.description = description.substr(0, 255);
+                    a.reward = reward;
+                    a.verifier_reward = verifier_reward;
+                    a.deadline = deadline;
+                    a.usages = usages;
+                    a.usages_left = usages_left;
+                    a.verifications = verifications;
+                    a.verification_type = verification_type;
+                    a.is_completed = is_completed;
+                    a.has_proof_photo = has_proof_photo;
+                    a.has_proof_code = has_proof_code;
+                    a.photo_proof_instructions = photo_proof_instructions.substr(0, 255);
+                  });
   }
 
   if (verification_type == "claimable")
@@ -403,11 +408,12 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       eosio::check(itr_validator != network.end(), "one of the validators doesn't belong to the community");
 
       // Add list of validators
-      validator.emplace(_self, [&](auto &v) {
-        v.id = validator.available_primary_key();
-        v.action_id = action_id;
-        v.validator = acc;
-      });
+      validator.emplace(_self, [&](auto &v)
+                        {
+                          v.id = validator.available_primary_key();
+                          v.action_id = action_id;
+                          v.validator = acc;
+                        });
     };
   }
 }
@@ -461,14 +467,15 @@ void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::
   }
 
   // change status of verification
-  action.modify(itr_objact, _self, [&](auto &a) {
-    a.usages_left = a.usages_left - 1;
+  action.modify(itr_objact, _self, [&](auto &a)
+                {
+                  a.usages_left = a.usages_left - 1;
 
-    if (a.usages_left - 1 <= 0)
-    {
-      a.is_completed = 1;
-    }
-  });
+                  if (a.usages_left - 1 <= 0)
+                  {
+                    a.is_completed = 1;
+                  }
+                });
 
   // Find Token
   // cambiatus_tokens tokens(currency_account, currency_account.value);
@@ -566,14 +573,15 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   // Emplace new claim
   // claimsnew claim_table(_self, _self.value);
   claims claim_table(_self, _self.value);
-  claim_table.emplace(_self, [&](auto &c) {
-    c.id = claim_id;
-    c.action_id = action_id;
-    c.claimer = maker;
-    c.status = "pending";
-    c.proof_photo = proof_photo;
-    c.proof_code = proof_code;
-  });
+  claim_table.emplace(_self, [&](auto &c)
+                      {
+                        c.id = claim_id;
+                        c.action_id = action_id;
+                        c.claimer = maker;
+                        c.status = "pending";
+                        c.proof_photo = proof_photo;
+                        c.proof_code = proof_code;
+                      });
 }
 
 /// @abi action
@@ -650,12 +658,13 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   }
 
   // Add new check
-  check.emplace(_self, [&](auto &c) {
-    c.id = check.available_primary_key();
-    c.claim_id = claim.id;
-    c.validator = verifier;
-    c.is_verified = vote;
-  });
+  check.emplace(_self, [&](auto &c)
+                {
+                  c.id = check.available_primary_key();
+                  c.claim_id = claim.id;
+                  c.validator = verifier;
+                  c.is_verified = vote;
+                });
 
   if (objact.verifier_reward.amount > 0)
   {
@@ -724,9 +733,8 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // eosio::check(positive_votes + negative_votes > objact.verifications, "Cannot compute your vote, already got all votes needed");
 
   eosio::print("\nFinal status of the claim is: ", status);
-  claim_table.modify(itr_clm, _self, [&](auto &c) {
-    c.status = status;
-  });
+  claim_table.modify(itr_clm, _self, [&](auto &c)
+                     { c.status = status; });
 
   if (status == "approved" && objact.reward.amount > 0)
   {
@@ -743,10 +751,11 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   // Check if action can be completed. Current claim must be either "approved" or "rejected"
   if (status != "pending" && !objact.is_completed && objact.usages > 0)
   {
-    action.modify(itr_objact, _self, [&](auto &a) {
-      a.usages_left = objact.usages_left - 1;
-      a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
-    });
+    action.modify(itr_objact, _self, [&](auto &a)
+                  {
+                    a.usages_left = objact.usages_left - 1;
+                    a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
+                  });
   }
 }
 
@@ -794,17 +803,18 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
 
   // Insert new sale
   sales sale(_self, _self.value);
-  sale.emplace(_self, [&](auto &s) {
-    s.id = sale_id;
-    s.creator = from;
-    s.community = netlink.community;
-    s.title = title;
-    s.description = description.substr(0, 255);
-    s.image = image;
-    s.track_stock = track_stock;
-    s.quantity = quantity;
-    s.units = units;
-  });
+  sale.emplace(_self, [&](auto &s)
+               {
+                 s.id = sale_id;
+                 s.creator = from;
+                 s.community = netlink.community;
+                 s.title = title;
+                 s.description = description.substr(0, 255);
+                 s.image = image;
+                 s.track_stock = track_stock;
+                 s.quantity = quantity;
+                 s.units = units;
+               });
 }
 
 void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
@@ -850,14 +860,15 @@ void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
   const auto &netlink = network.get(id, "This account doesn't belong to the community");
 
   // Update sale
-  sale.modify(found_sale, _self, [&](auto &s) {
-    s.title = title;
-    s.description = description.substr(0, 255);
-    s.image = image;
-    s.quantity = quantity;
-    s.units = units;
-    s.track_stock = track_stock;
-  });
+  sale.modify(found_sale, _self, [&](auto &s)
+              {
+                s.title = title;
+                s.description = description.substr(0, 255);
+                s.image = image;
+                s.quantity = quantity;
+                s.units = units;
+                s.track_stock = track_stock;
+              });
 }
 
 void cambiatus::deletesale(std::uint64_t sale_id)
@@ -962,9 +973,8 @@ void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::nam
   // Update sale
   if (found_sale.track_stock == 1)
   {
-    sale.modify(found_sale, _self, [&](auto &s) {
-      s.units -= units;
-    });
+    sale.modify(found_sale, _self, [&](auto &s)
+                { s.units -= units; });
   }
 }
 
