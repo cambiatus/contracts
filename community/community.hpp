@@ -32,6 +32,30 @@ public:
                      (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc));
   };
 
+  TABLE community_new
+  {
+    eosio::symbol symbol;
+
+    eosio::name creator;
+    std::string logo;
+    std::string name;
+    std::string description;
+
+    eosio::asset inviter_reward;
+    eosio::asset invited_reward;
+
+    std::uint8_t has_objectives;
+    std::uint8_t has_shop;
+    std::uint8_t has_kyc;
+
+    eosio::name default_role;
+
+    uint64_t primary_key() const { return symbol.raw(); };
+
+    EOSLIB_SERIALIZE(community,
+                     (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc)(default_role));
+  };
+
   TABLE network
   {
     std::uint64_t id;
@@ -48,6 +72,41 @@ public:
     EOSLIB_SERIALIZE(network,
                      (id)(community)(invited_user)(invited_by)(user_type));
   };
+
+  TABLE network_new
+  {
+    std::uint64_t id;
+
+    eosio::name invited_user;
+    eosio::name invited_by;
+    std::string user_type;
+    std::vector<eosio::name> roles; // "admin,validator,x"
+
+    // keys and indexes
+    std::uint64_t
+    primary_key() const { return id; }
+
+    EOSLIB_SERIALIZE(network_new,
+                     (id)(community)(invited_user)(invited_by)(user_type));
+  };
+
+  TABLE roles
+  {
+    // eosio::symbol community; // Should we add it?
+    eosio::name name;
+    std::hex color;
+    std::vector<string> permissions;
+    // invite: invite new users `netlink`
+    // claim: allow claiming actions `claimaction`
+    // order: create new orders `transfersale`
+    // verify: verify autenticity on claims `verifyclaim`
+    // sell: sell items on the shop `createsale` `updatesale` .
+    // award: awards an action `verifyaction` (`award`)
+
+    EOSLIB_SERIALIZE(roles, (name)(color)(permissions));
+  };
+
+  // Usuário bloqueado tem role `roles.where(name: :blocked).permissions == []`
 
   TABLE objective
   {
@@ -260,45 +319,45 @@ public:
   typedef eosio::multi_index<eosio::name{"network"},
                              cambiatus::network,
                              eosio::indexed_by<eosio::name{"usersbycmm"},
-                                               eosio::const_mem_fun<cambiatus::network, uint64_t, &cambiatus::network::users_by_cmm>>>
+                                               eosio::const_mem_fun<cambiatus::network, uint64_t, &cambiatus::network::users_by_cmm> > >
       networks;
 
   typedef eosio::multi_index<eosio::name{"objective"},
                              cambiatus::objective,
                              eosio::indexed_by<eosio::name{"bycmm"},
-                                               eosio::const_mem_fun<cambiatus::objective, uint64_t, &cambiatus::objective::by_cmm>>>
+                                               eosio::const_mem_fun<cambiatus::objective, uint64_t, &cambiatus::objective::by_cmm> > >
       objectives;
 
   typedef eosio::multi_index<eosio::name{"action"},
                              cambiatus::action,
                              eosio::indexed_by<eosio::name{"byobj"},
-                                               eosio::const_mem_fun<cambiatus::action, uint64_t, &cambiatus::action::by_objective>>>
+                                               eosio::const_mem_fun<cambiatus::action, uint64_t, &cambiatus::action::by_objective> > >
       actions;
 
   typedef eosio::multi_index<eosio::name{"validator"},
                              cambiatus::action_validator,
                              eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<cambiatus::action_validator, uint64_t, &cambiatus::action_validator::by_action>>>
+                                               eosio::const_mem_fun<cambiatus::action_validator, uint64_t, &cambiatus::action_validator::by_action> > >
       validators;
 
   typedef eosio::multi_index<eosio::name{"claim"},
                              cambiatus::claim,
                              eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action>>>
+                                               eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action> > >
       claims;
 
   typedef eosio::multi_index<eosio::name{"check"},
                              cambiatus::check,
                              eosio::indexed_by<eosio::name{"byclaim"},
-                                               eosio::const_mem_fun<cambiatus::check, uint64_t, &cambiatus::check::by_claim>>>
+                                               eosio::const_mem_fun<cambiatus::check, uint64_t, &cambiatus::check::by_claim> > >
       checks;
 
   typedef eosio::multi_index<eosio::name{"sale"},
                              cambiatus::sale,
                              eosio::indexed_by<eosio::name{"bycmm"},
-                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_cmm>>,
+                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_cmm> >,
                              eosio::indexed_by<eosio::name{"byuser"},
-                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_user>>>
+                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_user> > >
       sales;
 
   typedef eosio::singleton<eosio::name{"indexes"}, cambiatus::indexes> item_indexes;
