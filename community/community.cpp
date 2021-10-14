@@ -754,7 +754,7 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     action.modify(itr_objact, _self, [&](auto &a)
                   {
                     a.usages_left = objact.usages_left - 1;
-                    a.is_completed = (objact.usages_left - 1) == 0 ? 0 : 1;
+                    a.is_completed = (objact.usages_left - 1) == 0 ? 1 : 0;
                   });
   }
 }
