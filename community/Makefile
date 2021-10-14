@@ -13,5 +13,4 @@ clean:
 	rm $(obj)
 
 deploy:
-	make
 	cleos -u $(url) set contract cambiatus.cm ../community
