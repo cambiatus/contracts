@@ -172,6 +172,14 @@
                 {
                     "name": "t",
                     "type": "string"
+                },
+                {
+                    "name": "name_scope",
+                    "type": "name"
+                },
+                {
+                    "name": "symbol_scope",
+                    "type": "symbol"
                 }
             ]
         },
@@ -482,20 +490,20 @@
             ]
         },
         {
-            "name": "reactsale",
+            "name": "role",
             "base": "",
             "fields": [
                 {
-                    "name": "sale_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "from",
+                    "name": "name",
                     "type": "name"
                 },
                 {
-                    "name": "type",
+                    "name": "color",
                     "type": "string"
+                },
+                {
+                    "name": "permissions",
+                    "type": "string[]"
                 }
             ]
         },
@@ -766,6 +774,28 @@
             ]
         },
         {
+            "name": "upsertrole",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "name",
+                    "type": "name"
+                },
+                {
+                    "name": "color",
+                    "type": "string"
+                },
+                {
+                    "name": "permissions",
+                    "type": "string[]"
+                }
+            ]
+        },
+        {
             "name": "verifyaction",
             "base": "",
             "fields": [
@@ -859,11 +889,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "reactsale",
-            "type": "reactsale",
-            "ricardian_contract": ""
-        },
-        {
             "name": "setindices",
             "type": "setindices",
             "ricardian_contract": ""
@@ -891,6 +916,11 @@
         {
             "name": "upsertaction",
             "type": "upsertaction",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertrole",
+            "type": "upsertrole",
             "ricardian_contract": ""
         },
         {
@@ -950,6 +980,13 @@
         {
             "name": "objective",
             "type": "objective",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "role",
+            "type": "role",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

@@ -892,36 +892,6 @@ void cambiatus::deletesale(std::uint64_t sale_id)
   sale.erase(itr_sale);
 }
 
-void cambiatus::reactsale(std::uint64_t sale_id, eosio::name from, std::string type)
-{
-  // Validate user
-  require_auth(from);
-
-  // Find sale
-  sales sale(_self, _self.value);
-  const auto &found_sale = sale.get(sale_id, "Can't find any sale with given sale_id");
-
-  // Validate user is not the sale creator
-  eosio::check(from != found_sale.creator, "Can't react to your own sale");
-
-  // Check if community exists
-  communities community(_self, _self.value);
-  const auto &cmm = community.get(found_sale.community.raw(), "Can't find community with given Symbol");
-
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
-
-  // Validate user belongs to sale's community
-  auto from_id = gen_uuid(found_sale.community.raw(), from.value);
-  networks network(_self, _self.value);
-  auto itr_network = network.find(from_id);
-  eosio::check(itr_network != network.end(), "This account can't react to a sale from a community it doesn't belong");
-
-  // Validate vote type
-  eosio::check(
-      type == "thumbsup" || type == "thumbsdown" || type == "none", "React type must be some of: 'thumbsup', 'thumbsdown' or 'none'");
-}
-
-// to = sale creator
 void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units)
 {
   // Validate user
@@ -975,6 +945,54 @@ void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::nam
   {
     sale.modify(found_sale, _self, [&](auto &s)
                 { s.units -= units; });
+  }
+}
+
+void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::string color, std::vector<std::string> &permissions)
+{
+  eosio::check(community_id.is_valid(), "provided symbol is not valid");
+
+  // Find community
+  communities community(_self, _self.value);
+  const auto &cmm = community.get(community_id.raw(), "Can't find community with given community_id");
+
+  // Make sure we have admin's permission to upsert roles
+  require_auth(cmm.creator);
+
+  // Validate permission list
+  eosio::check(permissions.size() <= 6, "invalid cambiatus permissions");
+  for (auto p : permissions)
+  {
+    eosio::check(p == "invite" || p == "claim" ||
+                     p == "order" || p == "verify" ||
+                     p == "sell" || p == "award",
+                 "invalid cambiatus permission");
+  }
+
+  // Validate color
+  eosio::check(color.length() == 7, "invalid color");
+  eosio::check(color.front() == '#', "invalid color");
+
+  // Upserts
+  roles role_table(_self, community_id.raw());
+  auto existing_role = role_table.find(name.value);
+
+  if (existing_role == role_table.end())
+  {
+    role_table.emplace(_self, [&](auto &r)
+                       {
+                         r.name = name;
+                         r.color = color;
+                         r.permissions = permissions;
+                       });
+  }
+  else
+  {
+    role_table.modify(existing_role, _self, [&](auto &r)
+                      {
+                        r.color = color;
+                        r.permissions = permissions;
+                      });
   }
 }
 
@@ -1039,12 +1057,15 @@ void cambiatus::migrate(std::uint64_t id, std::uint64_t increment)
   // }
 }
 
-void cambiatus::clean(std::string t)
+void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbol_scope)
 {
   // Clean up the old claims table after the migration
   require_auth(_self);
 
-  eosio::check(t == "claim" || t == "community" || t == "network" || t == "action" || t == "objective", "invalid value for table name");
+  eosio::check(t == "claim" || t == "community" ||
+                   t == "network" || t == "action" ||
+                   t == "objective" || t == "role",
+               "invalid value for table name");
 
   if (t == "claim")
   {
@@ -1089,6 +1110,12 @@ void cambiatus::clean(std::string t)
     {
       itr = objective_table.erase(itr);
     }
+  }
+
+  roles role_table(_self, symbol_scope.raw());
+  for (auto itr = role_table.begin(); itr != role_table.end();)
+  {
+    itr = role_table.erase(itr);
   }
 }
 
@@ -1158,10 +1185,10 @@ uint64_t cambiatus::get_available_id(std::string table)
 }
 
 EOSIO_DISPATCH(cambiatus,
-               (create)(update)(netlink)                                     // Basic community
-               (newobjective)(updobjective)(upsertaction)                    // Objectives and Actions
-               (verifyaction)(claimaction)(verifyclaim)                      // Verifications and Claims
-               (createsale)(updatesale)(deletesale)(reactsale)(transfersale) // Shop
-               (setindices)(deleteobj)(deleteact)                            // Admin actions
-               (migrate)(clean)(migrateafter)                                // Temporary migration actions
+               (create)(update)(netlink)(upsertrole)              // Basic community
+               (newobjective)(updobjective)(upsertaction)         // Objectives and Actions
+               (verifyaction)(claimaction)(verifyclaim)           // Verifications and Claims
+               (createsale)(updatesale)(deletesale)(transfersale) // Shop
+               (setindices)(deleteobj)(deleteact)                 // Admin actions
+               (migrate)(clean)(migrateafter)                     // Temporary migration actions
 );

@@ -32,29 +32,29 @@ public:
                      (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc));
   };
 
-  TABLE community_new
-  {
-    eosio::symbol symbol;
+  // TABLE community_new
+  // {
+  //   eosio::symbol symbol;
 
-    eosio::name creator;
-    std::string logo;
-    std::string name;
-    std::string description;
+  //   eosio::name creator;
+  //   std::string logo;
+  //   std::string name;
+  //   std::string description;
 
-    eosio::asset inviter_reward;
-    eosio::asset invited_reward;
+  //   eosio::asset inviter_reward;
+  //   eosio::asset invited_reward;
 
-    std::uint8_t has_objectives;
-    std::uint8_t has_shop;
-    std::uint8_t has_kyc;
+  //   std::uint8_t has_objectives;
+  //   std::uint8_t has_shop;
+  //   std::uint8_t has_kyc;
 
-    eosio::name default_role;
+  //   eosio::name default_role;
 
-    uint64_t primary_key() const { return symbol.raw(); };
+  //   uint64_t primary_key() const { return symbol.raw(); };
 
-    EOSLIB_SERIALIZE(community,
-                     (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc)(default_role));
-  };
+  //   EOSLIB_SERIALIZE(community,
+  //                    (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc)(default_role));
+  // };
 
   TABLE network
   {
@@ -73,40 +73,53 @@ public:
                      (id)(community)(invited_user)(invited_by)(user_type));
   };
 
-  TABLE network_new
+  // TABLE member
+  // {
+  //   std::uint64_t id;
+
+  //   eosio::name invited_user;
+  //   eosio::name invited_by;
+  //   std::string user_type;
+  //   std::vector<eosio::name> roles; // "admin,validator,x"
+
+  //   // keys and indexes
+  //   std::uint64_t
+  //   primary_key() const { return id; }
+
+  //   EOSLIB_SERIALIZE(network_new,
+  //                    (id)(community)(invited_user)(invited_by)(user_type));
+  // };
+
+  /**
+   * Roles is a way to identify people's relation with their community. 
+   * It can be used to allow people to be recognized by their role in the whole of the community, to give them awards or to help them to identify themselves.
+   * They can be customized with a color and can have a name
+   * 
+   * Roles can also be atttached with permissions that gives them abilities within the community such as the ability to invite new people in, to sell goods and services and more
+   * 
+   * The initial abilities that we offer are:
+   *  invite: invite new users `netlink`
+   *  claim: allow claiming actions `claimaction`
+   *  order: create new orders `transfersale`
+   *  verify: verify autenticity on claims `verifyclaim`
+   *  sell: sell items on the shop `createsale` `updatesale` .
+   *  award: awards an action `verifyaction` (`award`)
+   * 
+   * All of those roles are used from within the contract to mediate the usage of some actions.
+   * 
+   * 
+   * Roles are scoped by community.
+   */
+  TABLE role
   {
-    std::uint64_t id;
-
-    eosio::name invited_user;
-    eosio::name invited_by;
-    std::string user_type;
-    std::vector<eosio::name> roles; // "admin,validator,x"
-
-    // keys and indexes
-    std::uint64_t
-    primary_key() const { return id; }
-
-    EOSLIB_SERIALIZE(network_new,
-                     (id)(community)(invited_user)(invited_by)(user_type));
-  };
-
-  TABLE roles
-  {
-    // eosio::symbol community; // Should we add it?
     eosio::name name;
-    std::hex color;
-    std::vector<string> permissions;
-    // invite: invite new users `netlink`
-    // claim: allow claiming actions `claimaction`
-    // order: create new orders `transfersale`
-    // verify: verify autenticity on claims `verifyclaim`
-    // sell: sell items on the shop `createsale` `updatesale` .
-    // award: awards an action `verifyaction` (`award`)
+    std::string color;
+    std::vector<std::string> permissions;
 
-    EOSLIB_SERIALIZE(roles, (name)(color)(permissions));
+    std::uint64_t primary_key() const { return name.value; }
+
+    EOSLIB_SERIALIZE(role, (name)(color)(permissions));
   };
-
-  // Usuário bloqueado tem role `roles.where(name: :blocked).permissions == []`
 
   TABLE objective
   {
@@ -287,12 +300,12 @@ public:
   ACTION deletesale(std::uint64_t sale_id);
 
   /// @abi action
-  /// Vote in a sale
-  ACTION reactsale(std::uint64_t sale_id, eosio::name from, std::string type);
-
-  /// @abi action
   /// Offchain event hook for when a transfer occours in our shop
   ACTION transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units);
+
+  /// @abi action
+  /// Upserts roles in a community
+  ACTION upsertrole(eosio::symbol community_id, eosio::name name, std::string color, std::vector<std::string> & permissions);
 
   /// @abi action
   /// Set the indices for a chain
@@ -308,7 +321,7 @@ public:
 
   /// next 3 actions used for table migrations
   ACTION migrate(std::uint64_t id, std::uint64_t increment);
-  ACTION clean(std::string t);
+  ACTION clean(std::string t, eosio::name name_scope, eosio::symbol symbol_scope);
   ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
 
   // Get available key
@@ -359,6 +372,8 @@ public:
                              eosio::indexed_by<eosio::name{"byuser"},
                                                eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_user> > >
       sales;
+
+  typedef eosio::multi_index<eosio::name{"role"}, cambiatus::role> roles;
 
   typedef eosio::singleton<eosio::name{"indexes"}, cambiatus::indexes> item_indexes;
 
