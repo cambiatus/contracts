@@ -2,21 +2,21 @@
 ---
 spec-version: 0.0.1
 title: Create new community
-summary: Creates a new community on BeSpiral. It requires you to send: `cmm_asset`, `creator`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. A BeSpiral community is closelly tied to a BeSpiral Token. A community allows a group of people with common goals and objectives to connect and allow the creation of incentives to reach those objectives. It also help to buy and sell products
+summary: Creates a new community on Cambiatus. It requires you to send: `cmm_asset`, `creator`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. A Cambiatus community is closelly tied to a Cambiatus Token. A community allows a group of people with common goals and objectives to connect and allow the creation of incentives to reach those objectives. It also help to buy and sell products
 icon:
 
 <h1 class="contract">update</h1>
 ---
 spec-version: 0.0.1
 title: Update some information about a community
-summary: Update information on a existing community on BeSpiral. It requires you to send: `cmm_asset`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. All information will be saved, with the exception of the asset that cannot be changed
+summary: Update information on a existing community on Cambiatus. It requires you to send: `cmm_asset`, `logo`, `name`, `description`, `inviter_reward` and `invited_reward`. All information will be saved, with the exception of the asset that cannot be changed
 icon:
 
 <h1 class="contract">netlink</h1>
 ---
 spec-version: 0.0.1
 title: Invites a new account to a given community
-summary: Add a user to the BeSpiral community network. It requires you to send: `cmm_asset`, `inviter` and `new_user`. We'll save who invited the new account and on which community
+summary: Add a user to the Cambiatus community network. It requires you to send: `cmm_asset`, `inviter` and `new_user`. We'll save who invited the new account and on which community
 icon:
 
 <h1 class="contract">newobjective</h1>
