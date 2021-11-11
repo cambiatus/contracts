@@ -53,7 +53,6 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
   community.emplace(_self, [&](auto &c)
                     {
                       c.symbol = new_symbol;
-
                       c.creator = creator;
                       c.logo = logo;
                       c.name = name;
@@ -104,7 +103,7 @@ void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string nam
                    });
 }
 
-void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user, std::string user_type)
+void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::name new_user, std::string user_type)
 {
   eosio::check(is_account(new_user), "new user account doesn't exists");
 
@@ -129,15 +128,17 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
   eosio::check(user_type == "natural" || user_type == "juridical", "User type must be 'natural' or 'juridical'");
 
   // Validates community
-  eosio::symbol cmm_symbol = cmm_asset.symbol;
   communities community(_self, _self.value);
-  const auto &cmm = community.get(cmm_symbol.raw(), "can't find any community with given asset");
+  const auto &cmm = community.get(community_id.raw(), "can't find any community with given asset");
 
   // Validates existent link
-  auto id = gen_uuid(cmm_symbol.raw(), new_user.value);
-  networks network(_self, _self.value);
-  auto existing_netlink = network.find(id);
-  if (existing_netlink != network.end())
+  auto id = gen_uuid(community_id.raw(), new_user.value);
+  members member(_self, community_id.raw());
+
+  // auto existing_netlink = network.find(id);
+  auto existing_netlink = member.find(id);
+
+  if (existing_netlink != member.end())
   {
     return; // Skip if user already in the network
   }
@@ -145,19 +146,18 @@ void cambiatus::netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name
   // Validates inviter if not the creator
   if (cmm.creator != inviter)
   {
-    auto inviter_id = gen_uuid(cmm.symbol.raw(), inviter.value);
-    auto itr_inviter = network.find(inviter_id);
-    eosio::check(itr_inviter != network.end(), "unknown inviter");
+    auto inviter_id = gen_uuid(community_id.raw(), inviter.value);
+    auto itr_inviter = member.find(inviter_id);
+    eosio::check(itr_inviter != member.end(), "unknown inviter");
   }
 
-  network.emplace(_self, [&](auto &r)
-                  {
-                    r.id = id;
-                    r.community = cmm_symbol;
-                    r.invited_user = new_user;
-                    r.invited_by = inviter;
-                    r.user_type = user_type;
-                  });
+  member.emplace(_self, [&](auto &r)
+                 {
+                   //  r.id = id;
+                   r.name = new_user;
+                   r.inviter = inviter;
+                   r.user_type = user_type;
+                 });
 
   // Skip rewards if inviter and invited is the same, may happen during community creation
   if (inviter == new_user)
@@ -244,10 +244,7 @@ void cambiatus::updobjective(std::uint64_t objective_id, std::string description
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if editor belongs to the community
-  networks network(_self, _self.value);
-  auto editor_id = gen_uuid(found_objective.community.raw(), editor.value);
-  auto itr_editor = network.find(editor_id);
-  eosio::check(itr_editor != network.end(), "Editor doesn't belong to the community");
+  eosio::check(is_member(cmm.symbol, editor), "Editor doesn't belong to the community");
 
   // Validate Auth can be either the community creator or the objective creator
   eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
@@ -1062,9 +1059,13 @@ void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbo
   // Clean up the old claims table after the migration
   require_auth(_self);
 
-  eosio::check(t == "claim" || t == "community" ||
-                   t == "network" || t == "action" ||
-                   t == "objective" || t == "role",
+  eosio::check(t == "claim" ||
+                   t == "community" ||
+                   t == "network" ||
+                   t == "member" ||
+                   t == "objective" ||
+                   t == "action" ||
+                   t == "role",
                "invalid value for table name");
 
   if (t == "claim")
@@ -1091,6 +1092,15 @@ void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbo
     for (auto itr = network_table.begin(); itr != network_table.end();)
     {
       itr = network_table.erase(itr);
+    }
+  }
+
+  if (t == "member")
+  {
+    members member_table(_self, symbol_scope.raw());
+    for (auto itr = member_table.begin(); itr != member_table.end();)
+    {
+      itr = member_table.erase(itr);
     }
   }
 
@@ -1145,6 +1155,36 @@ void cambiatus::migrateafter(std::uint64_t id, std::uint64_t increment)
   // }
 }
 
+void cambiatus::migrateusers(eosio::symbol community_id)
+{
+  require_auth(_self);
+
+  std::vector<eosio::name> default_roles{eosio::name{"member"}};
+
+  networks network_table(_self, _self.value);
+  auto by_community = network_table.get_index<eosio::name{"usersbycmm"}>();
+  auto itr = by_community.find(community_id.raw());
+  while (itr != by_community.end())
+  {
+    auto &item = *itr;
+    eosio::print(is_member(community_id, item.invited_user));
+
+    if (!is_member(community_id, item.invited_user))
+    {
+      members member_table(_self, community_id.raw());
+      member_table.emplace(_self, [&](auto &m)
+                           {
+                             m.name = item.invited_user;
+                             m.inviter = item.invited_by;
+                             m.user_type = item.user_type;
+                             m.roles = default_roles;
+                           });
+    }
+
+    itr++;
+  }
+}
+
 // Get available key
 uint64_t cambiatus::get_available_id(std::string table)
 {
@@ -1184,6 +1224,13 @@ uint64_t cambiatus::get_available_id(std::string table)
   return id;
 }
 
+bool cambiatus::is_member(eosio::symbol community_id, eosio::name user)
+{
+  members member(_self, community_id.raw());
+  auto itr = member.find(user.value);
+  return itr != member.end();
+}
+
 EOSIO_DISPATCH(cambiatus,
                (create)(update)(netlink)(upsertrole)              // Basic community
                (newobjective)(updobjective)(upsertaction)         // Objectives and Actions
@@ -1191,4 +1238,5 @@ EOSIO_DISPATCH(cambiatus,
                (createsale)(updatesale)(deletesale)(transfersale) // Shop
                (setindices)(deleteobj)(deleteact)                 // Admin actions
                (migrate)(clean)(migrateafter)                     // Temporary migration actions
+               (migrateusers)                                     // TODO: Remove this one after
 );

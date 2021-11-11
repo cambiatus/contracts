@@ -66,6 +66,10 @@
                 {
                     "name": "photo_proof_instructions",
                     "type": "string"
+                },
+                {
+                    "name": "roles",
+                    "type": "name[]"
                 }
             ]
         },
@@ -374,6 +378,28 @@
             ]
         },
         {
+            "name": "member",
+            "base": "",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "name"
+                },
+                {
+                    "name": "inviter",
+                    "type": "name"
+                },
+                {
+                    "name": "user_type",
+                    "type": "string"
+                },
+                {
+                    "name": "roles",
+                    "type": "name[]"
+                }
+            ]
+        },
+        {
             "name": "migrate",
             "base": "",
             "fields": [
@@ -402,12 +428,22 @@
             ]
         },
         {
+            "name": "migrateusers",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                }
+            ]
+        },
+        {
             "name": "netlink",
             "base": "",
             "fields": [
                 {
-                    "name": "cmm_asset",
-                    "type": "asset"
+                    "name": "community_id",
+                    "type": "symbol"
                 },
                 {
                     "name": "inviter",
@@ -879,6 +915,11 @@
             "ricardian_contract": ""
         },
         {
+            "name": "migrateusers",
+            "type": "migrateusers",
+            "ricardian_contract": ""
+        },
+        {
             "name": "netlink",
             "type": "netlink",
             "ricardian_contract": ""
@@ -966,6 +1007,13 @@
         {
             "name": "indexes",
             "type": "indexes",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "member",
+            "type": "member",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

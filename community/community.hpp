@@ -32,30 +32,6 @@ public:
                      (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc));
   };
 
-  // TABLE community_new
-  // {
-  //   eosio::symbol symbol;
-
-  //   eosio::name creator;
-  //   std::string logo;
-  //   std::string name;
-  //   std::string description;
-
-  //   eosio::asset inviter_reward;
-  //   eosio::asset invited_reward;
-
-  //   std::uint8_t has_objectives;
-  //   std::uint8_t has_shop;
-  //   std::uint8_t has_kyc;
-
-  //   eosio::name default_role;
-
-  //   uint64_t primary_key() const { return symbol.raw(); };
-
-  //   EOSLIB_SERIALIZE(community,
-  //                    (symbol)(creator)(logo)(name)(description)(inviter_reward)(invited_reward)(has_objectives)(has_shop)(has_kyc)(default_role));
-  // };
-
   TABLE network
   {
     std::uint64_t id;
@@ -73,22 +49,18 @@ public:
                      (id)(community)(invited_user)(invited_by)(user_type));
   };
 
-  // TABLE member
-  // {
-  //   std::uint64_t id;
+  TABLE member
+  {
+    eosio::name name;
+    eosio::name inviter;
+    std::string user_type;
+    std::vector<eosio::name> roles; // "admin,validator,x"
 
-  //   eosio::name invited_user;
-  //   eosio::name invited_by;
-  //   std::string user_type;
-  //   std::vector<eosio::name> roles; // "admin,validator,x"
+    std::uint64_t primary_key() const { return name.value; }
 
-  //   // keys and indexes
-  //   std::uint64_t
-  //   primary_key() const { return id; }
-
-  //   EOSLIB_SERIALIZE(network_new,
-  //                    (id)(community)(invited_user)(invited_by)(user_type));
-  // };
+    EOSLIB_SERIALIZE(member,
+                     (name)(inviter)(user_type)(roles));
+  };
 
   /**
    * Roles is a way to identify people's relation with their community. 
@@ -153,6 +125,8 @@ public:
     std::uint8_t has_proof_photo;
     std::uint8_t has_proof_code;
     std::string photo_proof_instructions;
+
+    std::vector<eosio::name> roles; // Validators of the action
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_objective() const { return objective_id; }
@@ -248,7 +222,7 @@ public:
 
   /// @abi action
   /// Adds a user to a community
-  ACTION netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user, std::string user_type);
+  ACTION netlink(eosio::symbol community_id, eosio::name inviter, eosio::name new_user, std::string user_type);
 
   /// @abi action
   /// Create a new community objective
@@ -324,10 +298,16 @@ public:
   ACTION clean(std::string t, eosio::name name_scope, eosio::symbol symbol_scope);
   ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
 
+  ACTION migrateusers(eosio::symbol community_id);
+
   // Get available key
   uint64_t get_available_id(std::string table);
 
+  // Convience
+  bool is_member(eosio::symbol community_id, eosio::name user);
+
   typedef eosio::multi_index<eosio::name{"community"}, cambiatus::community> communities;
+  typedef eosio::multi_index<eosio::name{"member"}, cambiatus::member> members;
 
   typedef eosio::multi_index<eosio::name{"network"},
                              cambiatus::network,
