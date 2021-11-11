@@ -125,38 +125,31 @@ void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::
   }
 
   // Validate user type
-  eosio::check(user_type == "natural" || user_type == "juridical", "User type must be 'natural' or 'juridical'");
+  eosio::check(user_type == "natural" || user_type == "juridical", "user type must be 'natural' or 'juridical'");
 
   // Validates community
   communities community(_self, _self.value);
   const auto &cmm = community.get(community_id.raw(), "can't find any community with given asset");
 
-  // Validates existent link
-  auto id = gen_uuid(community_id.raw(), new_user.value);
-  members member(_self, community_id.raw());
-
-  // auto existing_netlink = network.find(id);
-  auto existing_netlink = member.find(id);
-
-  if (existing_netlink != member.end())
+  // Skip if already member
+  if (is_member(community_id, new_user))
   {
-    return; // Skip if user already in the network
+    return;
   }
 
-  // Validates inviter if not the creator
+  // Validates if inviter is a member, if not the creator
   if (cmm.creator != inviter)
   {
-    auto inviter_id = gen_uuid(community_id.raw(), inviter.value);
-    auto itr_inviter = member.find(inviter_id);
-    eosio::check(itr_inviter != member.end(), "unknown inviter");
+    eosio::check(is_member(community_id, inviter), "inviter is not part of the community");
   }
 
+  members member(_self, community_id.raw());
   member.emplace(_self, [&](auto &r)
                  {
-                   //  r.id = id;
                    r.name = new_user;
                    r.inviter = inviter;
                    r.user_type = user_type;
+                   r.roles = {eosio::name{"member"}};
                  });
 
   // Skip rewards if inviter and invited is the same, may happen during community creation

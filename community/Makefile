@@ -38,8 +38,6 @@ invite:
 
 fill-role:
 	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
-	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
-	$(push) upsertrole '{"community_id": "0,MIZU", "name": "validators", "color": "#f26c48", "permissions": []}'
 
 	# Invalid color
 	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validators", "color": "#f26c489", "permissions": ["verify"]}'
