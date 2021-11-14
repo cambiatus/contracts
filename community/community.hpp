@@ -226,7 +226,7 @@ public:
 
   /// @abi action
   /// Create a new community objective
-  ACTION newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator);
+  ACTION newobjective(eosio::symbol community_id, std::string description, eosio::name creator);
 
   /// @abi action
   /// Edit the description of a given objective

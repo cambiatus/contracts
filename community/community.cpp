@@ -192,24 +192,21 @@ void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::
   }
 }
 
-void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator)
+void cambiatus::newobjective(eosio::symbol community_id, std::string description, eosio::name creator)
 {
   require_auth(creator);
 
-  eosio::symbol community_symbol = cmm_asset.symbol;
-  eosio::check(community_symbol.is_valid(), "Invalid symbol name for community");
+  eosio::check(community_id.is_valid(), "Invalid symbol name for community");
 
   // Check if community exists
-  communities community(_self, _self.value);
-  const auto &cmm = community.get(community_symbol.raw(), "Can't find community with given community_id");
+  communities community_table(_self, _self.value);
+  const auto &community = community_table.get(community_id.raw(), "Can't find community with given community_id");
 
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
+  // Check if objectives are enabled
+  eosio::check(community.has_objectives, "This community don't have objectives enabled.");
 
-  // Check if creator belongs to the community
-  networks network(_self, _self.value);
-  auto creator_id = gen_uuid(cmm.symbol.raw(), creator.value);
-  auto itr_creator = network.find(creator_id);
-  eosio::check(itr_creator != network.end(), "Creator doesn't belong to the community");
+  // Check if creator is a community member
+  eosio::check(is_member(community_id, creator), "Creator doesn't belong to the community");
 
   // Insert new objective
   objectives objective(_self, _self.value);
@@ -217,7 +214,7 @@ void cambiatus::newobjective(eosio::asset cmm_asset, std::string description, eo
                     {
                       o.id = get_available_id("objectives");
                       o.description = description.substr(0, 255);
-                      o.community = community_symbol;
+                      o.community = community_id;
                       o.creator = creator;
                     });
 }
@@ -275,10 +272,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Creator must belong to the community
-  networks network(_self, _self.value);
-  auto creator_id = gen_uuid(cmm.symbol.raw(), creator.value);
-  auto itr_creator = network.find(creator_id);
-  eosio::check(itr_creator != network.end(), "Creator doesn't belong to the community");
+  eosio::check(is_member(cmm.symbol, creator), "Creator doesn't belong to the community");
 
   // Validate assets
   eosio::check(reward.is_valid(), "invalid reward");
@@ -393,9 +387,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
       eosio::check(is_account(acc), "account from validator list don't exist");
 
       // Must belong to the community
-      auto validator_id = gen_uuid(cmm.symbol.raw(), acc.value);
-      auto itr_validator = network.find(validator_id);
-      eosio::check(itr_validator != network.end(), "one of the validators doesn't belong to the community");
+      eosio::check(is_member(cmm.symbol, acc), "one of the validators doesn't belong to the community");
 
       // Add list of validators
       validator.emplace(_self, [&](auto &v)
@@ -436,15 +428,9 @@ void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
-  networks network(_self, _self.value);
-  auto verifier_id = gen_uuid(cmm.symbol.raw(), verifier.value);
-  auto itr_network = network.find(verifier_id);
-  eosio::check(itr_network != network.end(), "Verifier doesn't belong to the community");
-
-  // Validates if maker belongs to the action community
-  auto maker_id = gen_uuid(cmm.symbol.raw(), maker.value);
-  auto itr_maker_network = network.find(maker_id);
-  eosio::check(itr_maker_network != network.end(), "Maker doesn't belong to the community");
+  // Validates if maker and verifier belong to the action community
+  eosio::check(is_member(cmm.symbol, verifier), "Verifier doesn't belong to the community");
+  eosio::check(is_member(cmm.symbol, maker), "Maker doesn't belong to the community");
 
   // Validate if the action type is `automatic`
   eosio::check(objact.verification_type == "automatic", "Can't verify actions that aren't automatic, you'll need to open a claim");
@@ -551,10 +537,7 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
-  networks network(_self, _self.value);
-  auto maker_id = gen_uuid(cmm.symbol.raw(), maker.value);
-  auto itr_network = network.find(maker_id);
-  eosio::check(itr_network != network.end(), "Maker doesn't belong to the community");
+  eosio::check(is_member(cmm.symbol, maker), "Maker doesn't belong to the community");
 
   // Get last used claim id and update item_index table
   uint64_t claim_id;
@@ -777,9 +760,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
   eosio::check(units <= 9999, "Invalid number of units");
 
   // Validate user belongs to community
-  auto from_id = gen_uuid(quantity.symbol.raw(), from.value);
-  networks network(_self, _self.value);
-  const auto &netlink = network.get(from_id, "'from' account doesn't belong to the community");
+  eosio::check(is_member(quantity.symbol, from), "'from' account doesn't belong to the community");
 
   // Check if community exists
   communities community(_self, _self.value);
@@ -797,7 +778,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
                {
                  s.id = sale_id;
                  s.creator = from;
-                 s.community = netlink.community;
+                 s.community = quantity.symbol;
                  s.title = title;
                  s.description = description.substr(0, 255);
                  s.image = image;
@@ -845,9 +826,7 @@ void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate user belongs to community
-  auto id = gen_uuid(quantity.symbol.raw(), found_sale.creator.value);
-  networks network(_self, _self.value);
-  const auto &netlink = network.get(id, "This account doesn't belong to the community");
+  eosio::check(is_member(quantity.symbol, found_sale.creator), "This account doesn't belong to the community");
 
   // Update sale
   sale.modify(found_sale, _self, [&](auto &s)
@@ -923,9 +902,7 @@ void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::nam
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Validate 'from' user belongs to sale community
-  auto from_id = gen_uuid(found_sale.community.raw(), from.value);
-  networks network(_self, _self.value);
-  const auto &netlink = network.get(from_id, "You can't use transfersale to this sale if you aren't part of the community");
+  eosio::check(is_member(found_sale.community, from), "You can't use transfersale to this sale if you aren't part of the community");
 
   // Validate 'to' user is the sale creator
   eosio::check(found_sale.creator == to, "Sale creator and sale doesn't match");

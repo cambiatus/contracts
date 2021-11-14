@@ -490,8 +490,8 @@
             "base": "",
             "fields": [
                 {
-                    "name": "cmm_asset",
-                    "type": "asset"
+                    "name": "community_id",
+                    "type": "symbol"
                 },
                 {
                     "name": "description",
