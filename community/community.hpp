@@ -5,6 +5,16 @@
 #define TOSTR_(T) #T
 #define TOSTR(T) TOSTR_(T)
 
+enum permission
+{
+  invite,
+  claim,
+  order,
+  verify,
+  sell,
+  award
+};
+
 class [[eosio::contract("community")]] cambiatus : public eosio::contract
 {
 public:
@@ -303,8 +313,10 @@ public:
   // Get available key
   uint64_t get_available_id(std::string table);
 
-  // Convience
+  // Convience methods
   bool is_member(eosio::symbol community_id, eosio::name user);
+  bool has_permission(eosio::symbol community_id, eosio::name user, permission e_permission);
+  std::string permission_to_string(permission e_permission);
 
   typedef eosio::multi_index<eosio::name{"community"}, cambiatus::community> communities;
   typedef eosio::multi_index<eosio::name{"member"}, cambiatus::member> members;
@@ -335,8 +347,7 @@ public:
 
   typedef eosio::multi_index<eosio::name{"claim"},
                              cambiatus::claim,
-                             eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action> > >
+                             eosio::indexed_by<eosio::name{"byaction"}, eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action> > >
       claims;
 
   typedef eosio::multi_index<eosio::name{"check"},

@@ -702,9 +702,6 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     }
   }
 
-  // TODO: should we keep this check?
-  // eosio::check(positive_votes + negative_votes > objact.verifications, "Cannot compute your vote, already got all votes needed");
-
   eosio::print("\nFinal status of the claim is: ", status);
   claim_table.modify(itr_clm, _self, [&](auto &c)
                      { c.status = status; });
@@ -1196,9 +1193,44 @@ uint64_t cambiatus::get_available_id(std::string table)
 
 bool cambiatus::is_member(eosio::symbol community_id, eosio::name user)
 {
-  members member(_self, community_id.raw());
-  auto itr = member.find(user.value);
-  return itr != member.end();
+  members member_table(_self, community_id.raw());
+  auto itr = member_table.find(user.value);
+  return itr != member_table.end();
+}
+
+bool cambiatus::has_permission(eosio::symbol community_id, eosio::name user, permission e_permission)
+{
+  std::string permission = cambiatus::permission_to_string(e_permission);
+
+  members member_table(_self, community_id.raw());
+  const auto &member = member_table.get(user.value, "user is not part of the communtiy");
+
+  roles role_table(_self, community_id.raw());
+  for (auto &&member_role : member.roles)
+  {
+    const auto &role = role_table.get(member_role.value, "user has a role that doesn't exist!");
+
+    return std::find(role.permissions.begin(), role.permissions.end(), permission) != role.permissions.end();
+  }
+}
+
+std::string cambiatus::permission_to_string(permission e_permission)
+{
+  switch (e_permission)
+  {
+  case permission::invite:
+    return "invite";
+  case permission::claim:
+    return "claim";
+  case permission::order:
+    return "order";
+  case permission::verify:
+    return "verify";
+  case permission::sell:
+    return "sell";
+  case permission::award:
+    return "award";
+  }
 }
 
 EOSIO_DISPATCH(cambiatus,
