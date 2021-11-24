@@ -192,58 +192,48 @@ void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::
   }
 }
 
-void cambiatus::newobjective(eosio::symbol community_id, std::string description, eosio::name creator)
-{
-  require_auth(creator);
-
-  eosio::check(community_id.is_valid(), "Invalid symbol name for community");
-
-  // Check if community exists
-  communities community_table(_self, _self.value);
-  const auto &community = community_table.get(community_id.raw(), "Can't find community with given community_id");
-
-  // Check if objectives are enabled
-  eosio::check(community.has_objectives, "This community don't have objectives enabled.");
-
-  // Check if creator is a community member
-  eosio::check(is_member(community_id, creator), "Creator doesn't belong to the community");
-
-  // Insert new objective
-  objectives objective(_self, _self.value);
-  objective.emplace(_self, [&](auto &o)
-                    {
-                      o.id = get_available_id("objectives");
-                      o.description = description.substr(0, 255);
-                      o.community = community_id;
-                      o.creator = creator;
-                    });
-}
-
-void cambiatus::updobjective(std::uint64_t objective_id, std::string description, eosio::name editor)
+void cambiatus::upsertobjctv(eosio::symbol community_id, std::uint64_t objective_id, std::string description, eosio::name editor)
 {
   require_auth(editor);
 
-  // Find objective
-  objectives objective(_self, _self.value);
-  const auto &found_objective = objective.get(objective_id, "Can't find objective with given ID");
+  eosio::check(community_id.is_valid(), "Invalid symbol name for community");
 
   // Find community
   communities community(_self, _self.value);
-  const auto &cmm = community.get(found_objective.community.raw(), "Can't find community with given community_id");
+  const auto &cmm = community.get(community_id.raw(), "Can't find community with given community_id");
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   // Check if editor belongs to the community
   eosio::check(is_member(cmm.symbol, editor), "Editor doesn't belong to the community");
 
-  // Validate Auth can be either the community creator or the objective creator
-  eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
+  if (objective_id > 0)
+  {
+    // Find objective
+    objectives objective(_self, community_id.raw());
+    const auto &found_objective = objective.get(objective_id, "Can't find objective with given ID");
 
-  objective.modify(found_objective, _self, [&](auto &row)
-                   { row.description = description.substr(0, 255); });
+    // Validate Auth can be either the community creator or the objective creator
+    eosio::check(found_objective.creator == editor || cmm.creator == editor, "You must be either the creator of the objective or the community creator to edit");
+
+    objective.modify(found_objective, _self, [&](auto &row)
+                     { row.description = description.substr(0, 255); });
+  }
+  else
+  {
+    // Insert new objective
+    objectives objective(_self, community_id.raw());
+    objective.emplace(_self, [&](auto &o)
+                      {
+                        o.id = get_available_id("objectives");
+                        o.description = description.substr(0, 255);
+                        o.community = community_id;
+                        o.creator = editor;
+                      });
+  }
 }
 
-void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
+void cambiatus::upsertaction(eosio::symbol community_id, std::uint64_t action_id, std::uint64_t objective_id,
                              std::string description, eosio::asset reward,
                              eosio::asset verifier_reward, std::uint64_t deadline,
                              std::uint64_t usages, std::uint64_t usages_left,
@@ -258,7 +248,7 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
   require_auth(creator);
 
   // Validates that the objective exists
-  objectives objective(_self, _self.value);
+  objectives objective(_self, community_id.raw());
   auto itr_obj = objective.find(objective_id);
   eosio::check(itr_obj != objective.end(), "Can't find objective with given objective_id");
   auto &obj = *itr_obj;
@@ -401,76 +391,73 @@ void cambiatus::upsertaction(std::uint64_t action_id, std::uint64_t objective_id
 }
 
 /// @abi action
-/// Verify an automatic action
-void cambiatus::verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier)
+/// Verify an automatic action, rewarding tokens
+void cambiatus::reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder)
 {
-  // Validates verifier
-  eosio::check(is_account(verifier), "invalid account for verifier");
-  eosio::check(is_account(maker), "invalid account for maker");
-  require_auth(verifier);
+  // Validates awarder
+  eosio::check(is_account(awarder), "invalid account for awarder");
+  eosio::check(is_account(receiver), "invalid account for receiver");
+  require_auth(awarder);
 
   // Validates if action exists
-  actions action(_self, _self.value);
-  auto itr_objact = action.find(action_id);
-  eosio::check(itr_objact != action.end(), "Can't find action with given action_id");
-  auto &objact = *itr_objact;
+  actions action_table(_self, _self.value);
+  const auto &action = action_table.get(action_id, "can't find action with given action_id");
 
-  // Validates verifier belongs to the action community
-  objectives objective(_self, _self.value);
-  auto itr_obj = objective.find(objact.objective_id);
-  eosio::check(itr_obj != objective.end(), "Can't find objective with given action_id");
-  auto &obj = *itr_obj;
+  // Validates action and objective are from the community
+  objectives objective_table(_self, community_id.raw());
+  const auto &obj = objective_table.get(action.objective_id, "can't find objective with given action_id");
 
   communities community(_self, _self.value);
-  auto itr_cmm = community.find(obj.community.raw());
-  eosio::check(itr_cmm != community.end(), "Can't find community with given action_id");
-  auto &cmm = *itr_cmm;
+  const auto &cmm = community.get(obj.community.raw(), "can't find community with given action_id");
 
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_objectives, "this community don't have objectives enabled.");
 
-  // Validates if maker and verifier belong to the action community
-  eosio::check(is_member(cmm.symbol, verifier), "Verifier doesn't belong to the community");
-  eosio::check(is_member(cmm.symbol, maker), "Maker doesn't belong to the community");
+  // Validates if receiver and awarder belong to the action community
+  eosio::check(is_member(cmm.symbol, awarder), "verifier doesn't belong to the community");
+  eosio::check(is_member(cmm.symbol, receiver), "receiver doesn't belong to the community");
 
   // Validate if the action type is `automatic`
-  eosio::check(objact.verification_type == "automatic", "Can't verify actions that aren't automatic, you'll need to open a claim");
+  eosio::check(action.verification_type == "automatic", "can't verify actions that aren't automatic, you'll need to open a claim");
 
-  eosio::check(objact.is_completed == false, "This action is already completed");
+  eosio::check(action.is_completed == false, "this action is already completed");
 
-  if (objact.usages > 0)
+  // Check if user has permission to reward
+  eosio::check(has_permission(cmm.symbol, awarder, permission::award), "you cannot award with your current roles");
+
+  if (action.usages > 0)
   {
-    eosio::check(objact.usages_left >= 1, "There are no usages left for this action");
+    eosio::check(action.usages_left >= 1, "there are no usages left for this action");
   }
 
   // change status of verification
-  action.modify(itr_objact, _self, [&](auto &a)
-                {
-                  a.usages_left = a.usages_left - 1;
+  action_table.modify(action, _self, [&](auto &a)
+                      {
+                        a.usages_left = a.usages_left - 1;
 
-                  if (a.usages_left - 1 <= 0)
-                  {
-                    a.is_completed = 1;
-                  }
-                });
+                        if (a.usages_left - 1 <= 0)
+                        {
+                          a.is_completed = 1;
+                        }
+                      });
 
   // Find Token
   // cambiatus_tokens tokens(currency_account, currency_account.value);
   cambiatus_tokens tokens(currency_account, cmm.symbol.code().raw());
-  const auto &token = tokens.get(cmm.symbol.code().raw(), "Can't find token configurations on cambiatus token contract");
+  const auto &token = tokens.get(cmm.symbol.code().raw(), "can't find token configurations on cambiatus token contract");
 
-  if (objact.reward.amount > 0)
+  if (action.reward.amount > 0)
   {
     // Reward Action Claimer
-    std::string memo_action = "Thanks for doing an action for your community";
+    std::string memo_action = "thanks for doing an action for your community";
     eosio::action reward_action = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
                                                 currency_account,                                                 // Account
                                                 eosio::name{"issue"},                                             // Action
                                                 // to, quantity, memo
-                                                std::make_tuple(maker, objact.reward, memo_action));
+                                                std::make_tuple(receiver, action.reward, memo_action));
     reward_action.send();
   }
 
-  // Don't reward verifier for automatic verifications
+  // Don't reward awarder for automatic verifications
 }
 
 /// @abi action
@@ -917,11 +904,11 @@ void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::st
   eosio::check(community_id.is_valid(), "provided symbol is not valid");
 
   // Find community
-  communities community(_self, _self.value);
-  const auto &cmm = community.get(community_id.raw(), "Can't find community with given community_id");
+  communities community_table(_self, _self.value);
+  const auto &community = community_table.get(community_id.raw(), "can't find community with given community_id");
 
   // Make sure we have admin's permission to upsert roles
-  require_auth(cmm.creator);
+  require_auth(community.creator);
 
   // Validate permission list
   eosio::check(permissions.size() <= 6, "invalid cambiatus permissions");
@@ -946,18 +933,41 @@ void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::st
     role_table.emplace(_self, [&](auto &r)
                        {
                          r.name = name;
-                         r.color = color;
                          r.permissions = permissions;
                        });
   }
   else
   {
     role_table.modify(existing_role, _self, [&](auto &r)
-                      {
-                        r.color = color;
-                        r.permissions = permissions;
-                      });
+                      { r.permissions = permissions; });
   }
+}
+
+void cambiatus::assignrole(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> &new_roles)
+{
+  eosio::check(community_id.is_valid(), "provided symbol is not valid");
+
+  // Find community
+  communities community_table(_self, _self.value);
+  const auto &community = community_table.get(community_id.raw(), "can't find community with given community_id");
+
+  // Make sure we have admin's permission to upsert roles
+  require_auth(community.creator);
+
+  // Check if all roles exist
+  roles role_table(_self, community_id.raw());
+  for (auto role : new_roles)
+  {
+    role_table.get(role.value, "this role doesn't exist");
+  }
+
+  eosio::check(is_member(community_id, member), "user don't belong to the community");
+
+  // Update member roles
+  members member_table(_self, community_id.raw());
+  auto const &found_member = member_table.get(member.value, "user don't belong to the community");
+  member_table.modify(found_member, _self, [&](auto &m)
+                      { m.roles = new_roles; });
 }
 
 // set chain indices
@@ -1152,6 +1162,31 @@ void cambiatus::migrateusers(eosio::symbol community_id)
   }
 }
 
+void cambiatus::migrateobj(eosio::symbol community_id)
+{
+  require_auth(_self);
+
+  objectives objective_table(_self, _self.value);
+  objectives objective_table_scoped(_self, community_id.raw());
+
+  auto by_community = objective_table.get_index<eosio::name{"bycmm"}>();
+  auto itr = by_community.find(community_id.raw());
+  while (itr != by_community.end())
+  {
+    auto &item = *itr;
+    objective_table_scoped.emplace(_self, [&](auto &o)
+                                   {
+                                     o.id = item.id;
+                                     o.description = item.description;
+                                     o.community = community_id;
+                                     o.creator = item.creator;
+                                   });
+    eosio::print("Done with one objective ", item.description);
+
+    itr = by_community.erase(itr);
+  }
+}
+
 // Get available key
 uint64_t cambiatus::get_available_id(std::string table)
 {
@@ -1210,8 +1245,15 @@ bool cambiatus::has_permission(eosio::symbol community_id, eosio::name user, per
   {
     const auto &role = role_table.get(member_role.value, "user has a role that doesn't exist!");
 
-    return std::find(role.permissions.begin(), role.permissions.end(), permission) != role.permissions.end();
+    bool any = std::any_of(role.permissions.begin(), role.permissions.end(), [&](const std::string &elem)
+                           { return elem == permission; });
+    if (any)
+    {
+      return true;
+    }
   }
+
+  return false;
 }
 
 std::string cambiatus::permission_to_string(permission e_permission)
@@ -1234,11 +1276,12 @@ std::string cambiatus::permission_to_string(permission e_permission)
 }
 
 EOSIO_DISPATCH(cambiatus,
-               (create)(update)(netlink)(upsertrole)              // Basic community
-               (newobjective)(updobjective)(upsertaction)         // Objectives and Actions
-               (verifyaction)(claimaction)(verifyclaim)           // Verifications and Claims
+               (create)(update)(netlink)                          // Basic community
+               (upsertrole)(assignrole)                           // Roles & Permission
+               (upsertobjctv)(upsertaction)                       // Objectives and Actions
+               (reward)(claimaction)(verifyclaim)                 // Verifications and Claims
                (createsale)(updatesale)(deletesale)(transfersale) // Shop
                (setindices)(deleteobj)(deleteact)                 // Admin actions
                (migrate)(clean)(migrateafter)                     // Temporary migration actions
-               (migrateusers)                                     // TODO: Remove this one after
+               (migrateusers)(migrateobj)                         // TODO: Remove this one after
 );

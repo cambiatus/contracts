@@ -66,10 +66,6 @@
                 {
                     "name": "photo_proof_instructions",
                     "type": "string"
-                },
-                {
-                    "name": "roles",
-                    "type": "name[]"
                 }
             ]
         },
@@ -88,6 +84,24 @@
                 {
                     "name": "validator",
                     "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "assignrole",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "member",
+                    "type": "name"
+                },
+                {
+                    "name": "roles",
+                    "type": "name[]"
                 }
             ]
         },
@@ -428,6 +442,16 @@
             ]
         },
         {
+            "name": "migrateobj",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                }
+            ]
+        },
+        {
             "name": "migrateusers",
             "base": "",
             "fields": [
@@ -486,24 +510,6 @@
             ]
         },
         {
-            "name": "newobjective",
-            "base": "",
-            "fields": [
-                {
-                    "name": "community_id",
-                    "type": "symbol"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "creator",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "objective",
             "base": "",
             "fields": [
@@ -526,16 +532,34 @@
             ]
         },
         {
+            "name": "reward",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "action_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "receiver",
+                    "type": "name"
+                },
+                {
+                    "name": "awarder",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "role",
             "base": "",
             "fields": [
                 {
                     "name": "name",
                     "type": "name"
-                },
-                {
-                    "name": "color",
-                    "type": "string"
                 },
                 {
                     "name": "permissions",
@@ -722,27 +746,13 @@
             ]
         },
         {
-            "name": "updobjective",
-            "base": "",
-            "fields": [
-                {
-                    "name": "objective_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "editor",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "upsertaction",
             "base": "",
             "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
                 {
                     "name": "action_id",
                     "type": "uint64"
@@ -810,6 +820,28 @@
             ]
         },
         {
+            "name": "upsertobjctv",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "objective_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "editor",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "upsertrole",
             "base": "",
             "fields": [
@@ -828,24 +860,6 @@
                 {
                     "name": "permissions",
                     "type": "string[]"
-                }
-            ]
-        },
-        {
-            "name": "verifyaction",
-            "base": "",
-            "fields": [
-                {
-                    "name": "action_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "maker",
-                    "type": "name"
-                },
-                {
-                    "name": "verifier",
-                    "type": "name"
                 }
             ]
         },
@@ -869,6 +883,11 @@
         }
     ],
     "actions": [
+        {
+            "name": "assignrole",
+            "type": "assignrole",
+            "ricardian_contract": ""
+        },
         {
             "name": "claimaction",
             "type": "claimaction",
@@ -915,6 +934,11 @@
             "ricardian_contract": ""
         },
         {
+            "name": "migrateobj",
+            "type": "migrateobj",
+            "ricardian_contract": ""
+        },
+        {
             "name": "migrateusers",
             "type": "migrateusers",
             "ricardian_contract": ""
@@ -925,8 +949,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "newobjective",
-            "type": "newobjective",
+            "name": "reward",
+            "type": "reward",
             "ricardian_contract": ""
         },
         {
@@ -950,23 +974,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "updobjective",
-            "type": "updobjective",
-            "ricardian_contract": ""
-        },
-        {
             "name": "upsertaction",
             "type": "upsertaction",
             "ricardian_contract": ""
         },
         {
-            "name": "upsertrole",
-            "type": "upsertrole",
+            "name": "upsertobjctv",
+            "type": "upsertobjctv",
             "ricardian_contract": ""
         },
         {
-            "name": "verifyaction",
-            "type": "verifyaction",
+            "name": "upsertrole",
+            "type": "upsertrole",
             "ricardian_contract": ""
         },
         {

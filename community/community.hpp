@@ -95,12 +95,11 @@ public:
   TABLE role
   {
     eosio::name name;
-    std::string color;
     std::vector<std::string> permissions;
 
     std::uint64_t primary_key() const { return name.value; }
 
-    EOSLIB_SERIALIZE(role, (name)(color)(permissions));
+    EOSLIB_SERIALIZE(role, (name)(permissions));
   };
 
   TABLE objective
@@ -136,7 +135,7 @@ public:
     std::uint8_t has_proof_code;
     std::string photo_proof_instructions;
 
-    std::vector<eosio::name> roles; // Validators of the action
+    // std::vector<eosio::name> roles; // Validators of the action
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_objective() const { return objective_id; }
@@ -235,16 +234,12 @@ public:
   ACTION netlink(eosio::symbol community_id, eosio::name inviter, eosio::name new_user, std::string user_type);
 
   /// @abi action
-  /// Create a new community objective
-  ACTION newobjective(eosio::symbol community_id, std::string description, eosio::name creator);
-
-  /// @abi action
-  /// Edit the description of a given objective
-  ACTION updobjective(std::uint64_t objective_id, std::string description, eosio::name editor);
+  /// Create/Edit a given objective
+  ACTION upsertobjctv(eosio::symbol community_id, std::uint64_t objective_id, std::string description, eosio::name editor);
 
   /// @abi action
   /// Update action
-  ACTION upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
+  ACTION upsertaction(eosio::symbol community_id, std::uint64_t action_id, std::uint64_t objective_id,
                       std::string description, eosio::asset reward,
                       eosio::asset verifier_reward, std::uint64_t deadline,
                       std::uint64_t usages, std::uint64_t usages_left,
@@ -265,7 +260,7 @@ public:
 
   /// @abi action
   /// Verify that a given action was completed. It has to have the `automatic` verification_type
-  ACTION verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier);
+  ACTION reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder);
 
   /// @abi action
   /// Create a new sale
@@ -292,6 +287,10 @@ public:
   ACTION upsertrole(eosio::symbol community_id, eosio::name name, std::string color, std::vector<std::string> & permissions);
 
   /// @abi action
+  /// Sets a number of roles for an user
+  ACTION assignrole(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> & roles);
+
+  /// @abi action
   /// Set the indices for a chain
   ACTION setindices(std::uint64_t sale_id, std::uint64_t objective_id, std::uint64_t action_id, std::uint64_t claim_id);
 
@@ -309,6 +308,7 @@ public:
   ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
 
   ACTION migrateusers(eosio::symbol community_id);
+  ACTION migrateobj(eosio::symbol community_id);
 
   // Get available key
   uint64_t get_available_id(std::string table);
