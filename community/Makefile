@@ -27,27 +27,44 @@ deploy:
 
 erase:
 	$(push_adm) clean '["role", "", "0,MIZU"]'
-	$(push_adm) clean '["member", "", "0,MIZU"]'
+	# $(push_adm) clean '["member", "", "0,MIZU"]'
 
 
-migrate:
+migrate-users:
 	$(push_adm) migrateusers '["0,MIZU"]'
+
+migrate-obj:
+	$(push_adm) migrateobj '["0,AMTA"]'
+	$(push_adm) migrateobj '["0,AMTB"]'
 
 invite:
 	$(push) netlink '["0,MIZU", "lucca", "memberdev123", "natural"]'
 
 fill-role:
 	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
+	$(push) upsertrole '{"community_id": "0,MIZU", "name": "enabler", "color": "#ffffff", "permissions": ["award", "verify"]}'
 
 	# Invalid color
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validators", "color": "#f26c489", "permissions": ["verify"]}'
+	$(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
 
 	# Invalid Cambiatus permission
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validators", "color": "#f26c48", "permissions": ["verify", "something"]}'
+	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify", "something"]}'
 
 	# Upsert check - color change and then permission change
 	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#5959a1", "permissions": ["invite", "claim", "order"]}'
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validators", "color": "#f26c48", "permissions": ["verify"]}'
+	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
 
+assign-role:
+	$(push) assignrole '{"community_id": "0,MIZU", "member": "lucca", "roles": ["member", "enabler"]} '
 
+objective:
+	$(push) upsertobjctv '["0,MIZU", 0, "New community goal", "lucca"]'
 
+action:
+	$(push) upsertaction '["0,MIZU", 0, 90 , "New automatic action", "30 MIZU", "3 MIZU", 0, 0, 0, 3, "claimable", "lucca-karla-henriquebuss", 0, "lucca", 0, 0, ""]'
+
+reward:
+	$(push) reward '["0,MIZU", 166, "lucca", "karla"]'
+
+claim:
+	$(push) claimaction '[167, "lucca", "", "", 0]'
