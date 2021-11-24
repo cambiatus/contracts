@@ -42,21 +42,12 @@ invite:
 
 fill-role:
 	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
-	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "order"]}'
-	$(push) upsertrole '{"community_id": "0,MIZU", "name": "enabler", "color": "#ffffff", "permissions": ["award", "verify"]}'
-
-	# Invalid color
+	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "order"]}'
+	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "enabler", "color": "#ffffff", "permissions": ["award", "verify"]}'
 	$(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
 
-	# Invalid Cambiatus permission
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify", "something"]}'
-
-	# Upsert check - color change and then permission change
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#5959a1", "permissions": ["invite", "claim", "order"]}'
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
-
 assign-role:
-	$(push) assignrole '{"community_id": "0,MIZU", "member": "lucca", "roles": ["member", "enabler"]} '
+	$(push) assignrole '{"community_id": "0,MIZU", "member": "lucca", "roles": ["member", "validator"]} '
 
 objective:
 	$(push) upsertobjctv '["0,MIZU", 0, "## New community goal", "lucca"]'
@@ -70,3 +61,6 @@ reward:
 
 claim:
 	$(push) claimaction '["0,MIZU", 171, "lucca", "", "", 0]'
+
+verify:
+	$(push) verifyclaim '["0,MIZU", 336, "lucca", 1]'

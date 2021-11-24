@@ -541,7 +541,7 @@ void cambiatus::claimaction(eosio::symbol community_id, std::uint64_t action_id,
 
 /// @abi action
 /// Send a vote to a given claim
-void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote)
+void cambiatus::verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote)
 {
   // Validates verifier belongs to the action community
   claims claim_table(_self, _self.value);
@@ -560,7 +560,7 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
   auto &objact = *itr_objact;
 
   // Validates that the objective exists
-  objectives objective(_self, _self.value);
+  objectives objective(_self, community_id.raw());
   auto itr_obj = objective.find(objact.objective_id);
   eosio::check(itr_obj != objective.end(), "Can't find objective with given claim_id");
   auto &obj = *itr_obj;
@@ -585,6 +585,8 @@ void cambiatus::verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::u
     itr_validators++;
   }
   eosio::check(validator_count > 0, "Verifier is not in the action validator list");
+
+  eosio::check(has_permission(cmm.symbol, verifier, permission::verify), "you cannot verify with your current roles");
 
   // Check if action is completed, have usages left or the deadline has been met
   eosio::check(objact.is_completed == false, "This is action is already completed, can't verify claim");

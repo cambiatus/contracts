@@ -256,7 +256,7 @@ public:
 
   /// @abi action
   /// Send a vote verification for a given claim. It has to be `claimable` verification_type
-  ACTION verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote);
+  ACTION verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote);
 
   /// @abi action
   /// Verify that a given action was completed. It has to have the `automatic` verification_type
