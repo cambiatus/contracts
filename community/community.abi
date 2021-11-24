@@ -162,6 +162,10 @@
             "base": "",
             "fields": [
                 {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
                     "name": "action_id",
                     "type": "uint64"
                 },

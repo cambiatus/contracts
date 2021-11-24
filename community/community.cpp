@@ -462,7 +462,7 @@ void cambiatus::reward(eosio::symbol community_id, std::uint64_t action_id, eosi
 
 /// @abi action
 /// Start a new claim on an action
-void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
+void cambiatus::claimaction(eosio::symbol community_id, std::uint64_t action_id, eosio::name maker,
                             std::string proof_photo, std::string proof_code, uint32_t proof_time)
 {
   // Validate maker
@@ -481,10 +481,8 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   }
 
   // Validates if action exists
-  actions action(_self, _self.value);
-  auto itr_objact = action.find(action_id);
-  eosio::check(itr_objact != action.end(), "Can't find action with given action_id");
-  auto &objact = *itr_objact;
+  actions action_table(_self, _self.value);
+  const auto &objact = action_table.get(action_id, "Can't find action with given action_id");
 
   // Check if action is completed, have usages left or the deadline has been met
   eosio::check(objact.is_completed == false, "This is action is already completed, can't open claim");
@@ -512,19 +510,16 @@ void cambiatus::claimaction(std::uint64_t action_id, eosio::name maker,
   }
 
   // Validates maker belongs to the action community
-  objectives objective(_self, _self.value);
-  auto itr_obj = objective.find(objact.objective_id);
-  eosio::check(itr_obj != objective.end(), "Can't find objective with given action_id");
-  auto &obj = *itr_obj;
+  objectives objective(_self, community_id.raw());
+  const auto &obj = objective.get(objact.objective_id, "Can't find objective with given action_id");
 
   communities community(_self, _self.value);
-  auto itr_cmm = community.find(obj.community.raw());
-  eosio::check(itr_cmm != community.end(), "Can't find community with given action_id");
-  auto &cmm = *itr_cmm;
+  const auto &cmm = community.get(community_id.raw(), "Can't find community with given action_id");
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
   eosio::check(is_member(cmm.symbol, maker), "Maker doesn't belong to the community");
+  eosio::check(has_permission(community_id, maker, permission::claim), "you cannot claim with your current roles");
 
   // Get last used claim id and update item_index table
   uint64_t claim_id;

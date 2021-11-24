@@ -251,7 +251,7 @@ public:
 
   /// @abi action
   /// Start a new claim on an action
-  ACTION claimaction(std::uint64_t action_id, eosio::name maker,
+  ACTION claimaction(eosio::symbol community_id, std::uint64_t action_id, eosio::name maker,
                      std::string proof_photo, std::string proof_code, uint32_t proof_time);
 
   /// @abi action

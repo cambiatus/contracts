@@ -41,7 +41,8 @@ invite:
 	$(push) netlink '["0,MIZU", "lucca", "memberdev123", "natural"]'
 
 fill-role:
-	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
+	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
+	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "order"]}'
 	$(push) upsertrole '{"community_id": "0,MIZU", "name": "enabler", "color": "#ffffff", "permissions": ["award", "verify"]}'
 
 	# Invalid color
@@ -58,13 +59,14 @@ assign-role:
 	$(push) assignrole '{"community_id": "0,MIZU", "member": "lucca", "roles": ["member", "enabler"]} '
 
 objective:
-	$(push) upsertobjctv '["0,MIZU", 0, "New community goal", "lucca"]'
+	$(push) upsertobjctv '["0,MIZU", 0, "## New community goal", "lucca"]'
 
 action:
-	$(push) upsertaction '["0,MIZU", 0, 90 , "New automatic action", "30 MIZU", "3 MIZU", 0, 0, 0, 3, "claimable", "lucca-karla-henriquebuss", 0, "lucca", 0, 0, ""]'
+	$(push) upsertaction '["0,MIZU", 0, 94 , "New claimable action", "30 MIZU", "3 MIZU", 0, 0, 0, 3, "claimable", "lucca-karla-henriquebuss", 0, "lucca", 0, 0, ""]'
+	$(push) upsertaction '["0,MIZU", 0, 94 , "Automatic action", "30 MIZU", "3 MIZU", 0, 0, 0, 3, "automatic", "lucca-karla-henriquebuss", 0, "lucca", 0, 0, ""]'
 
 reward:
-	$(push) reward '["0,MIZU", 166, "lucca", "karla"]'
+	$(push) reward '["0,MIZU", 172, "karla", "lucca"]'
 
 claim:
-	$(push) claimaction '[167, "lucca", "", "", 0]'
+	$(push) claimaction '["0,MIZU", 171, "lucca", "", "", 0]'
