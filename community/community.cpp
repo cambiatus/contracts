@@ -141,6 +141,7 @@ void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::
   if (cmm.creator != inviter)
   {
     eosio::check(is_member(community_id, inviter), "inviter is not part of the community");
+    eosio::check(has_permission(community_id, inviter, permission::invite), "this user cannot invite with its current roles");
   }
 
   members member(_self, community_id.raw());

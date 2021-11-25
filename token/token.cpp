@@ -43,13 +43,14 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
   auto existing = statstable.find(sym.code().raw());
   eosio::check(existing == statstable.end(), "token with this symbol already exists");
 
-  statstable.emplace(_self, [&](auto &s) {
-    s.supply.symbol = max_supply.symbol;
-    s.max_supply = max_supply;
-    s.min_balance = min_balance;
-    s.issuer = issuer;
-    s.type = type;
-  });
+  statstable.emplace(_self, [&](auto &s)
+                     {
+                       s.supply.symbol = max_supply.symbol;
+                       s.max_supply = max_supply;
+                       s.min_balance = min_balance;
+                       s.issuer = issuer;
+                       s.type = type;
+                     });
 
   // Notify creator
   require_recipient(cmm.creator);
@@ -68,10 +69,11 @@ void token::create(eosio::name issuer, eosio::asset max_supply,
 
   // Create new balance for the creator
   accounts accounts(_self, issuer.value);
-  accounts.emplace(_self, [&](auto &a) {
-    a.balance = eosio::asset(0, max_supply.symbol);
-    a.last_activity = now();
-  });
+  accounts.emplace(_self, [&](auto &a)
+                   {
+                     a.balance = eosio::asset(0, max_supply.symbol);
+                     a.last_activity = now();
+                   });
 }
 
 /**
@@ -97,10 +99,11 @@ void token::update(eosio::asset max_supply, eosio::asset min_balance)
 
   require_auth(st.issuer);
 
-  statstable.modify(st, _self, [&](auto &s) {
-    s.max_supply = max_supply;
-    s.min_balance = min_balance;
-  });
+  statstable.modify(st, _self, [&](auto &s)
+                    {
+                      s.max_supply = max_supply;
+                      s.min_balance = min_balance;
+                    });
 }
 
 /**
@@ -129,9 +132,8 @@ void token::issue(eosio::name to, eosio::asset quantity, std::string memo)
   eosio::check(quantity.symbol == st.supply.symbol, "symbol mismatch");
   eosio::check(quantity.amount <= st.max_supply.amount - st.supply.amount, "quantity exceeds available supply");
 
-  statstable.modify(st, _self, [&](auto &s) {
-    s.supply += quantity;
-  });
+  statstable.modify(st, _self, [&](auto &s)
+                    { s.supply += quantity; });
 
   add_balance(st.issuer, quantity, st);
 
@@ -174,15 +176,10 @@ void token::transfer(eosio::name from, eosio::name to, eosio::asset quantity, st
   eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
 
   // Check if from belongs to the community
-  bespiral_networks network(community_account, community_account.value);
-  auto from_id = gen_uuid(quantity.symbol.raw(), from.value);
-  auto itr_from = network.find(from_id);
-  eosio::check(itr_from != network.end(), "from account doesn't belong to the community");
+  eosio::check(is_member(quantity.symbol, from), "from account doesn't belong to the community");
 
   // Check if to belongs to the community
-  auto to_id = gen_uuid(quantity.symbol.raw(), to.value);
-  auto itr_to = network.find(to_id);
-  eosio::check(itr_to != network.end(), "to account doesn't belong to the community");
+  eosio::check(is_member(quantity.symbol, to), "to account doesn't belong to the community");
 
   // Transfer values
   sub_balance(from, quantity, st);
@@ -215,27 +212,26 @@ void token::retire(eosio::symbol currency, std::string user_type, std::string me
 
   eosio::check(st.type == "expiry", "Cambiatus only retire tokens of the 'expiry' type");
 
-  bespiral_networks network(community_account, community_account.value);
-  auto network_by_cmm = network.get_index<eosio::name{"usersbycmm"}>();
-  for (auto itr = network_by_cmm.find(currency.raw()); itr != network_by_cmm.end(); itr++)
+  members member_table(community_account, currency.raw());
+  for (auto itr = member_table.begin(); itr != member_table.end(); itr++)
   {
     // Make sure to retire only of a single type
     if (itr->user_type == user_type)
     {
-      token::accounts accounts(_self, itr->invited_user.value);
+      token::accounts accounts(_self, itr->name.value);
       auto from_account = accounts.find(sym.code().raw());
 
       if (from_account != accounts.end())
       {
         // Decrease available supply
-        statstable.modify(st, _self, [&](auto &s) {
-          s.supply -= from_account->balance;
-        });
+        statstable.modify(st, _self, [&](auto &s)
+                          { s.supply -= from_account->balance; });
 
-        accounts.modify(from_account, _self, [&](auto &a) {
-          a.balance = eosio::asset(0, currency);
-          a.last_activity = now();
-        });
+        accounts.modify(from_account, _self, [&](auto &a)
+                        {
+                          a.balance = eosio::asset(0, currency);
+                          a.last_activity = now();
+                        });
       }
     }
   }
@@ -249,10 +245,7 @@ void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inv
 
   // Make sure account belongs to the given community
   // Check if from belongs to the community
-  bespiral_networks network(community_account, community_account.value);
-  auto network_id = gen_uuid(currency.raw(), account.value);
-  auto itr_net = network.find(network_id);
-  eosio::check(itr_net != network.end(), "account doesn't belong to the community");
+  eosio::check(is_member(currency, account), "account doesn't belong to the community");
 
   // Create account table entry
   accounts accounts(_self, account.value);
@@ -260,10 +253,11 @@ void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inv
 
   if (found_account == accounts.end())
   {
-    accounts.emplace(_self, [&](auto &a) {
-      a.balance = eosio::asset(0, st.supply.symbol);
-      a.last_activity = now();
-    });
+    accounts.emplace(_self, [&](auto &a)
+                     {
+                       a.balance = eosio::asset(0, st.supply.symbol);
+                       a.last_activity = now();
+                     });
   }
 }
 
@@ -272,10 +266,10 @@ void token::initacc(eosio::symbol currency, eosio::name account, eosio::name inv
  * @author Julien Lucca
  * @version 1.0
  *
- * Upsert expiration details on `expiryopts` table. Also fill amounts for every account on the network and schedules its retirement
+ * Upsert expiration details on `expiryopts` table. Also fill amounts for every account on the member list and schedules its retirement
  *
  * 1) Upserts given expiration options (`expiration_period` in seconds and `renovation_amount` in eosio::asset) for the given `currency`
- * 2) Iterates over the network table. For every account on the community.
+ * 2) Iterates over the members table. For every account on the community.
  *  2.1) Issue for the account the given `renovation_amount`
  * 3) Schedules a `retire` action for the given `currency` after the given `expiration_period`
  */
@@ -303,27 +297,28 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t natural_expiration_p
 
   if (old_opts == opts.end())
   {
-    opts.emplace(_self, [&](auto &a) {
-      a.currency = currency;
-      a.natural_expiration_period = natural_expiration_period;
-      a.juridical_expiration_period = juridical_expiration_period;
-      a.renovation_amount = renovation_amount;
-    });
+    opts.emplace(_self, [&](auto &a)
+                 {
+                   a.currency = currency;
+                   a.natural_expiration_period = natural_expiration_period;
+                   a.juridical_expiration_period = juridical_expiration_period;
+                   a.renovation_amount = renovation_amount;
+                 });
   }
   else
   {
-    opts.modify(old_opts, _self, [&](auto &a) {
-      a.currency = currency;
-      a.natural_expiration_period = natural_expiration_period;
-      a.juridical_expiration_period = juridical_expiration_period;
-      a.renovation_amount = renovation_amount;
-    });
+    opts.modify(old_opts, _self, [&](auto &a)
+                {
+                  a.currency = currency;
+                  a.natural_expiration_period = natural_expiration_period;
+                  a.juridical_expiration_period = juridical_expiration_period;
+                  a.renovation_amount = renovation_amount;
+                });
   }
 
   // Setup expiration
-  bespiral_networks network(community_account, community_account.value);
-  auto network_by_cmm = network.get_index<eosio::name{"usersbycmm"}>();
-  for (auto itr = network_by_cmm.find(currency.raw()); itr != network_by_cmm.end(); itr++)
+  members members_table(community_account, currency.raw());
+  for (auto itr = members_table.begin(); itr != members_table.end(); itr++)
   {
     // Only natural users receive the
     if (itr->user_type == "natural")
@@ -337,7 +332,7 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t natural_expiration_p
       eosio::action issue = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
                                           get_self(),                                                 // Account
                                           eosio::name{"issue"},                                       // Action
-                                          std::make_tuple(itr->invited_user, renovation_amount, issue_memo));
+                                          std::make_tuple(itr->name, renovation_amount, issue_memo));
       issue.send();
     }
   }
@@ -368,6 +363,14 @@ void token::setexpiry(eosio::symbol currency, std::uint32_t natural_expiration_p
   retire_juridical.send(juridical_schedule_id, get_self(), true);
 }
 
+bool token::is_member(eosio::symbol community_id, eosio::name user)
+{
+  members member_table(community_account, community_id.raw());
+  auto itr = member_table.find(user.value);
+
+  return itr != member_table.end();
+}
+
 void token::sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st)
 {
   eosio::check(value.is_valid(), "Invalid value");
@@ -382,20 +385,22 @@ void token::sub_balance(eosio::name owner, eosio::asset value, const token::curr
   {
     eosio::check((value.amount * -1) >= st.min_balance.amount, "overdrawn community limit");
 
-    accounts.emplace(_self, [&](auto &a) {
-      a.balance = value;
-      a.balance.amount *= -1;
-      a.last_activity = now();
-    });
+    accounts.emplace(_self, [&](auto &a)
+                     {
+                       a.balance = value;
+                       a.balance.amount *= -1;
+                       a.last_activity = now();
+                     });
   }
   else
   {
     auto new_balance = from->balance.amount - value.amount;
     eosio::check(new_balance >= st.min_balance.amount, "overdrawn community limit");
-    accounts.modify(from, _self, [&](auto &a) {
-      a.balance.amount -= value.amount;
-      a.last_activity = now();
-    });
+    accounts.modify(from, _self, [&](auto &a)
+                    {
+                      a.balance.amount -= value.amount;
+                      a.last_activity = now();
+                    });
   }
   return;
 }
@@ -410,17 +415,19 @@ void token::add_balance(eosio::name recipient, eosio::asset value, const token::
 
   if (to == accounts.end())
   {
-    accounts.emplace(_self, [&](auto &a) {
-      a.balance = value;
-      a.last_activity = now();
-    });
+    accounts.emplace(_self, [&](auto &a)
+                     {
+                       a.balance = value;
+                       a.last_activity = now();
+                     });
   }
   else
   {
-    accounts.modify(to, _self, [&](auto &a) {
-      a.balance += value;
-      a.last_activity = now();
-    });
+    accounts.modify(to, _self, [&](auto &a)
+                    {
+                      a.balance += value;
+                      a.last_activity = now();
+                    });
   }
 }
 

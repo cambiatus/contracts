@@ -64,7 +64,7 @@ public:
     eosio::name name;
     eosio::name inviter;
     std::string user_type;
-    std::vector<eosio::name> roles; // "admin,validator,x"
+    std::vector<eosio::name> roles;
 
     std::uint64_t primary_key() const { return name.value; }
 

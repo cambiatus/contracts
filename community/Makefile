@@ -39,10 +39,11 @@ migrate-obj:
 
 invite:
 	$(push) netlink '["0,MIZU", "lucca", "memberdev123", "natural"]'
+	$(cleos) push action $(contract) netlink '["0,MIZU", "memberdev123", "memberdev321", "natural"]' -p memberdev123@active
 
 fill-role:
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "order"]}'
+	$(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order"]}'
+	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "member", "color": "#ffffff", "permissions": ["order"]}'
 	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "enabler", "color": "#ffffff", "permissions": ["award", "verify"]}'
 	$(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
 
