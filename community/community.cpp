@@ -749,6 +749,7 @@ void cambiatus::createsale(eosio::name from, std::string title, std::string desc
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
   eosio::check(cmm.has_shop, "This community don't have shop enabled.");
+  eosio::check(has_permission(quantity.symbol, from, permission::sell), "you cannot create a new product or service with your current roles");
 
   // Get last used objective id and update item_index table
   uint64_t sale_id;
@@ -809,6 +810,9 @@ void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
 
   // Validate user belongs to community
   eosio::check(is_member(quantity.symbol, found_sale.creator), "This account doesn't belong to the community");
+
+  // Validate if user can sell in the platform
+  eosio::check(has_permission(quantity.symbol, found_sale.creator, permission::sell), "you cannot create a new product or service with your current roles");
 
   // Update sale
   sale.modify(found_sale, _self, [&](auto &s)
@@ -882,6 +886,9 @@ void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::nam
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
+
+  eosio::check(has_permission(quantity.symbol, from, permission::order), "you cannot create an order with your current roles");
+  eosio::check(has_permission(quantity.symbol, to, permission::sell), "you cannot buy from this user, it doesn't have the permission to sell in this community anymore.");
 
   // Validate 'from' user belongs to sale community
   eosio::check(is_member(found_sale.community, from), "You can't use transfersale to this sale if you aren't part of the community");
