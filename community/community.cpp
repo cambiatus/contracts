@@ -948,7 +948,7 @@ void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::st
   }
 }
 
-void cambiatus::assignrole(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> &new_roles)
+void cambiatus::assignroles(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> &new_roles)
 {
   eosio::check(community_id.is_valid(), "provided symbol is not valid");
 

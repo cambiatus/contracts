@@ -288,7 +288,7 @@ public:
 
   /// @abi action
   /// Sets a number of roles for an user
-  ACTION assignrole(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> & roles);
+  ACTION assignroles(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> & roles);
 
   /// @abi action
   /// Set the indices for a chain
