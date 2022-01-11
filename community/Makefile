@@ -15,7 +15,6 @@ cleos = cleos -u $(url)
 push_adm = $(cleos) push action $(contract) $^ -p $(contract_authorization)
 push = $(cleos) push action $(contract) $^ -p $(authorization)
 
-# eosio-cpp -w $(OPTS) -o $@ -abigen -R ./ricardian $^
 community.wasm: $(src)
 	eosio-cpp -w $(OPTS) -o $@ $^ --no-missing-ricardian-clause
 
@@ -31,7 +30,8 @@ erase:
 
 
 migrate-users:
-	$(push_adm) migrateusers '["0,MIZU"]'
+	# $(push_adm) migrateusers '["0,BUSS"]'
+
 
 migrate-obj:
 	$(push_adm) migrateobj '["0,AMTA"]'

@@ -65,11 +65,10 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
                     });
 
   std::string user_type = "natural";
-
   eosio::action netlink = eosio::action(eosio::permission_level{get_self(), eosio::name{"active"}}, // Permission
                                         get_self(),                                                 // Account
                                         eosio::name{"netlink"},                                     // Action
-                                        std::make_tuple(cmm_asset, creator, creator, user_type));
+                                        std::make_tuple(new_symbol, creator, creator, user_type));
   netlink.send();
 
   // Notify creator
@@ -137,7 +136,7 @@ void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::
     return;
   }
 
-  // Validates if inviter is a member, if not the creator
+  // Validates if inviter is a member, except if its the creator
   if (cmm.creator != inviter)
   {
     eosio::check(is_member(community_id, inviter), "inviter is not part of the community");
@@ -242,7 +241,7 @@ void cambiatus::upsertaction(eosio::symbol community_id, std::uint64_t action_id
                              std::string validators_str, std::uint8_t is_completed,
                              eosio::name creator,
                              std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
-                             std::string photo_proof_instructions)
+                             std::string photo_proof_instructions, std::string image)
 {
   // Validate creator
   eosio::check(is_account(creator), "invalid account for creator");
@@ -1282,7 +1281,7 @@ std::string cambiatus::permission_to_string(permission e_permission)
 
 EOSIO_DISPATCH(cambiatus,
                (create)(update)(netlink)                          // Basic community
-               (upsertrole)(assignrole)                           // Roles & Permission
+               (upsertrole)(assignroles)                          // Roles & Permission
                (upsertobjctv)(upsertaction)                       // Objectives and Actions
                (reward)(claimaction)(verifyclaim)                 // Verifications and Claims
                (createsale)(updatesale)(deletesale)(transfersale) // Shop

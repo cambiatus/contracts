@@ -247,7 +247,7 @@ public:
                       std::string validators_str, std::uint8_t is_completed,
                       eosio::name creator,
                       std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
-                      std::string photo_proof_instructions);
+                      std::string photo_proof_instructions, std::string image);
 
   /// @abi action
   /// Start a new claim on an action
