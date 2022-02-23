@@ -12,7 +12,8 @@ enum permission
   order,
   verify,
   sell,
-  award
+  award,
+  transfer
 };
 
 class [[eosio::contract("community")]] cambiatus : public eosio::contract
@@ -73,12 +74,12 @@ public:
   };
 
   /**
-   * Roles is a way to identify people's relation with their community. 
+   * Roles is a way to identify people's relation with their community.
    * It can be used to allow people to be recognized by their role in the whole of the community, to give them awards or to help them to identify themselves.
    * They can be customized with a color and can have a name
-   * 
+   *
    * Roles can also be atttached with permissions that gives them abilities within the community such as the ability to invite new people in, to sell goods and services and more
-   * 
+   *
    * The initial abilities that we offer are:
    *  invite: invite new users `netlink`
    *  claim: allow claiming actions `claimaction`
@@ -86,10 +87,10 @@ public:
    *  verify: verify autenticity on claims `verifyclaim`
    *  sell: sell items on the shop `createsale` `updatesale` .
    *  award: awards an action `verifyaction` (`award`)
-   * 
+   *
    * All of those roles are used from within the contract to mediate the usage of some actions.
-   * 
-   * 
+   *
+   *
    * Roles are scoped by community.
    */
   TABLE role
@@ -302,18 +303,12 @@ public:
   /// Deletes an action
   ACTION deleteact(std::uint64_t id);
 
-  /// next 3 actions used for table migrations
-  ACTION migrate(std::uint64_t id, std::uint64_t increment);
   ACTION clean(std::string t, eosio::name name_scope, eosio::symbol symbol_scope);
-  ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
-
-  ACTION migrateusers(eosio::symbol community_id);
-  ACTION migrateobj(eosio::symbol community_id);
 
   // Get available key
   uint64_t get_available_id(std::string table);
 
-  // Convience methods
+  // Convinience methods
   bool is_member(eosio::symbol community_id, eosio::name user);
   bool has_permission(eosio::symbol community_id, eosio::name user, permission e_permission);
   std::string permission_to_string(permission e_permission);

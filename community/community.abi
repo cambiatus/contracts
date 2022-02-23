@@ -418,54 +418,6 @@
             ]
         },
         {
-            "name": "migrate",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "increment",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "migrateafter",
-            "base": "",
-            "fields": [
-                {
-                    "name": "claim_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "increment",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "migrateobj",
-            "base": "",
-            "fields": [
-                {
-                    "name": "community_id",
-                    "type": "symbol"
-                }
-            ]
-        },
-        {
-            "name": "migrateusers",
-            "base": "",
-            "fields": [
-                {
-                    "name": "community_id",
-                    "type": "symbol"
-                }
-            ]
-        },
-        {
             "name": "netlink",
             "base": "",
             "fields": [
@@ -933,26 +885,6 @@
         {
             "name": "deletesale",
             "type": "deletesale",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "migrate",
-            "type": "migrate",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "migrateafter",
-            "type": "migrateafter",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "migrateobj",
-            "type": "migrateobj",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "migrateusers",
-            "type": "migrateusers",
             "ricardian_contract": ""
         },
         {
