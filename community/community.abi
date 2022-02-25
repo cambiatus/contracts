@@ -88,6 +88,24 @@
             ]
         },
         {
+            "name": "assignroles",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "member",
+                    "type": "name"
+                },
+                {
+                    "name": "roles",
+                    "type": "name[]"
+                }
+            ]
+        },
+        {
             "name": "check",
             "base": "",
             "fields": [
@@ -144,6 +162,10 @@
             "base": "",
             "fields": [
                 {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
                     "name": "action_id",
                     "type": "uint64"
                 },
@@ -172,6 +194,14 @@
                 {
                     "name": "t",
                     "type": "string"
+                },
+                {
+                    "name": "name_scope",
+                    "type": "name"
+                },
+                {
+                    "name": "symbol_scope",
+                    "type": "symbol"
                 }
             ]
         },
@@ -366,30 +396,24 @@
             ]
         },
         {
-            "name": "migrate",
+            "name": "member",
             "base": "",
             "fields": [
                 {
-                    "name": "id",
-                    "type": "uint64"
+                    "name": "name",
+                    "type": "name"
                 },
                 {
-                    "name": "increment",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "migrateafter",
-            "base": "",
-            "fields": [
-                {
-                    "name": "claim_id",
-                    "type": "uint64"
+                    "name": "inviter",
+                    "type": "name"
                 },
                 {
-                    "name": "increment",
-                    "type": "uint64"
+                    "name": "user_type",
+                    "type": "string"
+                },
+                {
+                    "name": "roles",
+                    "type": "name[]"
                 }
             ]
         },
@@ -398,8 +422,8 @@
             "base": "",
             "fields": [
                 {
-                    "name": "cmm_asset",
-                    "type": "asset"
+                    "name": "community_id",
+                    "type": "symbol"
                 },
                 {
                     "name": "inviter",
@@ -442,24 +466,6 @@
             ]
         },
         {
-            "name": "newobjective",
-            "base": "",
-            "fields": [
-                {
-                    "name": "cmm_asset",
-                    "type": "asset"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "creator",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "objective",
             "base": "",
             "fields": [
@@ -482,20 +488,38 @@
             ]
         },
         {
-            "name": "reactsale",
+            "name": "reward",
             "base": "",
             "fields": [
                 {
-                    "name": "sale_id",
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "action_id",
                     "type": "uint64"
                 },
                 {
-                    "name": "from",
+                    "name": "receiver",
                     "type": "name"
                 },
                 {
-                    "name": "type",
-                    "type": "string"
+                    "name": "awarder",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "role",
+            "base": "",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "name"
+                },
+                {
+                    "name": "permissions",
+                    "type": "string[]"
                 }
             ]
         },
@@ -678,27 +702,13 @@
             ]
         },
         {
-            "name": "updobjective",
-            "base": "",
-            "fields": [
-                {
-                    "name": "objective_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "editor",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "upsertaction",
             "base": "",
             "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
                 {
                     "name": "action_id",
                     "type": "uint64"
@@ -762,24 +772,54 @@
                 {
                     "name": "photo_proof_instructions",
                     "type": "string"
+                },
+                {
+                    "name": "image",
+                    "type": "string"
                 }
             ]
         },
         {
-            "name": "verifyaction",
+            "name": "upsertobjctv",
             "base": "",
             "fields": [
                 {
-                    "name": "action_id",
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "objective_id",
                     "type": "uint64"
                 },
                 {
-                    "name": "maker",
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "editor",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "upsertrole",
+            "base": "",
+            "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
+                {
+                    "name": "name",
                     "type": "name"
                 },
                 {
-                    "name": "verifier",
-                    "type": "name"
+                    "name": "color",
+                    "type": "string"
+                },
+                {
+                    "name": "permissions",
+                    "type": "string[]"
                 }
             ]
         },
@@ -787,6 +827,10 @@
             "name": "verifyclaim",
             "base": "",
             "fields": [
+                {
+                    "name": "community_id",
+                    "type": "symbol"
+                },
                 {
                     "name": "claim_id",
                     "type": "uint64"
@@ -803,6 +847,11 @@
         }
     ],
     "actions": [
+        {
+            "name": "assignroles",
+            "type": "assignroles",
+            "ricardian_contract": ""
+        },
         {
             "name": "claimaction",
             "type": "claimaction",
@@ -839,28 +888,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "migrate",
-            "type": "migrate",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "migrateafter",
-            "type": "migrateafter",
-            "ricardian_contract": ""
-        },
-        {
             "name": "netlink",
             "type": "netlink",
             "ricardian_contract": ""
         },
         {
-            "name": "newobjective",
-            "type": "newobjective",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "reactsale",
-            "type": "reactsale",
+            "name": "reward",
+            "type": "reward",
             "ricardian_contract": ""
         },
         {
@@ -884,18 +918,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "updobjective",
-            "type": "updobjective",
-            "ricardian_contract": ""
-        },
-        {
             "name": "upsertaction",
             "type": "upsertaction",
             "ricardian_contract": ""
         },
         {
-            "name": "verifyaction",
-            "type": "verifyaction",
+            "name": "upsertobjctv",
+            "type": "upsertobjctv",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "upsertrole",
+            "type": "upsertrole",
             "ricardian_contract": ""
         },
         {
@@ -941,6 +975,13 @@
             "key_types": []
         },
         {
+            "name": "member",
+            "type": "member",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
             "name": "network",
             "type": "network",
             "index_type": "i64",
@@ -950,6 +991,13 @@
         {
             "name": "objective",
             "type": "objective",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "role",
+            "type": "role",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

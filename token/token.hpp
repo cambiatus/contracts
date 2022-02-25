@@ -77,6 +77,8 @@ public:
   typedef eosio::multi_index<eosio::name{"stat"}, currency_stats> stats;
   typedef eosio::multi_index<eosio::name{"expiryopts"}, expiry_options> expiry_opts;
 
+  bool is_member(eosio::symbol community_id, eosio::name user);
+
   void sub_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st);
   void add_balance(eosio::name owner, eosio::asset value, const token::currency_stats &st);
   void renovate_expiration(eosio::name account, const token::currency_stats &st);
@@ -116,8 +118,20 @@ struct network
   std::uint64_t users_by_cmm() const { return community.raw(); }
 };
 
+struct member
+{
+  eosio::name name;
+  eosio::name inviter;
+  std::string user_type;
+  std::vector<eosio::name> roles;
+
+  std::uint64_t primary_key() const { return name.value; }
+};
+
 typedef eosio::multi_index<eosio::name{"network"},
                            network,
                            eosio::indexed_by<eosio::name{"usersbycmm"},
-                                             eosio::const_mem_fun<network, uint64_t, &network::users_by_cmm>>>
+                                             eosio::const_mem_fun<network, uint64_t, &network::users_by_cmm> > >
     bespiral_networks;
+
+typedef eosio::multi_index<eosio::name{"member"}, member> members;

@@ -5,6 +5,17 @@
 #define TOSTR_(T) #T
 #define TOSTR(T) TOSTR_(T)
 
+enum permission
+{
+  invite,
+  claim,
+  order,
+  verify,
+  sell,
+  award,
+  transfer
+};
+
 class [[eosio::contract("community")]] cambiatus : public eosio::contract
 {
 public:
@@ -49,6 +60,49 @@ public:
                      (id)(community)(invited_user)(invited_by)(user_type));
   };
 
+  TABLE member
+  {
+    eosio::name name;
+    eosio::name inviter;
+    std::string user_type;
+    std::vector<eosio::name> roles;
+
+    std::uint64_t primary_key() const { return name.value; }
+
+    EOSLIB_SERIALIZE(member,
+                     (name)(inviter)(user_type)(roles));
+  };
+
+  /**
+   * Roles is a way to identify people's relation with their community.
+   * It can be used to allow people to be recognized by their role in the whole of the community, to give them awards or to help them to identify themselves.
+   * They can be customized with a color and can have a name
+   *
+   * Roles can also be atttached with permissions that gives them abilities within the community such as the ability to invite new people in, to sell goods and services and more
+   *
+   * The initial abilities that we offer are:
+   *  invite: invite new users `netlink`
+   *  claim: allow claiming actions `claimaction`
+   *  order: create new orders `transfersale`
+   *  verify: verify autenticity on claims `verifyclaim`
+   *  sell: sell items on the shop `createsale` `updatesale` .
+   *  award: awards an action `verifyaction` (`award`)
+   *
+   * All of those roles are used from within the contract to mediate the usage of some actions.
+   *
+   *
+   * Roles are scoped by community.
+   */
+  TABLE role
+  {
+    eosio::name name;
+    std::vector<std::string> permissions;
+
+    std::uint64_t primary_key() const { return name.value; }
+
+    EOSLIB_SERIALIZE(role, (name)(permissions));
+  };
+
   TABLE objective
   {
     std::uint64_t id;
@@ -81,6 +135,8 @@ public:
     std::uint8_t has_proof_photo;
     std::uint8_t has_proof_code;
     std::string photo_proof_instructions;
+
+    // std::vector<eosio::name> roles; // Validators of the action
 
     std::uint64_t primary_key() const { return id; }
     std::uint64_t by_objective() const { return objective_id; }
@@ -176,19 +232,15 @@ public:
 
   /// @abi action
   /// Adds a user to a community
-  ACTION netlink(eosio::asset cmm_asset, eosio::name inviter, eosio::name new_user, std::string user_type);
+  ACTION netlink(eosio::symbol community_id, eosio::name inviter, eosio::name new_user, std::string user_type);
 
   /// @abi action
-  /// Create a new community objective
-  ACTION newobjective(eosio::asset cmm_asset, std::string description, eosio::name creator);
-
-  /// @abi action
-  /// Edit the description of a given objective
-  ACTION updobjective(std::uint64_t objective_id, std::string description, eosio::name editor);
+  /// Create/Edit a given objective
+  ACTION upsertobjctv(eosio::symbol community_id, std::uint64_t objective_id, std::string description, eosio::name editor);
 
   /// @abi action
   /// Update action
-  ACTION upsertaction(std::uint64_t action_id, std::uint64_t objective_id,
+  ACTION upsertaction(eosio::symbol community_id, std::uint64_t action_id, std::uint64_t objective_id,
                       std::string description, eosio::asset reward,
                       eosio::asset verifier_reward, std::uint64_t deadline,
                       std::uint64_t usages, std::uint64_t usages_left,
@@ -196,20 +248,20 @@ public:
                       std::string validators_str, std::uint8_t is_completed,
                       eosio::name creator,
                       std::uint8_t has_proof_photo, std::uint8_t has_proof_code,
-                      std::string photo_proof_instructions);
+                      std::string photo_proof_instructions, std::string image);
 
   /// @abi action
   /// Start a new claim on an action
-  ACTION claimaction(std::uint64_t action_id, eosio::name maker,
+  ACTION claimaction(eosio::symbol community_id, std::uint64_t action_id, eosio::name maker,
                      std::string proof_photo, std::string proof_code, uint32_t proof_time);
 
   /// @abi action
   /// Send a vote verification for a given claim. It has to be `claimable` verification_type
-  ACTION verifyclaim(std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote);
+  ACTION verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, eosio::name verifier, std::uint8_t vote);
 
   /// @abi action
   /// Verify that a given action was completed. It has to have the `automatic` verification_type
-  ACTION verifyaction(std::uint64_t action_id, eosio::name maker, eosio::name verifier);
+  ACTION reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder);
 
   /// @abi action
   /// Create a new sale
@@ -228,12 +280,16 @@ public:
   ACTION deletesale(std::uint64_t sale_id);
 
   /// @abi action
-  /// Vote in a sale
-  ACTION reactsale(std::uint64_t sale_id, eosio::name from, std::string type);
-
-  /// @abi action
   /// Offchain event hook for when a transfer occours in our shop
   ACTION transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units);
+
+  /// @abi action
+  /// Upserts roles in a community
+  ACTION upsertrole(eosio::symbol community_id, eosio::name name, std::string color, std::vector<std::string> & permissions);
+
+  /// @abi action
+  /// Sets a number of roles for an user
+  ACTION assignroles(eosio::symbol community_id, eosio::name member, std::vector<eosio::name> & roles);
 
   /// @abi action
   /// Set the indices for a chain
@@ -247,59 +303,63 @@ public:
   /// Deletes an action
   ACTION deleteact(std::uint64_t id);
 
-  /// next 3 actions used for table migrations
-  ACTION migrate(std::uint64_t id, std::uint64_t increment);
-  ACTION clean(std::string t);
-  ACTION migrateafter(std::uint64_t claim_id, std::uint64_t increment);
+  ACTION clean(std::string t, eosio::name name_scope, eosio::symbol symbol_scope);
 
   // Get available key
   uint64_t get_available_id(std::string table);
 
+  // Convinience methods
+  bool is_member(eosio::symbol community_id, eosio::name user);
+  bool has_permission(eosio::symbol community_id, eosio::name user, permission e_permission);
+  std::string permission_to_string(permission e_permission);
+
   typedef eosio::multi_index<eosio::name{"community"}, cambiatus::community> communities;
+  typedef eosio::multi_index<eosio::name{"member"}, cambiatus::member> members;
 
   typedef eosio::multi_index<eosio::name{"network"},
                              cambiatus::network,
                              eosio::indexed_by<eosio::name{"usersbycmm"},
-                                               eosio::const_mem_fun<cambiatus::network, uint64_t, &cambiatus::network::users_by_cmm>>>
+                                               eosio::const_mem_fun<cambiatus::network, uint64_t, &cambiatus::network::users_by_cmm> > >
       networks;
 
   typedef eosio::multi_index<eosio::name{"objective"},
                              cambiatus::objective,
                              eosio::indexed_by<eosio::name{"bycmm"},
-                                               eosio::const_mem_fun<cambiatus::objective, uint64_t, &cambiatus::objective::by_cmm>>>
+                                               eosio::const_mem_fun<cambiatus::objective, uint64_t, &cambiatus::objective::by_cmm> > >
       objectives;
 
   typedef eosio::multi_index<eosio::name{"action"},
                              cambiatus::action,
                              eosio::indexed_by<eosio::name{"byobj"},
-                                               eosio::const_mem_fun<cambiatus::action, uint64_t, &cambiatus::action::by_objective>>>
+                                               eosio::const_mem_fun<cambiatus::action, uint64_t, &cambiatus::action::by_objective> > >
       actions;
 
   typedef eosio::multi_index<eosio::name{"validator"},
                              cambiatus::action_validator,
                              eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<cambiatus::action_validator, uint64_t, &cambiatus::action_validator::by_action>>>
+                                               eosio::const_mem_fun<cambiatus::action_validator, uint64_t, &cambiatus::action_validator::by_action> > >
       validators;
 
   typedef eosio::multi_index<eosio::name{"claim"},
                              cambiatus::claim,
-                             eosio::indexed_by<eosio::name{"byaction"},
-                                               eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action>>>
+                             eosio::indexed_by<eosio::name{"byaction"}, eosio::const_mem_fun<cambiatus::claim, uint64_t, &cambiatus::claim::by_action> > >
       claims;
 
   typedef eosio::multi_index<eosio::name{"check"},
                              cambiatus::check,
                              eosio::indexed_by<eosio::name{"byclaim"},
-                                               eosio::const_mem_fun<cambiatus::check, uint64_t, &cambiatus::check::by_claim>>>
+                                               eosio::const_mem_fun<cambiatus::check, uint64_t, &cambiatus::check::by_claim> > >
       checks;
 
   typedef eosio::multi_index<eosio::name{"sale"},
                              cambiatus::sale,
                              eosio::indexed_by<eosio::name{"bycmm"},
-                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_cmm>>,
+                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_cmm> >,
                              eosio::indexed_by<eosio::name{"byuser"},
-                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_user>>>
+                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_user> > >
       sales;
+
+  typedef eosio::multi_index<eosio::name{"role"}, cambiatus::role> roles;
 
   typedef eosio::singleton<eosio::name{"indexes"}, cambiatus::indexes> item_indexes;
 
