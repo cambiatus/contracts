@@ -6,14 +6,14 @@ OPTS = -D'__TOKEN_ACCOUNT__=cambiatus.tk' -D'__BACKEND_ACCOUNT__=cambiatus' -D'_
 
 contract = cambiatus.cm
 contract_authorization = $(contract)@active
-authorization = lucca@active
-# authorization = henriquebuss@active
+# authorization = lucca@active
+authorization = cambiatus@active
 
 url = https://staging.cambiatus.io
 # url = https://demo.cambiatus.io
 # url = https://app.cambiatus.io
 
-cleos = cleos -u $(url) 
+cleos = cleos -u $(url)
 push_adm = $(cleos) push action $(contract) $^ -p $(contract_authorization)
 push = $(cleos) push action $(contract) $^ -p $(authorization)
 
@@ -29,12 +29,20 @@ deploy:
 erase:
 	# $(push_adm) clean '["role", "", "0,TISA"]'
 	# $(push_adm) clean '["member", "", "0,CMB"]'
+	$(push_adm) clean '["network", "", "0,NOCOMM"]'
 
 invite:
 	# $(push) netlink '["0,MIZU", "lucca", "memberdev123", "natural"]'
 
+
 fill-role:
-	# $(push) upsertrole '{"community_id": "0,MIZU", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
+	$(push_adm) upsertrole '{"community_id": "0,GOPLAY", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order", "verify", "sell", "transfer"]}'
+
+	# $(push) upsertrole '{"community_id": "0,MUDA", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
+
+migrate-users:
+	# $(push_adm) migrateusers '["0,VRD"]'
+
 
 assign-role:
 	# $(push) assignrole '{"community_id": "0,MIZU", "member": "lucca", "roles": ["member", "validator"]} '
