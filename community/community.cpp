@@ -72,6 +72,12 @@ void cambiatus::create(eosio::asset cmm_asset, eosio::name creator, std::string 
 
   // Notify creator
   require_recipient(creator);
+
+  // Create default member role
+  std::vector<std::string> permissions{"invite", "claim", "order", "verify", "sell", "transfer"};
+  roles role_table(_self, new_symbol.raw());
+  role_table.emplace(_self, [&](auto &r)
+                     { r.name = eosio::name{"member"}; r.permissions = permissions; });
 }
 
 void cambiatus::update(eosio::asset cmm_asset, std::string logo, std::string name,
@@ -143,11 +149,7 @@ void cambiatus::netlink(eosio::symbol community_id, eosio::name inviter, eosio::
 
   members member(_self, community_id.raw());
   member.emplace(_self, [&](auto &r)
-                 {
-      r.name = new_user;
-      r.inviter = inviter;
-      r.user_type = user_type;
-      r.roles = { eosio::name{"member"} }; });
+                 { r.name = new_user; r.inviter = inviter; r.user_type = user_type; r.roles = { eosio::name{"member"} }; });
 
   // Skip rewards if inviter and invited is the same, may happen during community creation
   if (inviter == new_user)
@@ -898,8 +900,16 @@ void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::st
   communities community_table(_self, _self.value);
   const auto &community = community_table.get(community_id.raw(), "can't find community with given community_id");
 
-  // Make sure we have admin's permission to upsert roles
-  require_auth(community.creator);
+  // Make sure we have admin's permission to upsert roles **or** the contract permission
+  // Roles are automatically created during community creation process
+  if (eosio::get_sender() == community.creator)
+  {
+    require_auth(community.creator);
+  }
+  else
+  {
+    require_auth(get_self());
+  }
 
   // Validate permission list
   eosio::check(permissions.size() <= 6, "invalid cambiatus permissions");
@@ -1064,10 +1074,13 @@ void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbo
     }
   }
 
-  roles role_table(_self, symbol_scope.raw());
-  for (auto itr = role_table.begin(); itr != role_table.end();)
+  if (t == "roles")
   {
-    itr = role_table.erase(itr);
+    roles role_table(_self, symbol_scope.raw());
+    for (auto itr = role_table.begin(); itr != role_table.end();)
+    {
+      itr = role_table.erase(itr);
+    }
   }
 }
 
@@ -1167,5 +1180,4 @@ EOSIO_DISPATCH(cambiatus,
                (upsertobjctv)(upsertaction)                       // Objectives and Actions
                (reward)(claimaction)(verifyclaim)                 // Verifications and Claims
                (createsale)(updatesale)(deletesale)(transfersale) // Shop
-               (setindices)(deleteobj)(deleteact)(clean)          // Admin actions
-);
+               (setindices)(deleteobj)(deleteact)(clean));        // Admin actions
