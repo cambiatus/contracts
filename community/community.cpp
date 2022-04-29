@@ -853,7 +853,8 @@ void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbo
                    t == "member" ||
                    t == "objective" ||
                    t == "action" ||
-                   t == "role",
+                   t == "role" ||
+                   t == "sale",
                "invalid value for table name");
 
   if (t == "claim")
@@ -910,12 +911,21 @@ void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbo
     }
   }
 
-  if (t == "roles")
+  if (t == "role")
   {
     roles role_table(_self, symbol_scope.raw());
     for (auto itr = role_table.begin(); itr != role_table.end();)
     {
       itr = role_table.erase(itr);
+    }
+  }
+
+  if (t == "sale")
+  {
+    sales sale_table(_self, _self.value);
+    for (auto itr = sale_table.begin(); itr != sale_table.end();)
+    {
+      itr = sale_table.erase(itr);
     }
   }
 }
