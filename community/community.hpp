@@ -188,26 +188,6 @@ public:
                      (id)(claim_id)(validator)(is_verified));
   };
 
-  TABLE sale
-  {
-    std::uint64_t id;
-    eosio::name creator;
-    eosio::symbol community;
-    std::string title;
-    std::string description;
-    std::string image;
-    std::uint8_t track_stock;
-    eosio::asset quantity; // Actual price of product/service
-    std::uint64_t units;   // How many are available
-
-    std::uint64_t primary_key() const { return id; }
-    std::uint64_t by_cmm() const { return community.raw(); }
-    std::uint64_t by_user() const { return creator.value; }
-
-    EOSLIB_SERIALIZE(sale,
-                     (id)(creator)(community)(title)(description)(image)(track_stock)(quantity)(units));
-  };
-
   TABLE indexes
   {
     std::uint64_t last_used_sale_id;
@@ -334,14 +314,6 @@ public:
                              eosio::indexed_by<eosio::name{"byclaim"},
                                                eosio::const_mem_fun<cambiatus::check, uint64_t, &cambiatus::check::by_claim> > >
       checks;
-
-  typedef eosio::multi_index<eosio::name{"sale"},
-                             cambiatus::sale,
-                             eosio::indexed_by<eosio::name{"bycmm"},
-                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_cmm> >,
-                             eosio::indexed_by<eosio::name{"byuser"},
-                                               eosio::const_mem_fun<cambiatus::sale, uint64_t, &cambiatus::sale::by_user> > >
-      sales;
 
   typedef eosio::multi_index<eosio::name{"role"}, cambiatus::role> roles;
 
