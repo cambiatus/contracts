@@ -704,137 +704,6 @@ void cambiatus::verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, 
   }
 }
 
-void cambiatus::createsale(eosio::name from, std::string title, std::string description,
-                           eosio::asset quantity, std::string image,
-                           std::uint8_t track_stock, std::uint64_t units)
-{
-  // Validate user
-  require_auth(from);
-
-  // Validate quantity
-  eosio::check(quantity.is_valid(), "Quantity is invalid");
-  eosio::check(quantity.amount >= 0, "Invalid amount of quantity, must be greater than or equal to 0");
-
-  // Check if stock is tracked
-  if (track_stock >= 1)
-  {
-    eosio::check(units > 0, "Invalid number of units, must use a positive value");
-  }
-  else
-  {
-    // Discard units value if not tracking stock
-    units = 0;
-  }
-
-  // Validate Strings
-  eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
-  eosio::check(units <= 9999, "Invalid number of units");
-
-  // Validate user belongs to community
-  eosio::check(is_member(quantity.symbol, from), "'from' account doesn't belong to the community");
-
-  // Check if community exists
-  communities community(_self, _self.value);
-  const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
-
-  eosio::check(cmm.has_shop, "This community don't have shop enabled.");
-  eosio::check(has_permission(quantity.symbol, from, permission::sell), "you cannot create a new product or service with your current roles");
-
-  // Get last used objective id and update item_index table
-  uint64_t sale_id;
-  sale_id = get_available_id("sales");
-
-  // Insert new sale
-  sales sale(_self, _self.value);
-  sale.emplace(_self, [&](auto &s)
-               {
-                 s.id = sale_id;
-                 s.creator = from;
-                 s.community = quantity.symbol;
-                 s.title = title;
-                 s.description = description.substr(0, 255);
-                 s.image = image;
-                 s.track_stock = track_stock;
-                 s.quantity = quantity;
-                 s.units = units; });
-}
-
-void cambiatus::updatesale(std::uint64_t sale_id, std::string title,
-                           std::string description, eosio::asset quantity,
-                           std::string image, std::uint8_t track_stock, std::uint64_t units)
-{
-  // Find sale
-  sales sale(_self, _self.value);
-  const auto &found_sale = sale.get(sale_id, "Can't find any sale with given sale_id");
-
-  // Validate user
-  require_auth(found_sale.creator);
-
-  // Validate quantity
-  eosio::check(quantity.is_valid(), "Quantity is invalid");
-  eosio::check(quantity.amount >= 0, "Invalid amount of quantity, must use a positive value");
-
-  // Check if stock is tracked
-  if (found_sale.track_stock >= 1 && track_stock == 1)
-  {
-    eosio::check(units >= 0, "Invalid number of units, must be greater than or equal to 0");
-  }
-  else
-  {
-    // Discard units value if not tracking stock
-    units = 0;
-  }
-
-  // Validate Strings
-  eosio::check(title.length() <= 256, "Invalid length for title, must be less than 256 characters");
-  eosio::check(image.length() <= 256, "Invalid length for image, must be less than 256 characters");
-  eosio::check(units <= 9999, "Invalid number of units");
-
-  // Check if community exists
-  communities community(_self, _self.value);
-  const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
-
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
-
-  // Validate user belongs to community
-  eosio::check(is_member(quantity.symbol, found_sale.creator), "This account doesn't belong to the community");
-
-  // Validate if user can sell in the platform
-  eosio::check(has_permission(quantity.symbol, found_sale.creator, permission::sell), "you cannot create a new product or service with your current roles");
-
-  // Update sale
-  sale.modify(found_sale, _self, [&](auto &s)
-              {
-                s.title = title;
-                s.description = description.substr(0, 255);
-                s.image = image;
-                s.quantity = quantity;
-                s.units = units;
-                s.track_stock = track_stock; });
-}
-
-void cambiatus::deletesale(std::uint64_t sale_id)
-{
-  // Find sale
-  sales sale(_self, _self.value);
-  auto itr_sale = sale.find(sale_id);
-  eosio::check(itr_sale != sale.end(), "Can't find any sale with the given sale_id");
-  const auto &found_sale = *itr_sale;
-
-  // Check if community exists
-  communities community(_self, _self.value);
-  const auto &cmm = community.get(found_sale.community.raw(), "Can't find community with given Symbol");
-
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
-
-  // Validate user
-  require_auth(found_sale.creator);
-
-  // Remove sale
-  sale.erase(itr_sale);
-}
-
 void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units)
 {
   // Validate user
@@ -846,50 +715,17 @@ void cambiatus::transfersale(std::uint64_t sale_id, eosio::name from, eosio::nam
   // Validate accounts are different
   eosio::check(from != to, "Can't sale for yourself");
 
-  // Find sale
-  sales sale(_self, _self.value);
-  const auto &found_sale = sale.get(sale_id, "Can't find any sale with given sale_id");
-
-  if (found_sale.track_stock == 1)
-  {
-    // Validate units
-    eosio::check(units > 0, "Invalid number of units, must be greater than 0");
-
-    // Validate sale has that amount of units available
-    eosio::check(found_sale.units >= units, "Sale doesn't have that many units available");
-
-    // Check amount depending on quantity
-    const auto found_sale_sub_total = found_sale.quantity.amount * units;
-    const auto from_total_offered = quantity.amount * units;
-    eosio::check(from_total_offered == found_sale_sub_total, "Amount offered doesn't correspond to expected value");
-  }
-  else
-  {
-    // Without trackStock
-    eosio::check(quantity == found_sale.quantity, "Quantity must be the same as the sale price");
-  }
-
   // Check if community exists
   communities community(_self, _self.value);
   const auto &cmm = community.get(quantity.symbol.raw(), "Can't find community with given Symbol");
 
-  eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
+  eosio::check(cmm.has_shop, "This community don't have shop enabled.");
 
   eosio::check(has_permission(quantity.symbol, from, permission::order), "you cannot create an order with your current roles");
   eosio::check(has_permission(quantity.symbol, to, permission::sell), "you cannot buy from this user, it doesn't have the permission to sell in this community anymore.");
 
   // Validate 'from' user belongs to sale community
-  eosio::check(is_member(found_sale.community, from), "You can't use transfersale to this sale if you aren't part of the community");
-
-  // Validate 'to' user is the sale creator
-  eosio::check(found_sale.creator == to, "Sale creator and sale doesn't match");
-
-  // Update sale
-  if (found_sale.track_stock == 1)
-  {
-    sale.modify(found_sale, _self, [&](auto &s)
-                { s.units -= units; });
-  }
+  eosio::check(is_member(quantity.symbol, from), "You can't use transfersale to this sale if you aren't part of the community");
 }
 
 void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::string color, std::vector<std::string> &permissions)
@@ -1175,9 +1011,9 @@ std::string cambiatus::permission_to_string(permission e_permission)
 }
 
 EOSIO_DISPATCH(cambiatus,
-               (create)(update)(netlink)                          // Basic community
-               (upsertrole)(assignroles)                          // Roles & Permission
-               (upsertobjctv)(upsertaction)                       // Objectives and Actions
-               (reward)(claimaction)(verifyclaim)                 // Verifications and Claims
-               (createsale)(updatesale)(deletesale)(transfersale) // Shop
-               (setindices)(deleteobj)(deleteact)(clean));        // Admin actions
+               (create)(update)(netlink)                   // Basic community
+               (upsertrole)(assignroles)                   // Roles & Permission
+               (upsertobjctv)(upsertaction)                // Objectives and Actions
+               (reward)(claimaction)(verifyclaim)          // Verifications and Claims
+               (transfersale)                              // Shop
+               (setindices)(deleteobj)(deleteact)(clean)); // Admin actions
