@@ -29,7 +29,7 @@ deploy:
 erase:
 	# $(push_adm) clean '["role", "", "0,TISA"]'
 	# $(push_adm) clean '["member", "", "0,CMB"]'
-	$(push_adm) clean '["network", "", "0,NOCOMM"]'
+	# $(push_adm) clean '["sale", "", "0,XXX"]'
 
 invite:
 	# $(push) netlink '["0,MIZU", "lucca", "memberdev123", "natural"]'

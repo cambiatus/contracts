@@ -480,48 +480,6 @@
             ]
         },
         {
-            "name": "sale",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "creator",
-                    "type": "name"
-                },
-                {
-                    "name": "community",
-                    "type": "symbol"
-                },
-                {
-                    "name": "title",
-                    "type": "string"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "image",
-                    "type": "string"
-                },
-                {
-                    "name": "track_stock",
-                    "type": "uint8"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "units",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
             "name": "setindices",
             "base": "",
             "fields": [
@@ -905,13 +863,6 @@
         {
             "name": "role",
             "type": "role",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "sale",
-            "type": "sale",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
