@@ -310,40 +310,6 @@
             ]
         },
         {
-            "name": "createsale",
-            "base": "",
-            "fields": [
-                {
-                    "name": "from",
-                    "type": "name"
-                },
-                {
-                    "name": "title",
-                    "type": "string"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "image",
-                    "type": "string"
-                },
-                {
-                    "name": "track_stock",
-                    "type": "uint8"
-                },
-                {
-                    "name": "units",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
             "name": "deleteact",
             "base": "",
             "fields": [
@@ -359,16 +325,6 @@
             "fields": [
                 {
                     "name": "id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "deletesale",
-            "base": "",
-            "fields": [
-                {
-                    "name": "sale_id",
                     "type": "uint64"
                 }
             ]
@@ -668,40 +624,6 @@
             ]
         },
         {
-            "name": "updatesale",
-            "base": "",
-            "fields": [
-                {
-                    "name": "sale_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "title",
-                    "type": "string"
-                },
-                {
-                    "name": "description",
-                    "type": "string"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "image",
-                    "type": "string"
-                },
-                {
-                    "name": "track_stock",
-                    "type": "uint8"
-                },
-                {
-                    "name": "units",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
             "name": "upsertaction",
             "base": "",
             "fields": [
@@ -868,11 +790,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "createsale",
-            "type": "createsale",
-            "ricardian_contract": ""
-        },
-        {
             "name": "deleteact",
             "type": "deleteact",
             "ricardian_contract": ""
@@ -880,11 +797,6 @@
         {
             "name": "deleteobj",
             "type": "deleteobj",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "deletesale",
-            "type": "deletesale",
             "ricardian_contract": ""
         },
         {
@@ -910,11 +822,6 @@
         {
             "name": "update",
             "type": "update",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "updatesale",
-            "type": "updatesale",
             "ricardian_contract": ""
         },
         {

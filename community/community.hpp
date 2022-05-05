@@ -264,22 +264,6 @@ public:
   ACTION reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder);
 
   /// @abi action
-  /// Create a new sale
-  ACTION createsale(eosio::name from, std::string title, std::string description,
-                    eosio::asset quantity, std::string image,
-                    std::uint8_t track_stock, std::uint64_t units);
-
-  /// @abi action
-  /// Update some sale details
-  ACTION updatesale(std::uint64_t sale_id, std::string title,
-                    std::string description, eosio::asset quantity,
-                    std::string image, std::uint8_t track_stock, std::uint64_t units);
-
-  /// @abi action
-  /// Delete a sale
-  ACTION deletesale(std::uint64_t sale_id);
-
-  /// @abi action
   /// Offchain event hook for when a transfer occours in our shop
   ACTION transfersale(std::uint64_t sale_id, eosio::name from, eosio::name to, eosio::asset quantity, std::uint64_t units);
 
