@@ -853,8 +853,7 @@ void cambiatus::clean(std::string t, eosio::name name_scope, eosio::symbol symbo
                    t == "member" ||
                    t == "objective" ||
                    t == "action" ||
-                   t == "role" ||
-                   t == "sale",
+                   t == "role",
                "invalid value for table name");
 
   if (t == "claim")
