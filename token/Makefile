@@ -8,7 +8,7 @@ contract = cambiatus.tk
 authorization = lucca@active
 contract_authorization = $(contract)@active
 
-url = https://staging.cambiatus.io
+# url = https://staging.cambiatus.io
 # url = https://demo.cambiatus.io
 # url = https://app.cambiatus.io
 

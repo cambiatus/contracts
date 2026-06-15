@@ -9,9 +9,9 @@ contract_authorization = $(contract)@active
 # authorization = lucca@active
 authorization = cambiatus@active
 
-url = https://staging.cambiatus.io
+# url = https://staging.cambiatus.io
 # url = https://demo.cambiatus.io
-# url = https://app.cambiatus.io
+url = https://app.cambiatus.io
 
 cleos = cleos -u $(url)
 push_adm = $(cleos) push action $(contract) $^ -p $(contract_authorization)
@@ -36,8 +36,8 @@ invite:
 
 
 fill-role:
-	$(push_adm) upsertrole '{"community_id": "0,GOPLAY", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order", "verify", "sell", "transfer"]}'
-
+	# $(push_adm) upsertrole '{"community_id": "0,GOPLAY", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order", "verify", "sell", "transfer"]}'
+	$(push_adm) upsertrole '{"community_id": "1,PAY", "name": "member", "color": "#ffffff", "permissions": ["invite", "claim", "order", "verify", "sell", "transfer"]}'
 	# $(push) upsertrole '{"community_id": "0,MUDA", "name": "validator", "color": "#f26c48", "permissions": ["verify"]}'
 
 migrate-users:

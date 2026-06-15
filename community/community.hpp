@@ -13,7 +13,8 @@ enum permission
   verify,
   sell,
   award,
-  transfer
+  transfer,
+  admin
 };
 
 class [[eosio::contract("community")]] cambiatus : public eosio::contract
@@ -87,6 +88,7 @@ public:
    *  verify: verify autenticity on claims `verifyclaim`
    *  sell: sell items on the shop `createsale` `updatesale` .
    *  award: awards an action `verifyaction` (`award`)
+   *  admin: manage roles and role assignments `upsertrole` `assignroles`
    *
    * All of those roles are used from within the contract to mediate the usage of some actions.
    *
@@ -275,6 +277,7 @@ public:
   // Convinience methods
   bool is_member(eosio::symbol community_id, eosio::name user);
   bool has_permission(eosio::symbol community_id, eosio::name user, permission e_permission);
+  bool has_admin_auth(eosio::symbol community_id, eosio::name creator);
   std::string permission_to_string(permission e_permission);
 
   typedef eosio::multi_index<eosio::name{"community"}, cambiatus::community> communities;

@@ -1,2 +1,5 @@
 setup.sh
 .vscode
+.DS_Store
+.claude/
+community_backup_*

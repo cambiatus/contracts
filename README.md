@@ -1,84 +1,68 @@
 # EOS Smart Contracts for Cambiatus
 
-All of our Cambiatus Smart contracts lives here. You'll find everything you need to run here.
+Two EOSIO smart contracts: `community/` (`cambiatus.cm`) manages the social layer and `token/` (`cambiatus.tk`) is the token contract.
 
-## Install
+## Prerequisites
 
-```
-git clone https://github.com/cambiatus/contracts.git
-```
-
-Our docker setup include two nodes `keosd` and `nodeosd`. The `keosd` is responsible for running the wallet and as well the `cleos` commmand, since this way `cleos` won't spin up its own version of `keosd` daemon everytime you invoke it. The other `nodeos` node is responsible for running the blockchain and compiling files.
+- [eosio.cdt](https://github.com/EOSIO/eosio.cdt) v1.8.x — provides `eosio-cpp`
+- EOSIO v2.1.x — provides `cleos` and `keosd`
+- [Docker](https://docs.docker.com/get-docker/) — nodeos runs in a container
+- `jq`
 
 ## Build
 
-Building the Community Contract
-
+```bash
+make build              # compile both contracts
+cd community && make    # community only → community.wasm + community.abi
+cd token && make        # token only → token.wasm + token.abi
 ```
-cd community
-make
+
+## Local Development & Testing
+
+Nodeos runs in a Docker container (`eosio/eosio:v2.1.0`). `cleos` and `keosd` run on the host.
+
+```bash
+make test        # fresh chain + compile + bootstrap + run all 90 tests
+make test-only   # re-run tests on an already-running bootstrapped chain (fast)
 ```
 
-## Attention
+Other node commands:
 
-This repo only works using [eosio.cdt](https://github.com/EOSIO/eosio.cdt/releases/tag/v1.7.0) version `v1.7.0`
+```bash
+make node-fresh   # start a clean nodeos container at http://127.0.0.1:8888
+make bootstrap    # deploy contracts + seed TST community (requires running node)
+make node-stop    # stop the nodeos container
+make node-status  # show head block / LIB
+make node-logs    # tail nodeos container logs
+```
 
-## Setting up a Local EOS Environment
+### Seed state
 
-To setup a local environment you need to install locally a version of EOSIO;
-if installed properly, it will add `nodeos` and `cleos` to your binaries.
+Bootstrap creates these accounts (all share one dev key):
 
-Then you can execute the following commands:
+| Account | Role |
+|---|---|
+| `alice` | community creator, token issuer |
+| `bob`, `carol`, `dave`, `eve` | members |
+| `cambiatus.cm` | community contract |
+| `cambiatus.tk` | token contract |
+| `cambiatus` | backend account |
 
-```sh
-WALLET_PASSWORD="YOUR--EOS--WALLET--PASS"
-CONTRACT="cambiatus.cm"
-TOKEN_CONTRACT="cambiatus.tk"
-BACKEND_ACC="cambiatus"
-PUBLIC_KEY="EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV"
+Community `TST`: mcc type, max 1M, min -100, inviter_reward 1 TST, invited_reward 2 TST.
 
-nohup nodeos -e -p eosio \
-    --data-dir .nodeos/data \
-    --config-dir .nodeos/config \
-    --plugin eosio::producer_plugin \
-    --plugin eosio::producer_api_plugin \
-    --plugin eosio::chain_api_plugin \
-    --plugin eosio::history_plugin \
-    --plugin eosio::history_api_plugin \
-    --plugin eosio::http_plugin \
-    --plugin eosio::state_history_plugin \
-    --access-control-allow-origin='*' \
-    --contracts-console \
-    --http-validate-host=false \
-    --trace-history \
-    --chain-state-history \
-    --verbose-http-errors \
-    --filter-on='*' \
-    --disable-replay-opts \
-    --delete-all-blocks &
+Dev key pair:
+- Private: `5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3`
+- Public: `EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV`
 
-curl -X POST http://127.0.0.1:8888/v1/producer/schedule_protocol_feature_activations -d '{"protocol_features_to_activate": ["0ec7e080177b2c02b278d5088611686b49d739925a92d9bfcacd7fc6b74053bd"]}'
+## Deploy
 
-cleos set code eosio ./tests/eosio.contracts/eosio.bios.wasm -p eosio
-cleos set abi eosio ./tests/eosio.contracts/eosio.bios.abi -p eosio
+```bash
+cd community && make deploy   # deploys to https://app.cambiatus.io by default
+cd token && make deploy
+```
 
-cleos push action eosio activate '["f0af56d2c5a48d60a4a5b5c903edfb7db3a736a94ed589d0b797df33ff9d3e1d"]' -p eosio # GET_SENDER
+Override the target network via the `url` Makefile variable:
 
-cleos create account eosio $CONTRACT $PUBLIC_KEY $PUBLIC_KEY
-cleos create account eosio $TOKEN_CONTRACT $PUBLIC_KEY $PUBLIC_KEY
-
-cleos set account permission $TOKEN_CONTRACT active '{"threshold": 1, "keys": [{"key": "'$PUBLIC_KEY'", "weight": 1}], "accounts": [{"permission": {"actor": "'$CONTRACT'", "permission": "eosio.code"}, "weight": 1}]}' owner
-
-cleos set account permission $CONTRACT active '{"threshold": 1, "keys": [{"key": "'$PUBLIC_KEY'", "weight": 1}], "accounts": [{"permission": {"actor": "'$TOKEN_CONTRACT'", "permission": "eosio.code"}, "weight": 1}]}' owner
-
-cleos set account permission $CONTRACT active --add-code
-cleos set account permission $TOKEN_CONTRACT active --add-code
-
-cleos create account eosio $BACKEND_ACC $PUBLIC_KEY $PUBLIC_KEY
-
-cleos set code $CONTRACT ../community/community.wasm
-cleos set abi $CONTRACT ../community/community.abi
-
-cleos set code $TOKEN_CONTRACT ../token/token.wasm
-cleos set abi $TOKEN_CONTRACT ../token/token.abi
+```bash
+make deploy url=https://staging.cambiatus.io
 ```

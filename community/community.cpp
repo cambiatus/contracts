@@ -1,6 +1,7 @@
 #include "community.hpp"
 #include "../utils/utils.cpp"
 #include <eosio/crypto.hpp>
+#include <eosio/transaction.hpp>
 
 inline void verify_sha256_prefix(const std::string &value, const std::string &compared_hash)
 {
@@ -243,7 +244,6 @@ void cambiatus::upsertaction(eosio::symbol community_id, std::uint64_t action_id
 {
   // Validate creator
   eosio::check(is_account(creator), "invalid account for creator");
-  require_auth(creator);
 
   // Validates that the objective exists
   objectives objective(_self, community_id.raw());
@@ -256,6 +256,12 @@ void cambiatus::upsertaction(eosio::symbol community_id, std::uint64_t action_id
   auto itr_cmm = community.find(obj.community.raw());
   eosio::check(itr_cmm != community.end(), "Can't find community with given objective_id");
   auto &cmm = *itr_cmm;
+
+  // The action's creator, or any admin of the community, may manage actions.
+  // Authorize against the resolved community (cmm.symbol), never the caller-
+  // supplied community_id, so admin rights can't be claimed cross-community.
+  eosio::check(has_admin_auth(cmm.symbol, creator),
+               "only the action creator or a community admin can manage actions");
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
@@ -341,47 +347,39 @@ void cambiatus::upsertaction(eosio::symbol community_id, std::uint64_t action_id
 
   if (verification_type == "claimable")
   {
-    // Validate list of validators
-    std::vector<std::string> strs = split(validators_str, "-");
-    eosio::check(strs.size() >= verifications, "You cannot have a bigger number of verifications than accounts in the validator list");
-
-    // Ensure list of validators in unique
-    sort(strs.begin(), strs.end());
-    auto strs_it = std::unique(strs.begin(), strs.end());
-    eosio::check(strs_it == strs.end(), "You cannot add a validator more than once to an action");
-
-    // Make sure we have at least 2 verifiers
-    eosio::check(strs.size() >= 2, "You need at least two verifiers in a claimable action");
-
-    // Define validators table, scoped by action
     validators validator(_self, action_id);
 
-    // Clean up existing validators if action already exists
-
-    // for (validator;itr_vals != validator.end();) {
+    // Clear any existing explicit validators (handles edit from explicit→role-based)
     for (auto itr_vals = validator.begin(); itr_vals != validator.end();)
-    {
-      eosio::print_f("Test Table : {%, %}\n", itr_vals->action_id);
       itr_vals = validator.erase(itr_vals);
-    }
 
-    std::vector<std::string> validator_v = split(validators_str, "-");
-    for (auto i : validator_v)
+    if (!validators_str.empty())
     {
-      eosio::name acc = eosio::name{i};
-      eosio::check((bool)acc, "account from validator list cannot be empty");
-      eosio::check(is_account(acc), "account from validator list don't exist");
+      // Explicit validator list mode
+      std::vector<std::string> strs = split(validators_str, "-");
+      eosio::check(strs.size() >= verifications, "You cannot have a bigger number of verifications than accounts in the validator list");
 
-      // Must belong to the community
-      eosio::check(is_member(cmm.symbol, acc), "one of the validators doesn't belong to the community");
+      sort(strs.begin(), strs.end());
+      auto strs_it = std::unique(strs.begin(), strs.end());
+      eosio::check(strs_it == strs.end(), "You cannot add a validator more than once to an action");
 
-      // Add list of validators
-      validator.emplace(_self, [&](auto &v)
-                        {
-                          v.id = validator.available_primary_key();
-                          v.action_id = action_id;
-                          v.validator = acc; });
-    };
+      eosio::check(strs.size() >= 2, "You need at least two verifiers in a claimable action");
+
+      for (auto i : strs)
+      {
+        eosio::name acc = eosio::name{i};
+        eosio::check((bool)acc, "account from validator list cannot be empty");
+        eosio::check(is_account(acc), "account from validator list don't exist");
+        eosio::check(is_member(cmm.symbol, acc), "one of the validators doesn't belong to the community");
+
+        validator.emplace(_self, [&](auto &v)
+                          {
+                            v.id = validator.available_primary_key();
+                            v.action_id = action_id;
+                            v.validator = acc; });
+      }
+    }
+    // else: empty validators_str → role-based mode; any member with verify permission can validate
   }
 }
 
@@ -566,18 +564,22 @@ void cambiatus::verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, 
 
   eosio::check(cmm.has_objectives, "This community don't have objectives enabled.");
 
-  // Check if user belongs to the action_validator list
   validators validator(_self, objact.id);
-  std::uint64_t validator_count = 0;
-  for (auto itr_validators = validator.begin(); itr_validators != validator.end();)
+  bool has_explicit_validators = validator.begin() != validator.end();
+
+  if (has_explicit_validators)
   {
-    if ((*itr_validators).validator == verifier)
+    bool in_list = false;
+    for (auto itr_v = validator.begin(); itr_v != validator.end(); itr_v++)
     {
-      validator_count++;
+      if (itr_v->validator == verifier)
+      {
+        in_list = true;
+        break;
+      }
     }
-    itr_validators++;
+    eosio::check(in_list, "Verifier is not in the action validator list");
   }
-  eosio::check(validator_count > 0, "Verifier is not in the action validator list");
 
   eosio::check(has_permission(cmm.symbol, verifier, permission::verify), "you cannot verify with your current roles");
 
@@ -599,12 +601,12 @@ void cambiatus::verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, 
   auto check_by_claim = check.get_index<eosio::name{"byclaim"}>();
 
   // Assert that verifier hasn't voted previously
-  uint64_t checks_count = 0;
   for (auto itr_check_claim = check_by_claim.find(claim_id); itr_check_claim != check_by_claim.end(); itr_check_claim++)
   {
-    auto check_claim = *itr_check_claim;
-    bool existing_vote = check_claim.validator == verifier && check_claim.claim_id == claim_id;
-    eosio::check(!existing_vote, "The verifier cannot check the same claim more than once");
+    // index is sorted by claim_id — stop at the first row of another claim
+    if (itr_check_claim->claim_id != claim_id)
+      break;
+    eosio::check(itr_check_claim->validator != verifier, "The verifier cannot check the same claim more than once");
   }
 
   // Add new check
@@ -643,8 +645,9 @@ void cambiatus::verifyclaim(eosio::symbol community_id, std::uint64_t claim_id, 
   auto checks_with_claim = check.get_index<eosio::name{"byclaim"}>();
   for (auto itr_vote = checks_with_claim.find(claim_id); itr_vote != checks_with_claim.end(); itr_vote++)
   {
+    // index is sorted by claim_id — stop at the first row of another claim
     if (itr_vote->claim_id != claim_id)
-      continue;
+      break;
 
     if (itr_vote->is_verified == 1)
     {
@@ -736,25 +739,19 @@ void cambiatus::upsertrole(eosio::symbol community_id, eosio::name name, std::st
   communities community_table(_self, _self.value);
   const auto &community = community_table.get(community_id.raw(), "can't find community with given community_id");
 
-  // Make sure we have admin's permission to upsert roles **or** the contract permission
-  // Roles are automatically created during community creation process
-  if (eosio::get_sender() == community.creator)
-  {
-    require_auth(community.creator);
-  }
-  else
-  {
-    require_auth(get_self());
-  }
+  // Roles can be managed by the community creator, the contract itself
+  // (during community creation) or any member with the admin permission
+  eosio::check(has_admin_auth(community_id, community.creator),
+               "only the community creator or an admin can manage roles");
 
   // Validate permission list
-  eosio::check(permissions.size() <= 6, "invalid cambiatus permissions");
+  eosio::check(permissions.size() <= 8, "invalid cambiatus permissions");
   for (auto p : permissions)
   {
     eosio::check(p == "invite" || p == "claim" ||
                      p == "order" || p == "verify" ||
                      p == "sell" || p == "award" ||
-                     p == "transfer",
+                     p == "transfer" || p == "admin",
                  "Invalid permission. Check permission list sent");
   }
 
@@ -788,8 +785,10 @@ void cambiatus::assignroles(eosio::symbol community_id, eosio::name member, std:
   communities community_table(_self, _self.value);
   const auto &community = community_table.get(community_id.raw(), "can't find community with given community_id");
 
-  // Make sure we have admin's permission to upsert roles
-  require_auth(community.creator);
+  // Roles can be assigned by the community creator, the contract itself
+  // or any member with the admin permission
+  eosio::check(has_admin_auth(community_id, community.creator),
+               "only the community creator or an admin can assign roles");
 
   // Check if all roles exist
   roles role_table(_self, community_id.raw());
@@ -989,6 +988,37 @@ bool cambiatus::has_permission(eosio::symbol community_id, eosio::name user, per
   return false;
 }
 
+bool cambiatus::has_admin_auth(eosio::symbol community_id, eosio::name creator)
+{
+  if (has_auth(creator) || has_auth(get_self()))
+  {
+    return true;
+  }
+
+  // Test every account that authorized this transaction for the admin
+  // permission. Bounded by the transaction's declared authorizations —
+  // never scans the member table, so cost is independent of community size
+  auto tx_size = eosio::transaction_size();
+  std::vector<char> buffer(tx_size);
+  eosio::read_transaction(buffer.data(), tx_size);
+  auto tx = eosio::unpack<eosio::transaction>(buffer.data(), tx_size);
+
+  for (auto &action : tx.actions)
+  {
+    for (auto &level : action.authorization)
+    {
+      if (level.actor != creator && has_auth(level.actor) &&
+          is_member(community_id, level.actor) &&
+          has_permission(community_id, level.actor, permission::admin))
+      {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 std::string cambiatus::permission_to_string(permission e_permission)
 {
   switch (e_permission)
@@ -1007,6 +1037,8 @@ std::string cambiatus::permission_to_string(permission e_permission)
     return "award";
   case permission::transfer:
     return "transfer";
+  case permission::admin:
+    return "admin";
   }
 }
 
