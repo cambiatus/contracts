@@ -192,10 +192,14 @@ public:
 
   TABLE indexes
   {
-    std::uint64_t last_used_sale_id;
-    std::uint64_t last_used_objective_id;
-    std::uint64_t last_used_action_id;
-    std::uint64_t last_used_claim_id;
+    // Default member initializers: get_available_id default-constructs an `indexes`
+    // and passes it to get_or_create. Without these, a fresh singleton is seeded with
+    // indeterminate stack values, so the first objective/action/sale/claim gets a garbage
+    // id (e.g. 7394) instead of 1, diverging from the backend's sequential rows.
+    std::uint64_t last_used_sale_id = 0;
+    std::uint64_t last_used_objective_id = 0;
+    std::uint64_t last_used_action_id = 0;
+    std::uint64_t last_used_claim_id = 0;
   };
 
   /// @abi action
