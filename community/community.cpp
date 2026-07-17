@@ -385,8 +385,11 @@ void cambiatus::upsertaction(eosio::symbol community_id, std::uint64_t action_id
 
 /// @abi action
 /// Verify an automatic action, rewarding tokens
-void cambiatus::reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder)
+void cambiatus::reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder,
+                       std::string memo)
 {
+  eosio::check(memo.size() <= 256, "memo has more than 256 bytes");
+
   // Validates awarder
   eosio::check(is_account(awarder), "invalid account for awarder");
   eosio::check(is_account(receiver), "invalid account for receiver");
@@ -440,12 +443,11 @@ void cambiatus::reward(eosio::symbol community_id, std::uint64_t action_id, eosi
   if (action.reward.amount > 0)
   {
     // Reward Action Claimer
-    std::string memo_action = "thanks for doing an action for your community";
     eosio::action reward_action = eosio::action(eosio::permission_level{currency_account, eosio::name{"active"}}, // Permission
                                                 currency_account,                                                 // Account
                                                 eosio::name{"issue"},                                             // Action
                                                 // to, quantity, memo
-                                                std::make_tuple(receiver, action.reward, memo_action));
+                                                std::make_tuple(receiver, action.reward, memo));
     reward_action.send();
   }
 

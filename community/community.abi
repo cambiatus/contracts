@@ -462,6 +462,10 @@
                 {
                     "name": "awarder",
                     "type": "name"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         },

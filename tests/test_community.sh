@@ -485,17 +485,36 @@ suite "Community: automatic reward"
 
 assert_ok "alice awards automatic action to bob" \
     $CLEOS push action "$CMM_CONTRACT" reward \
-    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"alice\"]" \
+    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"alice\", \"reward memo\"]" \
+    -p alice
+
+# The reward action's inline token issue must retain the caller-supplied memo.
+REWARD_TX=$($CLEOS push action "$CMM_CONTRACT" reward \
+    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"alice\", \"second reward memo\"]" \
+    -p alice -j | jq -r '.transaction_id')
+REWARD_ISSUE_MEMO=$($CLEOS get transaction "$REWARD_TX" \
+    | jq -r '.. | objects | select(.act?.name? == "issue") | .act.data.memo' \
+    | head -n 1)
+if [ "$REWARD_ISSUE_MEMO" = "second reward memo" ]; then
+    _pass "inline issue preserves reward memo"
+else
+    _fail "inline issue preserves reward memo" \
+        "expected: 'second reward memo'" "got:      '$REWARD_ISSUE_MEMO'"
+fi
+
+assert_fail "reward memo over 256 bytes is rejected" "memo has more than 256 bytes" \
+    $CLEOS push action "$CMM_CONTRACT" reward \
+    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"alice\", \"$(printf 'x%.0s' {1..257})\"]" \
     -p alice
 
 assert_fail "non-member cannot award" "verifier doesn't belong to the community" \
     $CLEOS push action "$CMM_CONTRACT" reward \
-    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"cambiatus\"]" \
+    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"cambiatus\", \"\"]" \
     -p cambiatus
 
 assert_fail "member without award permission cannot award" "you cannot award with your current roles" \
     $CLEOS push action "$CMM_CONTRACT" reward \
-    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"bob\"]" \
+    "[\"0,TST\", $AUTO_ACT_ID, \"bob\", \"bob\", \"\"]" \
     -p bob
 
 summary

@@ -247,7 +247,8 @@ public:
 
   /// @abi action
   /// Verify that a given action was completed. It has to have the `automatic` verification_type
-  ACTION reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder);
+  ACTION reward(eosio::symbol community_id, std::uint64_t action_id, eosio::name receiver, eosio::name awarder,
+                std::string memo);
 
   /// @abi action
   /// Offchain event hook for when a transfer occours in our shop
